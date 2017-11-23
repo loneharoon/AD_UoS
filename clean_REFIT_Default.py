@@ -8,6 +8,7 @@ Created on Wed Nov 22 14:10:59 2017
 """
 
 import os
+import re
 home_app= {
 1 : ["localminute","Aggregate", "Fridge", "Freezer_1", "Freezer_2", "WasherDryer",
 "WashingMachine", "Dishwasher", "Computer", "TelevisionSite", "ElectricHeater"],
@@ -61,7 +62,8 @@ fls = os.listdir(read_dir)
 for i in range(0,len(fls)):
   home = fls[i]
   df = pd.read_csv(read_dir+home)
-  df.columns = home_app[i+1]
+  df.columns = home_app[int(re.search(r'\d+', home).group(0))]
+  #df.columns = home_app[i+1]
   df['localminute'] = pd.to_datetime(df['localminute'],unit="s")
   df.to_csv(save_dir+home)
   
