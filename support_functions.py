@@ -19,3 +19,13 @@ def plot_facet_plots(df_local):
       .fig.subplots_adjust(wspace=.2,hspace=.5))
   return h
   
+def plot_facet_plots_years(df_local,savedir):
+  
+  """ this function creates a facet plot with 7 columns"""
+  h =  sns.FacetGrid(df_local,col='month',col_wrap=4,size=2.5)
+  (h.map_dataframe(plt.bar,'hour','Frequency')
+      .set_axis_labels("Day_hour","Frequency")
+      .fig.subplots_adjust(wspace=.2,hspace=.5))
+  #h.set(xticks = [0,2,4,6,8,10,12,14,16,18,20,22])
+  h.savefig(savedir)
+  #return h

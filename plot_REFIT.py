@@ -1,6 +1,8 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
+This is a simpler version of plot_REFIT_ALL.py. It allows to plot data of single 
+home and is bit interactive
 Created on Tue Nov 21 14:35:12 2017
 
 @author: haroonr
@@ -20,30 +22,18 @@ savedir = "/Volumes/MacintoshHD2/Users/haroonr/Dropbox/UniOfStrat/temp_plots/"
 df = pd.read_csv(dir+home,index_col="localminute")
 df.drop(df.columns[[0]], axis=1, inplace=True) #drop row no. column
 df.index = pd.to_datetime(df.index)
-df = df/1000
+#df = df/1000
 #%% 
 # this plots data of each appliance separtely in row fashion manner
-temp = df[ : '2013-12-30']
+temp = df[ : '2013-11-12']
 temp.plot(subplots=True,figsize=(12,10))
 #plt.savefig(savedir+"house1.pdf")
 #plt.close()
 #%% SINGLE DAY PLOT
-daydat = df['2014-05-05']['Magimix_Blender']
+daydat = df['2013-11-22']['TelevisionSite']
 daydat.plot()
-#%%
-temp = df['Aggregate']
-temp = temp['2014-01-01': '2014-01-30']
-temp = temp.to_frame()
-temp['day']= temp.index.date
-temp['timestamp'] = temp.index.time
-#%%
-#sns.set(style="ticks",color_codes=True)
-#h =  sns.FacetGrid(temp,col='day',col_wrap=7,size=2.5)
-#(h.map_dataframe(plt.plot,'timestamp','Aggregate')
-#       .set_axis_labels("Timestamp","Power(kW)")
-#       .fig.subplots_adjust(wspace=.2,hspace=.5))
-#h.savefig("/Volumes/MacintoshHD2/Users/haroonr/Downloads/haroon_temp.pdf")
-#%%
+
+#%% prepare data for facet plotting
 temp2 = df['Aggregate']
 temp2 = temp2.to_frame()
 temp2['day'] = temp2.index.date
