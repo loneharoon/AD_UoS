@@ -9,21 +9,22 @@ Created on Wed Nov 22 11:30:37 2017
 """
 
 #%%
-#%matplotlib inline
+%matplotlib inline
 import pandas as pd
 import matplotlib.pyplot as plt
 from matplotlib.backends.backend_pdf import PdfPages
 import os
+
 #%%
-#dir = "/Volumes/MacintoshHD2/Users/haroonr/Detailed_datasets/REFITT/dataset_10mins/"
-dir = "/Volumes/MacintoshHD2/Users/haroonr/Detailed_datasets/REFITT/dataset/"
+dir = "/Volumes/MacintoshHD2/Users/haroonr/Detailed_datasets/REFITT/dataset_10mins/"
+#dir = "/Volumes/MacintoshHD2/Users/haroonr/Detailed_datasets/REFITT/dataset/"
 savedir_home = "/Volumes/MacintoshHD2/Users/haroonr/Dropbox/UniOfStra/AD/plots/"
 exec(open("/Volumes/MacintoshHD2/Users/haroonr/Dropbox/UniOfStra/AD/support_functions.py").read())
 total_homes = os.listdir(dir)
 #%%
-#for i in range(1,len(total_homes)):
-#home = total_homes
-home = total_homes[6]
+#for i in range(0,len(total_homes)):
+  #home = total_homes
+home = total_homes[19]
 df = pd.read_csv(dir+home,index_col="localminute")
 df.drop(df.columns[[0]], axis=1, inplace=True) #drop row no. column
 df.index = pd.to_datetime(df.index)
@@ -31,7 +32,7 @@ df.index = pd.to_datetime(df.index)
 req_folder = savedir_home + home.split(".")[0] + "/"
 if not os.path.exists(req_folder):
   os.makedirs(req_folder)
-df = df/1000
+#df = df/1000
 df.plot(subplots=True,figsize=(12,10))
 plt.savefig(req_folder+"all_meters.pdf")
 #plt.close()
@@ -41,12 +42,13 @@ for i in range(0,meters.size):
   temp = df[meter_name]
   temp = temp.to_frame()
   temp['day'] = temp.index.date
-  temp['timestamp'] = temp.index.hour * 60 + temp.index.minute +  temp.index.second/60
+  #CHECK IF DATA IS AT SECONDS OR AT MINUTES LEVEL
+  #temp['timestamp'] = temp.index.hour * 60 + temp.index.minute +  temp.index.second/60 
+  temp['timestamp'] = temp.index.hour * 60 + temp.index.minute
   temp  =  temp.rename(columns={meter_name : 'power'})
   grouped_1 = temp.groupby([temp.index.year,temp.index.month])
   pdf_file_name = req_folder + meter_name + ".pdf"
   with PdfPages(pdf_file_name) as pdf:
     for i, group in grouped_1:
-      plt.figure()
       ob = plot_facet_plots(group)
       pdf.savefig(ob)

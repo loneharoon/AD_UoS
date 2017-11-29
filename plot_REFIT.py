@@ -12,7 +12,6 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import seaborn as sns
 sns.set(style="ticks",color_codes=True)
-import numpy as np
 from matplotlib.backends.backend_pdf import PdfPages
 import inspect
 #%%
@@ -30,7 +29,7 @@ temp.plot(subplots=True,figsize=(12,10))
 #plt.savefig(savedir+"house1.pdf")
 #plt.close()
 #%% SINGLE DAY PLOT
-daydat = df['2013-11-22']['TelevisionSite']
+daydat = df['2013-12-22']['TelevisionSite']
 daydat.plot()
 
 #%% prepare data for facet plotting

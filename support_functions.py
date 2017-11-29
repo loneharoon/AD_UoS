@@ -7,25 +7,29 @@ Created on Wed Nov 22 12:02:44 2017
 @author: haroonr
 """
 import seaborn as sns
-sns.set(style="ticks",color_codes=True)
+import numpy as np
 import matplotlib.pyplot as plt
 
 def plot_facet_plots(df_local):
   
-  """ this function creates a facet plot with 7 columns"""
-  h =  sns.FacetGrid(df_local,col='day',col_wrap=7,size=2.5)
+  """ this function creates a facet plot with 7 columns
+  Used to plot power consumtpion of appliances"""
+  h =  sns.FacetGrid(df_local,col='day',col_wrap=7,size=2.5,sharey=False)
   h = (h.map_dataframe(plt.plot,'timestamp','power')
-      .set_axis_labels("Timestamp","Power(kW)")
+      .set_axis_labels("Timestamp","Power(W)")
       .fig.subplots_adjust(wspace=.2,hspace=.5))
   return h
   
 def plot_facet_plots_years(df_local,savedir):
   
-  """ this function creates a facet plot with 7 columns"""
-  h =  sns.FacetGrid(df_local,col='month',col_wrap=4,size=2.5)
+  """ this function creates a facet plot with 7 columns
+  Used to plot appliance frequency usage"""
+  sns.set(style="whitegrid")
+  h =  sns.FacetGrid(df_local,col='month',col_wrap=4,size=2.5,sharex=False,sharey=False)
   (h.map_dataframe(plt.bar,'hour','Frequency')
       .set_axis_labels("Day_hour","Frequency")
       .fig.subplots_adjust(wspace=.2,hspace=.5))
-  #h.set(xticks = [0,2,4,6,8,10,12,14,16,18,20,22])
+  h.set(xticks = [0,6,12,18])
+  h.set(yticks = np.arange(0,31,5))
   h.savefig(savedir)
   #return h

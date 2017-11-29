@@ -10,10 +10,9 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import numpy as np
 import os
-
 #%%
-dir = "/Volumes/MacintoshHD2/Users/haroonr/Detailed_datasets/REFITT/dataset/"
-home = "House15.csv"
+dir = "/Volumes/MacintoshHD2/Users/haroonr/Detailed_datasets/REFITT/dataset_10mins/"
+home = "House21.csv"
 savedir = "/Volumes/MacintoshHD2/Users/haroonr/Dropbox/UniOfStrat/temp_plots/"
 exec(open("/Volumes/MacintoshHD2/Users/haroonr/Dropbox/UniOfStra/AD/support_functions.py").read())
 df = pd.read_csv(dir+home,index_col="localminute")
@@ -21,9 +20,9 @@ df.drop(df.columns[[0]], axis=1, inplace=True) #drop row no. column
 df.index = pd.to_datetime(df.index)
 appliances = df.columns
 appliances = appliances[1:appliances.size] # dropping agg column
-#%%
+
 for app in appliances:
-  #appliance = 'WashingMachine'
+  #appliance = 'Computer'
   appliance = app
   savedir = "/Volumes/MacintoshHD2/Users/haroonr/Dropbox/UniOfStra/AD/plots/"
   pdf_file_name = os.path.join(savedir, home.split(".")[0], "Fr_" + appliance + ".pdf")
@@ -34,7 +33,7 @@ for app in appliances:
   month_gp =  temp.groupby([temp.index.year,temp.index.month])
   for ind, month_data in month_gp:
     temp_gp = month_data.groupby(month_data.index.day)
-    threshold_watts = 50
+    threshold_watts = 25
     day_list = []
     for i, group in temp_gp:
       hour_gp = group.groupby(group.index.hour)
