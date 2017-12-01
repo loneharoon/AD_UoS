@@ -24,19 +24,20 @@ total_homes = os.listdir(dir)
 #%%
 #for i in range(0,len(total_homes)):
   #home = total_homes
-home = total_homes[19]
+home = total_homes[1]
 df = pd.read_csv(dir+home,index_col="localminute")
-df.drop(df.columns[[0]], axis=1, inplace=True) #drop row no. column
+#df.drop(df.columns[[0]], axis=1, inplace=True) #drop row no. column
 df.index = pd.to_datetime(df.index)
 # this plots data of each appliance separtely in row fashion manner
 req_folder = savedir_home + home.split(".")[0] + "/"
 if not os.path.exists(req_folder):
   os.makedirs(req_folder)
-#df = df/1000
-df.plot(subplots=True,figsize=(12,10))
-plt.savefig(req_folder+"all_meters.pdf")
+#df.plot(subplots=True,figsize=(12,10))
+#plt.savefig(req_folder+"all_meters.pdf")
 #plt.close()
 meters = df.columns
+
+#%%
 for i in range(0,meters.size):
   meter_name = meters[i]
   temp = df[meter_name]
