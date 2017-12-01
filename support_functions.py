@@ -32,4 +32,16 @@ def plot_facet_plots_years(df_local,savedir):
   h.set(xticks = [0,6,12,18])
   h.set(yticks = np.arange(0,31,5))
   h.savefig(savedir)
+  h.clear()
   #return h
+  
+def plot_temperature_plots(df_local):
+  """ this function creates a facet plot with 7 columns
+  Used to plot appliance frequency usage"""
+  sns.set(style="whitegrid")
+  sns.set(context="paper")
+  h =  sns.FacetGrid(df_local,col='date',col_wrap=7,size=2.5,sharex=False,sharey=False)
+  h = (h.map_dataframe(plt.plot,'time','TemperatureC')
+      .set_axis_labels("Time (minutes)","Temeperature(c)")
+      .fig.subplots_adjust(wspace=.2,hspace=.5))
+  return h
