@@ -10,12 +10,12 @@ import seaborn as sns
 import numpy as np
 import matplotlib.pyplot as plt
 
-def plot_facet_plots(df_local):
+def plot_facet_plots(df_local,color):
   
   """ this function creates a facet plot with 7 columns
   Used to plot power consumtpion of appliances"""
   h =  sns.FacetGrid(df_local,col='day',col_wrap=7,size=2.5,sharey=False)
-  h = (h.map_dataframe(plt.plot,'timestamp','power')
+  h = (h.map_dataframe(plt.plot,'timestamp','power', color=color)
       .set_axis_labels("Timestamp","Power(W)")
       .fig.subplots_adjust(wspace=.2,hspace=.5))
   return h
