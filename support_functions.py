@@ -10,11 +10,11 @@ import seaborn as sns
 import numpy as np
 import matplotlib.pyplot as plt
 
-def plot_facet_plots(df_local,color):
+def plot_facet_plots(df_local,color='steelblue'):
   
   """ this function creates a facet plot with 7 columns
   Used to plot power consumtpion of appliances"""
-  h =  sns.FacetGrid(df_local,col='day',col_wrap=7,size=2.5,sharey=False)
+  h =  sns.FacetGrid(df_local,col='day',col_wrap=7,size=2.5,sharey=False,dropna=False)
   h = (h.map_dataframe(plt.plot,'timestamp','power', color=color)
       .set_axis_labels("Timestamp","Power(W)")
       .fig.subplots_adjust(wspace=.2,hspace=.5))
@@ -25,7 +25,7 @@ def plot_facet_plots_years(df_local,savedir):
   """ this function creates a facet plot with 7 columns
   Used to plot appliance frequency usage"""
   sns.set(style="whitegrid")
-  h =  sns.FacetGrid(df_local,col='month',col_wrap=4,size=2.5,sharex=False,sharey=False)
+  h =  sns.FacetGrid(df_local,col='month',col_wrap=4,size=2.5,sharex=False,sharey=False,dropna=False)
   (h.map_dataframe(plt.bar,'hour','Frequency')
       .set_axis_labels("Day_hour","Frequency")
       .fig.subplots_adjust(wspace=.2,hspace=.5))
@@ -40,7 +40,7 @@ def plot_temperature_plots(df_local):
   Used to plot appliance frequency usage"""
   sns.set(style="whitegrid")
   sns.set(context="paper")
-  h =  sns.FacetGrid(df_local,col='date',col_wrap=7,size=2.5,sharex=False,sharey=False)
+  h =  sns.FacetGrid(df_local,col='date',col_wrap=7,size=2.5,sharex=False,sharey=False,dropna=False)
   h = (h.map_dataframe(plt.plot,'time','TemperatureC')
       .set_axis_labels("Time (minutes)","Temeperature(c)")
       .fig.subplots_adjust(wspace=.2,hspace=.5))
