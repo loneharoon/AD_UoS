@@ -15,7 +15,7 @@ Created on Wed Dec  6 11:14:56 2017
 
 @author: haroonr
 """
-%matplotlib inline
+
 import pandas as pd
 import matplotlib.pyplot as plt
 from matplotlib.backends.backend_pdf import PdfPages
@@ -30,8 +30,8 @@ exec(open("/Volumes/MacintoshHD2/Users/haroonr/Dropbox/UniOfStra/AD/support_func
 plot_folder = "/Volumes/MacintoshHD2/Users/haroonr/Dropbox/UniOfStra/AD/plot_raw/"
 all_homes = os.listdir(raw_dir)
 #%%
-part1 = 'RAW_House12_Part1.csv'
-part2 = 'RAW_House12_Part2.csv'
+part1 = 'RAW_House_17_Part1.csv'
+part2 = 'RAW_House_17_Part2.csv'
 df1 = pd.read_csv(raw_dir+part1,index_col="Time")
 df2 = pd.read_csv(raw_dir+part2,index_col="Time")
 #%%
@@ -40,11 +40,11 @@ temp.drop('Unix',axis=1,inplace=True)
 house_no = [int(f) for f in re.findall('\d+', part1)][0] # extract house number
 house_appliances =  home_app[house_no][1:] # extract appliances list
 temp.columns = house_appliances # name columns
-temp.to_csv(new_raw_dir+part1.split('_')[1]+".csv")
+temp.to_csv(new_raw_dir+part1.split('_')[2]+".csv")
 #% create/save downsampled version 
 temp.index= pd.to_datetime(temp.index)
 temp_sub = temp.resample('10T',label='right').mean()
-temp_sub.to_csv(new_raw_dir_10min+part1.split('_')[1]+".csv")
+temp_sub.to_csv(new_raw_dir_10min+part1.split('_')[2]+".csv")
 #% plot each of raw meters
 #meters= temp_sub.columns
 #req_folder = plot_folder + part1.split("_")[1] + "/"
@@ -72,14 +72,13 @@ exec(open("/Volumes/MacintoshHD2/Users/haroonr/Dropbox/UniOfStra/AD/REFIT_column
 home_list = [os.path.basename(x) for x in glob.glob(data_dir+'*.csv')]
 print (home_list)
 #%%
-home = home_list[0]
-home_df = pd.read_csv(data_dir+home,index_col="Time")
-
-#%%
-home_df.drop('Unix',axis=1,inplace=True)
-house_no = [int(f) for f in re.findall('\d+', home)][0] # extract house number
-house_appliances =  home_app[house_no][1:] # extract appliances list
-house_appliances.append('Issues')
-home_df.columns = house_appliances # name columns
-os.remove(data_dir+home)
-home_df.to_csv(data_dir+home)
+for i in range(1,len(home_list)):
+  home = home_list[i]
+  home_df = pd.read_csv(data_dir+home,index_col="Time")
+  home_df.drop('Unix',axis=1,inplace=True)
+  house_no = [int(f) for f in re.findall('\d+', home)][0] # extract house number
+  house_appliances =  home_app[house_no][1:] # extract appliances list
+  house_appliances.append('Issues')
+  home_df.columns = house_appliances # name columns
+  os.remove(data_dir+home)
+  home_df.to_csv(data_dir+home)

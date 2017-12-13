@@ -14,31 +14,30 @@ import pandas as pd
 import matplotlib.pyplot as plt
 from matplotlib.backends.backend_pdf import PdfPages
 import os
-
+plt.ioff()
 #%%
-dir = "/Volumes/MacintoshHD2/Users/haroonr/Detailed_datasets/REFITT/dataset_10mins/"
-#dir = "/Volumes/MacintoshHD2/Users/haroonr/Detailed_datasets/REFITT/dataset/"
+direc = "/Volumes/MacintoshHD2/Users/haroonr/Detailed_datasets/REFITT/CLEAN_REFIT_10min/"
+#dir = "/Volumes/MacintoshHD2/Users/haroonr/Detailed_datasets/REFITT/REFIT_RAW/"
 savedir_home = "/Volumes/MacintoshHD2/Users/haroonr/Dropbox/UniOfStra/AD/plots/"
 exec(open("/Volumes/MacintoshHD2/Users/haroonr/Dropbox/UniOfStra/AD/support_functions.py").read())
-total_homes = os.listdir(dir)
+#total_homes = sorted(os.listdir(dir))
 #%%
-#for i in range(0,len(total_homes)):
-  #home = total_homes
-home = total_homes[1]
-df = pd.read_csv(dir+home,index_col="localminute")
-#df.drop(df.columns[[0]], axis=1, inplace=True) #drop row no. column
+#for i in range(14,19):
+#home = total_homes[i]
+home = "House21.csv"
+#df = pd.read_csv(dir+home,index_col="localminute")
+df = pd.read_csv(direc+home,index_col="Time")
 df.index = pd.to_datetime(df.index)
-# this plots data of each appliance separtely in row fashion manner
+#df.drop(df.columns[[0]], axis=1, inplace=True) #drop row no. column
+# this plof each appliance separtely in row fashion manner
 req_folder = savedir_home + home.split(".")[0] + "/"
+#req_folder = savedir_home + "Raw_home3" + "/"
 if not os.path.exists(req_folder):
   os.makedirs(req_folder)
-#df.plot(subplots=True,figsize=(12,10))
-#plt.savefig(req_folder+"all_meters.pdf")
-#plt.close()
 meters = df.columns
-
 #%%
-for i in range(0,meters.size):
+meters = ["Aggregate", "Fridge-Freezer", "TumbleDryer", "WashingMachine", "Dishwasher", "FoodMixer", "noname", "Vivarium", "PondPump"]
+for i in range(0,len(meters)): # dropping issue column from plotting
   meter_name = meters[i]
   temp = df[meter_name]
   temp = temp.to_frame()
