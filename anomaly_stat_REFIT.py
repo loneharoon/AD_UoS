@@ -36,6 +36,6 @@ def remap_appliances_ifrequired(df,re_map):
   return(frame)
   
 dfx = remap_appliances_ifrequired(df,re_map)
-Counter(dfx.Appliance)
-
+Counter(dfx.Appliance) # prints all anomalies
+Counter(dfx[dfx.Status=='S'].Appliance) # prints only sure anomalies
  
