@@ -20,6 +20,7 @@ df_2min = df.resample('2T',label="right").mean()
 freezer_1 = copy(df.Freezer_1)
 freezer_1_sub =  freezer_1['2013']
 freezer_daywise = pd.groupby(freezer_1_sub,by=freezer_1_sub.index.date)
+#%% CALCULATE NUMBER OF CYCLES
 cycles = []
 for day in freezer_daywise:
  # print(type(day))
@@ -29,7 +30,18 @@ for day in freezer_daywise:
     if data[i] > 10 and data[i-1] < 2:
       count = count +1
   cycles.append(count)
-  
+cycles_unique = np.unique(cycles)
+#%% CALCULATE NUMBER OF SAMPLES
+from collections import Counter
+samples = Counter(cycles)
+
+#%% Calculate number of cycles probabilites
+from collections import OrderedDict
+samples_ordered = OrderedDict(sorted(samples.items()))
+frequency = list(samples_ordered.values())
+frequency_sum = np.sum(frequency)
+cyclesProb = [i/frequency_sum for i in frequency]
+#%%
 
 
   
