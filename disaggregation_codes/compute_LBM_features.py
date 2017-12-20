@@ -41,27 +41,34 @@ samples_ordered = OrderedDict(sorted(samples.items()))
 frequency = list(samples_ordered.values())
 frequency_sum = np.sum(frequency)
 cyclesProb = [i/frequency_sum for i in frequency]
-#%% calculate duration of applaince usage
+#%% calculate duration and energy of applaince usage
 sampling_time = 2*60 # 2 minutes
 #  = 0CALCULATE NUMBER OF CYCLES 
 cycles=[]
 duration=[]
+energy=[]
 for day in freezer_daywise:
  # print(type(day))
   data = day[1] # day[1] is item and day[0] is key
   count = 0
   ontime = 0
+  energycount = 0
   for i in range(1,data.shape[0]): 
     if data[i] > 10 and data[i-1] < 2:
       count = count +1
       ontime = ontime + 1
-    elif data[i] > 10 and data[i-1] > 10:
+      energycount =  energycount + data[i]
+    elif data[i] > 10 and data[i-1] > 10: # in same ON state
       ontime = ontime + 1
+      energycount = energycount + data[i]
   cycles.append(count)
   duration.append(ontime)
+  energy.append(energycount)
+
 cycles_unique = np.unique(cycles)
 df  = pd.DataFrame({'cycles':cycles,'duration':duration})
 appliance_duration = df.groupby(cycles)['duration'].mean()
+energy_appliance =  df.groupby(cycles)['energy'].mean()
 
 
   
