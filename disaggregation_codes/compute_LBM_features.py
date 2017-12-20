@@ -41,7 +41,8 @@ samples_ordered = OrderedDict(sorted(samples.items()))
 frequency = list(samples_ordered.values())
 frequency_sum = np.sum(frequency)
 cyclesProb = [i/frequency_sum for i in frequency]
-#%%
+#%% calculate duration of applaince usage
+
 
 
   
