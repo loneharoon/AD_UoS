@@ -20,7 +20,7 @@ df_2min = df.resample('2T',label="right").mean()
 freezer_1 = copy(df.Freezer_1)
 freezer_1_sub =  freezer_1['2013']
 freezer_daywise = pd.groupby(freezer_1_sub,by=freezer_1_sub.index.date)
-#%% CALCULATE NUMBER OF CYCLES
+#%% CALCULATE NUMBER OF CYCLES 
 cycles = []
 for day in freezer_daywise:
  # print(type(day))
@@ -42,7 +42,26 @@ frequency = list(samples_ordered.values())
 frequency_sum = np.sum(frequency)
 cyclesProb = [i/frequency_sum for i in frequency]
 #%% calculate duration of applaince usage
-
+sampling_time = 2*60 # 2 minutes
+#  = 0CALCULATE NUMBER OF CYCLES 
+cycles=[]
+duration=[]
+for day in freezer_daywise:
+ # print(type(day))
+  data = day[1] # day[1] is item and day[0] is key
+  count = 0
+  ontime = 0
+  for i in range(1,data.shape[0]): 
+    if data[i] > 10 and data[i-1] < 2:
+      count = count +1
+      ontime = ontime + 1
+    elif data[i] > 10 and data[i-1] > 10:
+      ontime = ontime + 1
+  cycles.append(count)
+  duration.append(ontime)
+cycles_unique = np.unique(cycles)
+df  = pd.DataFrame({'cycles':cycles,'duration':duration})
+appliance_duration = df.groupby(cycles)['duration'].mean()
 
 
   
