@@ -69,7 +69,26 @@ cycles_unique = np.unique(cycles)
 df  = pd.DataFrame({'cycles':cycles,'duration':duration})
 appliance_duration = df.groupby(cycles)['duration'].mean()
 energy_appliance =  df.groupby(cycles)['energy'].mean()
-
-
+#%% Compute SAC parameter 
+sac_energy=[]
+sac_duration=[]
+sampling_freq =  2*60 # 2 minutes
+for day in freezer_daywise:
+ # print(type(day))
+  data = day[1] # day[1] is item and day[0] is key
+  energy = 0
+  duration = 0
+  for i in range(1,data.shape[0]): 
+    if data[i] > 10 and data[i-1] < 2:
+      duration = duration + 1
+      energy =  energy + data[i]
+    elif data[i] > 10 and data[i-1] > 10: # in same ON state
+      duration = duration + 1
+      energy =  energy + data[i]
+  sac_energy.append(energy)
+  sac_duration.append(duration)
+sac = np.average(sac_energy)
+induced_sac_density  =   [np.mean(sac_energy),np.std(sac_energy)] 
+induced_sac_duration =   [np.mean(sac_duration),np.std(sac_duration)] 
   
   
