@@ -1,7 +1,8 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-In this file, I see how to compute features of LBM disaggregation model
+In this file, I see how to compute features of LBM disaggregation model.
+This is my dummy code on one appliance
 Created on Tue Dec 19 19:09:12 2017
 
 @author: haroonr
