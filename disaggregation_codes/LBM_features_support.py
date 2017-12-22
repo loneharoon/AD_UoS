@@ -36,7 +36,7 @@ def find_cycle_parameters(app_daywise,sampling_time):
     energy.append(energycount)
     
   cycles_unique = np.unique(cycles)
-  df = pd.DataFrame({'cycles':cycles,'duration':duration})
+  df = pd.DataFrame({'cycles':cycles,'duration':duration,'energy':energy})
   appliance_duration = df.groupby(cycles)['duration'].mean() * sampling_time
   energy_appliance =  df.groupby(cycles)['energy'].mean()
   samples = Counter(cycles) 
@@ -46,7 +46,7 @@ def find_cycle_parameters(app_daywise,sampling_time):
   frequency_sum = np.sum(frequency)
   cyclesprob = [i/frequency_sum for i in frequency]
   cycle_stat['numberOfCycles'] = cycles_unique
-  cycle_stat['numberOfSamples'] = samples
+  cycle_stat['numberOfSamples'] = dict(samples)
   cycle_stat['numberOfCyclesProb'] = cyclesprob
   cycle_stat['numberOfCyclesEnergy'] = energy_appliance
   cycle_stat['numberOfCyclesDuration'] = appliance_duration
