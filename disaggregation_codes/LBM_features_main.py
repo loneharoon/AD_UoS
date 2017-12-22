@@ -44,5 +44,5 @@ for i in appliances:
   app_features['numberOfCyclesStats'] = lbm_cyclepar
   lbm_sacpar = find_sac_parameters(data_daywise,sampling_time)
   app_features.update(lbm_sacpar) # merging dictionaries
-  lbm_app_features[i] = apo_features
+  lbm_app_features[i] = app_features
 #%%
