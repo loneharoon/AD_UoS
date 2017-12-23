@@ -13,8 +13,10 @@ import numpy as np
 from copy import copy
 from hmmlearn import hmm
 np.random.seed(42)
+import json
 from collections import Counter,OrderedDict
 exec(open("/Volumes/MacintoshHD2/Users/haroonr/Dropbox/UniOfStra/AD/disaggregation_codes/LBM_features_support.py").read())
+json_save_dir = "/Volumes/MacintoshHD2/Users/haroonr/Downloads/temp/"
 #%%
 dir = "/Volumes/MacintoshHD2/Users/haroonr/Detailed_datasets/Dataport/mix_homes/default/injected_anomalies/"
 fl = "115.csv"
@@ -36,13 +38,16 @@ for i in appliances:
   data = data.values
   data = [[j] for j in data]
   hmm_par = find_hmm_parameters(data)
-  app_features['means'] = hmm_par.means_ 
-  app_features['startprob'] = hmm_par.startprob_
-  app_features['transprob'] =hmm_par.transmat_
+  app_features['means'] = hmm_par.means_.tolist() 
+  app_features['startprob'] = hmm_par.startprob_.reshape(-1,1).tolist()
+  app_features['transprob'] = hmm_par.transmat_.tolist()
   data_daywise =  pd.groupby(train_df[i],by=train_df[i].index.date)
   lbm_cyclepar =  find_cycle_parameters(data_daywise,sampling_time)
   app_features['numberOfCyclesStats'] = lbm_cyclepar
   lbm_sacpar = find_sac_parameters(data_daywise,sampling_time)
   app_features.update(lbm_sacpar) # merging dictionaries
   lbm_app_features[i] = app_features
-#%%
+#%% Save dictionary in a json file
+savename = json_save_dir+'101.json'
+with open(savename,'w') as fp:
+  json.dump(lbm_app_features,fp)

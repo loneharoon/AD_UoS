@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 """
 In this file, I see how to compute features of LBM disaggregation model.
-This is my dummy code on one appliance
+This is my dummy code for an appliance. Please use other py files as final files
 Created on Tue Dec 19 19:09:12 2017
 
 @author: haroonr
@@ -11,7 +11,7 @@ Created on Tue Dec 19 19:09:12 2017
 import pandas as pd
 import numpy as np
 from copy import copy
-
+import matplotlib.pyplot as plt
 #%%
 dir = "/Volumes/MacintoshHD2/Users/haroonr/Detailed_datasets/REFITT/CLEAN_REFIT_081116/House1.csv"
 df =  pd.read_csv(dir,index_col="Time")

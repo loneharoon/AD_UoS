@@ -45,11 +45,11 @@ def find_cycle_parameters(app_daywise,sampling_time):
   frequency = list(samples_ordered.values())
   frequency_sum = np.sum(frequency)
   cyclesprob = [i/frequency_sum for i in frequency]
-  cycle_stat['numberOfCycles'] = cycles_unique
-  cycle_stat['numberOfSamples'] = dict(samples)
+  cycle_stat['numberOfCycles'] = cycles_unique.tolist()
+  cycle_stat['numberOfSamples'] = list(dict(samples).values())
   cycle_stat['numberOfCyclesProb'] = cyclesprob
-  cycle_stat['numberOfCyclesEnergy'] = energy_appliance
-  cycle_stat['numberOfCyclesDuration'] = appliance_duration
+  cycle_stat['numberOfCyclesEnergy'] = energy_appliance.tolist()
+  cycle_stat['numberOfCyclesDuration'] = appliance_duration.tolist()
   return(cycle_stat)
   
 def find_sac_parameters(app_daywise,sampling_time):
@@ -73,5 +73,6 @@ def find_sac_parameters(app_daywise,sampling_time):
   sac_stat['sac'] = np.average(sac_energy)
   sac_stat['induced density of sac'] = [np.mean(sac_energy),np.std(sac_energy)] 
   sac_stat['induced density of duration'] = [np.mean(sac_duration)*sampling_time,np.std(sac_duration)*sampling_time] 
+  sac_stat['sac sample'] = np.reshape(sac_energy, (-1,1)).tolist()
   return(sac_stat)
   
