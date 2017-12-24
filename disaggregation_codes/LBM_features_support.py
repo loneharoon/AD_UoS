@@ -76,3 +76,14 @@ def find_sac_parameters(app_daywise,sampling_time):
   sac_stat['sac sample'] = np.reshape(sac_energy, (-1,1)).tolist()
   return(sac_stat)
   
+class MyJsonEncoder(json.JSONEncoder):
+    #'''This function is required to save json file otherwise default implementation throws errors,https://stackoverflow.com/a/27050186/3317829''''
+    def default(self, obj):
+        if isinstance(obj, np.integer):
+            return int(obj)
+        elif isinstance(obj, np.floating):
+            return float(obj)
+        elif isinstance(obj, np.ndarray):
+            return obj.tolist()
+        else:
+            return super(MyJsonEncoder, self).default(obj)

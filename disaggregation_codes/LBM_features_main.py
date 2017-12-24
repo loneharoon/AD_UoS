@@ -29,8 +29,10 @@ train_df = copy(df[:'2014-06-20'])
 sampling_time =  2*60
 lbm_app_features = {}
 appliances = train_df.columns
+print(appliances)
+state_2_appliances = ['air1','furnace1','refrigerator1'] # for these we create 2 states in HMM otherwise 3
 #%%
-appliances = ['air1']
+#appliances = ['air1','refrigerator1']
 for i in appliances:
   # the data structure is implemented in sync with LBM model
   app_features = {} 
@@ -49,5 +51,10 @@ for i in appliances:
   lbm_app_features[i] = app_features
 #%% Save dictionary in a json file
 savename = json_save_dir+'101.json'
+
+  
+subdict = {k:lbm_app_features[k] for k in ('air1','furnace1') }
+
 with open(savename,'w') as fp:
-  json.dump(lbm_app_features,fp)
+  #json.dumps(lbm_app_features,fp,cls=MyJsonEncoder,indent=4)
+  json.dump(subdict,fp,indent = 4)
