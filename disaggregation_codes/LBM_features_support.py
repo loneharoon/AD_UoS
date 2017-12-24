@@ -7,8 +7,8 @@ Created on Fri Dec 22 12:12:11 2017
 @author: haroonr
 """
 
-def find_hmm_parameters(seq):
-  model = hmm.GaussianHMM(n_components=2)
+def find_hmm_parameters(seq,n_components):
+  model = hmm.GaussianHMM(n_components=n_components)
   model.fit(seq)
   return(model)
   
@@ -87,3 +87,14 @@ class MyJsonEncoder(json.JSONEncoder):
             return obj.tolist()
         else:
             return super(MyJsonEncoder, self).default(obj)
+
+def save_obj(obj, fname ):
+    # function used to save dictionaries in a file in pickle format
+    ## fname should end with .pkl
+    with open(fname, 'wb') as f:
+        pickle.dump(obj, f, protocol= 2)
+
+def load_obj(picklobject):
+   #function used to read dictionaries from a pickle format file
+    with open(picklobject, 'rb') as f:
+        return pickle.load(f)

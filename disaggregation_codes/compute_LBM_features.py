@@ -33,7 +33,7 @@ app_features['means'] = model.means_.tolist()
 app_features['startprob'] = model.startprob_.reshape(-1,1).tolist()
 app_features['transprob'] = model.transmat_.tolist()
 #%% cycles modelling
-sampling_time = 2*60
+sampling_time = 1 # means I am not changing anything
 app_daywise = pd.groupby(freezer_1_sub,by=freezer_1_sub.index.date)
 cycle_stat = {}
 cycles = [] # no  of cycles
