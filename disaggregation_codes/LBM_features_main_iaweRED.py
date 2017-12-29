@@ -1,12 +1,11 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-In this file I Compute LBM features of all appliances for a home and save in a json file
-Created on Fri Dec 22 15:13:33 2017
+In this file I Compute LBM features of all appliances for a home (iawe and redd) and save in a pickle file. This is replica of LBM_features_main.py for 1 second data
+Created on Fri Dec 29 19:49:46 2017
 
 @author: haroonr
 """
-
 #%% 
 import pandas as pd
 import numpy as np
@@ -17,17 +16,18 @@ import json,pickle
 from collections import Counter,OrderedDict
 exec(open("/Volumes/MacintoshHD2/Users/haroonr/Dropbox/UniOfStra/AD/disaggregation_codes/LBM_features_support.py").read())
 #%%
-dir = "/Volumes/MacintoshHD2/Users/haroonr/Detailed_datasets/Dataport/mix_homes/default3/"
-home = "3538.csv"
+dir = "/Volumes/MacintoshHD2/Users/haroonr/Detailed_datasets/Dataport/mix_homes/default/injected_anomalies/"
+home = "redd_home_6.csv" # meter_2.csv
+#%%
 df = pd.read_csv(dir+home,index_col="localminute")
 df.index = pd.to_datetime(df.index)
-#%% SPEICIFIC TO DATAPORT HOMES
-df = df["2014-06-01":"2014-08-29 23:59:59"] # for DATAPORT HOMES
+#%% SPEICIFIC TO iawe and redd home
 res = df.sum(axis=0)
 high_energy_apps = res.nlargest(6).keys() # CONTROL : selects few appliances
 df_new = df[high_energy_apps]
 del df_new['use']# dont need for building population models
-train_df = df_new.truncate(before="2014-06-01", after="2014-06-30 23:59:59")
+#train_df = df_new.truncate(before="2013-07-13", after="2013-07-20 23:59:59") # for iawe
+train_df = df_new.truncate(before="2011-05-24", after="2011-05-29 23:59:59") # for redd
 #%%
 sampling_time =  1 # let's not care here. Set after some visual inference
 lbm_app_features = {}
