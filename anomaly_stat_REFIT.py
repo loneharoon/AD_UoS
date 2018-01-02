@@ -38,4 +38,12 @@ def remap_appliances_ifrequired(df,re_map):
 dfx = remap_appliances_ifrequired(df,re_map)
 Counter(dfx.Appliance) # prints all anomalies
 Counter(dfx[dfx.Status=='S'].Appliance) # prints only sure anomalies
+ #%% Find home where specifid_appliance's anomaly occured more
+ tg_appliance = "Freezer"
+ Counter(dfx[(dfx.Appliance == tg_appliance) & (dfx.Status=='S')].House_No )
  
+OR
+ 
+dfx[(dfx.Appliance == tg_appliance) & (dfx.Status=='S')].groupby('House_No').size()
+dfx[(dfx.Appliance == tg_appliance) & (dfx.Status=='S')].groupby('House_No').size().sum()
+ #%5
