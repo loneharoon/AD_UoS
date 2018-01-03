@@ -7,14 +7,32 @@ Created on Tue Jan  2 08:54:04 2018
 @author: haroonr
 """
 
-def perform_clustering(samp):
+def perform_clustering(samp,clusters):
   #TODO: this has not been completed yet
   # http://scikit-learn.org/stable/modules/generated/sklearn.cluster.KMeans.html#sklearn.cluster.KMeans
-  kmeans = KMeans(n_clusters=2, random_state=0).fit(samp)
+  kmeans = KMeans(n_clusters=clusters, random_state=0).fit(samp)
   #kmeans.labels_
   #kmeans.cluster_centers_
   return (kmeans)
 
+def re_organize_clusterlabels(samp):
+  """In this block if labels assigned to data are correct. Less consumption should get lower label and higher should get high label. This maintains consistency across different days and datasets and allows comparison
+ input: samp pandas dataframe has  columns power and cluster
+ ouput: pandas dataframe """
+  dic = {}
+  for i in np.unique(samp.cluster):
+    dic[i] = samp[samp.cluster==i].power.iloc[0]
+  if not sorted(list(dic.values())) == list(dic.values()):
+    #if cluster labels are not assigned acc. to usage levels, i.e., less consumption should get lower label and so on
+     p = pd.DataFrame(list(dic.items()))
+     p.columns = ['old_label','value']
+     q = p.sort_values('value')
+     q['new_label'] = range(0,q.shape[0])
+     r = dict(zip(q.old_label,q.new_label))
+     samp['new_cluster'] =  [r[i] for i in samp['cluster'].values]
+     samp.cluster = samp.new_cluster
+     samp.drop('new_cluster',axis=1,inplace=True)
+  return (samp)
 
 
 def find_cycle_parameters(app_daywise,sampling_time):

@@ -12,6 +12,7 @@ import matplotlib.pyplot as plt
 from sklearn.cluster import KMeans
 import numpy as np
 from itertools import groupby
+from collections import OrderedDict
 #%%
 dir = "/Volumes/MacintoshHD2/Users/haroonr/Detailed_datasets/REFITT/CLEAN_REFIT_081116/"
 home = "House1.csv"
@@ -30,13 +31,19 @@ print(app_data.head(1))
 print(app_data.tail(1))
 #%%perform clustering
 samp = app_data['2014-03-07'].to_frame()
+samp.columns = ['power']
 samp_val =  samp.values
 samp_val = samp_val.reshape(-1,1)
 kobj = perform_clustering(samp_val,clusters=2)
 #FIXME:
 samp['cluster'] = kobj.labels_
-#%% obtain cycle stats
+samp = re_organize_clusterlabels(samp)
 
+
+
+
+   
+#%%
 temp1 = [(k,sum(1 for i in g)) for k,g in groupby(kobj.labels_)]
 temp1 = pd.DataFrame(temp1,columns=['cluster','cluster_length'])
 temp1['duration'] = temp1['cluster_length'] * data_sampling_time
