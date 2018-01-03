@@ -34,16 +34,54 @@ samp = app_data['2014-03-07'].to_frame()
 samp.columns = ['power']
 samp_val =  samp.values
 samp_val = samp_val.reshape(-1,1)
+#FIXME: you can play with clustering options
 kobj = perform_clustering(samp_val,clusters=2)
-#FIXME:
 samp['cluster'] = kobj.labels_
 samp = re_organize_clusterlabels(samp)
-
-
-
-
    
-#%%
-temp1 = [(k,sum(1 for i in g)) for k,g in groupby(kobj.labels_)]
-temp1 = pd.DataFrame(temp1,columns=['cluster','cluster_length'])
-temp1['duration'] = temp1['cluster_length'] * data_sampling_time
+#%% perfom stats on cycles
+temp1 = [(k,sum(1 for i in g)) for k,g in groupby(samp.cluster.values)]
+temp1 = pd.DataFrame(temp1,columns=['cluster','samples'])
+#temp1['duration'] = temp1['cluster_length'] * data_sampling_time
+off_cycles =list(temp1[temp1.cluster==0].samples)
+on_cycles =list(temp1[temp1.cluster==1].samples)
+#%% create training stats
+"""" 1. get data
+     2. divide it into 4 contexts 
+     3. divide each into day wise
+     4. calculate above stats
+     
+""""
+myapp = "Freezer_1"
+# set training data duration
+train_data= df_samp[myapp]['2014-03']
+# divide data according to  4 contexts [defined by times]
+night1_data = train_data.between_time("00:00","05:59")
+day1_data = train_data.between_time("06:00","11:59")
+day2_data = train_data.between_time("12:00","17:59")
+night2_data = train_data.between_time("18:00","23:59")
+# create groups within contexts day wise, this will allow us to catch stats at day level otherwise preserving boundaries between different days might become difficult
+night1_gp = night1_data.groupby(night1_data.index.date)
+day1_gp = day1_data.groupby(day1_data.index.date)
+day2_gp = day2_data.groupby(day2_data.index.date)
+night2_gp = night2_data.groupby(night2_data.index.date)
+
+dic = {}
+for k, v in night1_gp:
+  print(k)
+  samp = v.to_frame()
+  samp.columns = ['power']
+  samp_val =  samp.values
+  samp_val = samp_val.reshape(-1,1)
+  #FIXME: you can play with clustering options
+  kobj = perform_clustering(samp_val,clusters=2)
+  samp['cluster'] = kobj.labels_
+  samp = re_organize_clusterlabels(samp)
+  tempval = [(k,sum(1 for i in g)) for k,g in groupby(samp.cluster.values)]
+  tempval = pd.DataFrame(tempval,columns=['cluster','samples'])
+  off_cycles =list(tempval[tempval.cluster==0].samples)
+  on_cycles =list(tempval[tempval.cluster==1].samples)
+  temp_dic = {}
+  temp_dic["on"] = on_cycles
+  temp_dic["off"] = off_cycles
+  dic[k] = temp_dic

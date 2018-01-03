@@ -16,8 +16,8 @@ def perform_clustering(samp,clusters):
   return (kmeans)
 
 def re_organize_clusterlabels(samp):
-  """In this block if labels assigned to data are correct. Less consumption should get lower label and higher should get high label. This maintains consistency across different days and datasets and allows comparison
- input: samp pandas dataframe has  columns power and cluster
+  """this function checks if labels assigned to data are correct. Less consumption should get lower label and higher should get high label. Doing This maintains consistency across different days and datasets and allows comparison
+ input: samp pandas dataframe has  columns: power and cluster
  ouput: pandas dataframe """
   dic = {}
   for i in np.unique(samp.cluster):
