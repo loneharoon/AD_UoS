@@ -12,7 +12,7 @@ import matplotlib.pyplot as plt
 from sklearn.cluster import KMeans
 import numpy as np
 from itertools import groupby
-from collections import OrderedDict
+from collections import OrderedDict,Counter
 #%%
 dir = "/Volumes/MacintoshHD2/Users/haroonr/Detailed_datasets/REFITT/CLEAN_REFIT_081116/"
 home = "House1.csv"
@@ -92,5 +92,25 @@ for k, v in night1_gp:
   temp_dic = {}
   temp_dic["on"] = on_cycles
   temp_dic["off"] = off_cycles
+  cycle_stat = Counter(tempval.cluster)
+  temp_dic.update(cycle_stat)
   dic[str(k)] = temp_dic
-  #%%
+  #%% combine all OFF and ON states of different days into two lists
+  ON_duration = []
+  OFF_duration = []
+  ON_cycles = []
+  OFF_cycles = []
+  for k,v in dic.items():
+    ON_duration.append(v['on'])
+    OFF_duration.append(v['off'])
+    ON_cycles.append(v[1])
+    OFF_cycles.append(v[0])
+ ON_duration  =  [ item for sublist in ON_duration for item in sublist]
+ OFF_duration = [ item for sublist in OFF_duration for item in sublist]
+ #%%
+summ_dic = {}
+summ_dic['ON_duration'] = {'mean':round(np.mean(ON_duration),3), 'std':round(np.std(ON_duration),3)}
+summ_dic['OFF_duration'] = {'mean':round(np.mean(OFF_duration),3), 'std':round(np.std(OFF_duration),3)}
+summ_dic['ON_cycles'] = {'mean':round(np.mean(ON_cycles),0), 'std':round(np.std(ON_cycles),3)}
+summ_dic['OFF_cycles'] = {'mean':round(np.mean(OFF_cycles),0), 'std':round(np.std(OFF_cycles),3)}
+ 
