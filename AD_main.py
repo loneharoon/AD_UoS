@@ -6,6 +6,7 @@ Created on Tue Jan  2 08:53:47 2018
 
 @author: haroonr
 """
+
 #%%
 import pandas as pd
 import matplotlib.pyplot as plt
@@ -13,6 +14,7 @@ from sklearn.cluster import KMeans
 import numpy as np
 from itertools import groupby
 from collections import OrderedDict,Counter
+from AD_support import *
 #%%
 dir = "/Volumes/MacintoshHD2/Users/haroonr/Detailed_datasets/REFITT/CLEAN_REFIT_081116/"
 home = "House1.csv"
@@ -52,7 +54,7 @@ on_cycles =list(temp1[temp1.cluster==1].samples)
      4. calculate above stats """"
 myapp = "Freezer_1"
 # set training data duration
-train_data= df_samp[myapp]['2014-03']
+train_data =  df_samp[myapp]['2014-03']
 # divide data according to  4 contexts [defined by times]
 contexts = {}
 contexts['night_1_gp'] = train_data.between_time("00:00","05:59")
@@ -69,3 +71,28 @@ contexts_stats = {}
 for k,v in contexts_daywise.items():
   contexts_stats[k] = create_training_stats(v)
   print("trainins stats of context {} is done".format(k))
+#%% TESTING STAGE STARTS
+#prepare test data
+test_data =  df_samp[myapp]['2014-04-01']
+test_data_daywise = test_data.groupby(test_data.index.date) # daywise grouping
+test_contexts_daywise = {} 
+for k,v in test_data_daywise:     # context wise division
+  #print(str(k))
+  test_contexts= {}
+  test_contexts['night_1_gp'] = v.between_time("00:00","05:59")
+  test_contexts['day_1_gp']   = v.between_time("06:00","11:59")
+  test_contexts['day_2_gp']   = v.between_time("12:00","17:59")
+  test_contexts['night_2_gp'] = v.between_time("18:00","23:59")
+  test_contexts_daywise[str(k)] = test_contexts
+#%%
+res_dic = {}
+for day,data in test_contexts_daywise.items():
+  print("testing for day {}".format(day))
+  temp = {}
+  for context,con_data in data.items():
+    temp[context] = create_testing_stats(con_data)
+  res_dic[day] = temp
+    
+    
+ #test_result_contextscreate_testing_stats(contexts_stats)
+  
