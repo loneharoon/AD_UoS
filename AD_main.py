@@ -54,63 +54,18 @@ myapp = "Freezer_1"
 # set training data duration
 train_data= df_samp[myapp]['2014-03']
 # divide data according to  4 contexts [defined by times]
-night1_data = train_data.between_time("00:00","05:59")
-day1_data = train_data.between_time("06:00","11:59")
-day2_data = train_data.between_time("12:00","17:59")
-night2_data = train_data.between_time("18:00","23:59")
-# create groups within contexts day wise, this will allow us to catch stats at day level otherwise preserving boundaries between different days might become difficult
-night1_gp = night1_data.groupby(night1_data.index.date)
-day1_gp = day1_data.groupby(day1_data.index.date)
-day2_gp = day2_data.groupby(day2_data.index.date)
-night2_gp = night2_data.groupby(night2_data.index.date)
+contexts = {}
+contexts['night_1_gp'] = train_data.between_time("00:00","05:59")
+contexts['day_1_gp'] = train_data.between_time("06:00","11:59")
+contexts['day_2_gp'] = train_data.between_time("12:00","17:59")
+contexts['night_2_gp'] = train_data.between_time("18:00","23:59")
 #%%
-dic = {}
-for k, v in night1_gp:
-  print(k)
-  samp = v.to_frame()
-  # handle nans in data
-  nan_obs = int(samp.isnull().sum())
-  #rule: if more than 50% are nan then I drop that day from calculcations othewise I drop nan readings only
-  if nan_obs:  
-    if nan_obs >= 0.50*samp.shape[0]:
-      print("More than 50percent obs missing hence drop day {} ".format(k))
-      #continue
-    elif nan_obs < 0.50*samp.shape[0]:
-      print("dropping  {} nan observations for day {}".format(nan_obs,k))
-      samp.dropna(inplace=True)
-  samp.columns = ['power']
-  samp_val =  samp.values
-  samp_val = samp_val.reshape(-1,1)
-  #FIXME: you can play with clustering options
-  kobj = perform_clustering(samp_val,clusters=2)
-  samp['cluster'] = kobj.labels_
-  samp = re_organize_clusterlabels(samp)
-  tempval = [(k,sum(1 for i in g)) for k,g in groupby(samp.cluster.values)]
-  tempval = pd.DataFrame(tempval,columns=['cluster','samples'])
-  off_cycles =list(tempval[tempval.cluster==0].samples)
-  on_cycles =list(tempval[tempval.cluster==1].samples)
-  temp_dic = {}
-  temp_dic["on"] = on_cycles
-  temp_dic["off"] = off_cycles
-  cycle_stat = Counter(tempval.cluster)
-  temp_dic.update(cycle_stat)
-  dic[str(k)] = temp_dic
-  #%% combine all OFF and ON states of different days into two lists
-  ON_duration = []
-  OFF_duration = []
-  ON_cycles = []
-  OFF_cycles = []
-  for k,v in dic.items():
-    ON_duration.append(v['on'])
-    OFF_duration.append(v['off'])
-    ON_cycles.append(v[1])
-    OFF_cycles.append(v[0])
- ON_duration  =  [ item for sublist in ON_duration for item in sublist]
- OFF_duration = [ item for sublist in OFF_duration for item in sublist]
- #%%
-summ_dic = {}
-summ_dic['ON_duration'] = {'mean':round(np.mean(ON_duration),3), 'std':round(np.std(ON_duration),3)}
-summ_dic['OFF_duration'] = {'mean':round(np.mean(OFF_duration),3), 'std':round(np.std(OFF_duration),3)}
-summ_dic['ON_cycles'] = {'mean':round(np.mean(ON_cycles),0), 'std':round(np.std(ON_cycles),3)}
-summ_dic['OFF_cycles'] = {'mean':round(np.mean(OFF_cycles),0), 'std':round(np.std(OFF_cycles),3)}
- 
+# create groups within contexts day wise, this will allow us to catch stats at day level otherwise preserving boundaries between different days might become difficult
+contexts_daywise = {}
+for k,v in contexts.items():
+  contexts_daywise[k] = v.groupby(v.index.date)
+ #%% Compute stats context wise
+contexts_stats = {}
+for k,v in contexts_daywise.items():
+  contexts_stats[k] = create_training_stats(v)
+  print("trainins stats of context {} is done".format(k))

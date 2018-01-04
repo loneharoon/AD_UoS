@@ -34,43 +34,57 @@ def re_organize_clusterlabels(samp):
      samp.drop('new_cluster',axis=1,inplace=True)
   return (samp)
 
-
-def find_cycle_parameters(app_daywise,sampling_time):
-  #sampling_time = 2*60 # 2 minutes
-  cycle_stat = {}
-  cycles = [] # no  of cycles
-  duration = [] # no. of cycles duration
-  energy = [] # no of cycles energy
-      if data[i] > 10 and data[i-1] < 2:
-        count = count + 1
-        ontime = ontime + 1
-        energycount =  energycount + data[i]
-  for day in app_daywise:
-    data = day[1] # day[1] is item and day[0] is key
-    count = 0
-    ontime = 0
-    energycount = 0
-    for i in range(1,data.shape[0]): 
-      elif data[i] > 10 and data[i-1] > 10: # in same ON state
-        ontime = ontime + 1
-        energycount = energycount + data[i]
-    cycles.append(count)
-    duration.append(ontime)
-    energy.append(energycount)
-    
-  cycles_unique = np.unique(cycles)
-  df = pd.DataFrame({'cycles':cycles,'duration':duration,'energy':energy})
-  appliance_duration = df.groupby(cycles)['duration'].mean() * sampling_time
-  energy_appliance =  df.groupby(cycles)['energy'].mean()
-  samples = Counter(cycles) 
-  # calculate cycle probabilites
-  samples_ordered = OrderedDict(sorted(samples.items()))
-  frequency = list(samples_ordered.values())
-  frequency_sum = np.sum(frequency)
-  cyclesprob = [i/frequency_sum for i in frequency]
-  cycle_stat['numberOfCycles'] = cycles_unique.tolist()
-  cycle_stat['numberOfSamples'] = list(dict(samples).values())
-  cycle_stat['numberOfCyclesProb'] = cyclesprob
-  cycle_stat['numberOfCyclesEnergy'] = energy_appliance.tolist()
-  cycle_stat['numberOfCyclesDuration'] = appliance_duration.tolist()
-  return(cycle_stat)
+def create_training_stats(traindata):
+  """ this method computes cycle frequences and durations from the training data
+  Input: pandas series of power data in the python groupby object
+  Output: Stats computed in form of dictionary """
+  dic = {}
+  for k, v in traindata:
+    #print(k)
+    samp = v.to_frame()
+    # handle nans in data
+    nan_obs = int(samp.isnull().sum())
+    #rule: if more than 50% are nan then I drop that day from calculcations othewise I drop nan readings only
+    if nan_obs:  
+      if nan_obs >= 0.50*samp.shape[0]:
+        print("More than 50percent obs missing hence drop day {} ".format(k))
+        #continue
+      elif nan_obs < 0.50*samp.shape[0]:
+        print("dropping  {} nan observations for day {}".format(nan_obs,k))
+        samp.dropna(inplace=True)
+    samp.columns = ['power']
+    samp_val =  samp.values
+    samp_val = samp_val.reshape(-1,1)
+    #FIXME: you can play with clustering options
+    kobj = perform_clustering(samp_val,clusters=2)
+    samp['cluster'] = kobj.labels_
+    samp = re_organize_clusterlabels(samp)
+    tempval = [(k,sum(1 for i in g)) for k,g in groupby(samp.cluster.values)]
+    tempval = pd.DataFrame(tempval,columns=['cluster','samples'])
+    off_cycles =list(tempval[tempval.cluster==0].samples)
+    on_cycles =list(tempval[tempval.cluster==1].samples)
+    temp_dic = {}
+    temp_dic["on"] = on_cycles
+    temp_dic["off"] = off_cycles
+    cycle_stat = Counter(tempval.cluster)
+    temp_dic.update(cycle_stat)
+    dic[str(k)] = temp_dic
+    #% Merge  OFF and ON states of different days into singe lists 
+  ON_duration = []
+  OFF_duration = []
+  ON_cycles = []
+  OFF_cycles = []
+  for k,v in dic.items():
+    ON_duration.append(v['on'])
+    OFF_duration.append(v['off'])
+    ON_cycles.append(v[1])
+    OFF_cycles.append(v[0])
+  ON_duration  =  [ item for sublist in ON_duration for item in sublist]
+  OFF_duration = [ item for sublist in OFF_duration for item in sublist]
+ #%
+  summ_dic = {}
+  summ_dic['ON_duration'] = {'mean':round(np.mean(ON_duration),3), 'std':round(np.std(ON_duration),3)}
+  summ_dic['OFF_duration'] = {'mean':round(np.mean(OFF_duration),3), 'std':round(np.std(OFF_duration),3)}
+  summ_dic['ON_cycles'] = {'mean':round(np.mean(ON_cycles),0), 'std':round(np.std(ON_cycles),3)}
+  summ_dic['OFF_cycles'] = {'mean':round(np.mean(OFF_cycles),0), 'std':round(np.std(OFF_cycles),3)}
+  return (summ_dic)
