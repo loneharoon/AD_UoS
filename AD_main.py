@@ -49,9 +49,7 @@ on_cycles =list(temp1[temp1.cluster==1].samples)
 """" 1. get data
      2. divide it into 4 contexts 
      3. divide each into day wise
-     4. calculate above stats
-     
-""""
+     4. calculate above stats """"
 myapp = "Freezer_1"
 # set training data duration
 train_data= df_samp[myapp]['2014-03']
@@ -65,11 +63,21 @@ night1_gp = night1_data.groupby(night1_data.index.date)
 day1_gp = day1_data.groupby(day1_data.index.date)
 day2_gp = day2_data.groupby(day2_data.index.date)
 night2_gp = night2_data.groupby(night2_data.index.date)
-
+#%%
 dic = {}
 for k, v in night1_gp:
   print(k)
   samp = v.to_frame()
+  # handle nans in data
+  nan_obs = int(samp.isnull().sum())
+  #rule: if more than 50% are nan then I drop that day from calculcations othewise I drop nan readings only
+  if nan_obs:  
+    if nan_obs >= 0.50*samp.shape[0]:
+      print("More than 50percent obs missing hence drop day {} ".format(k))
+      #continue
+    elif nan_obs < 0.50*samp.shape[0]:
+      print("dropping  {} nan observations for day {}".format(nan_obs,k))
+      samp.dropna(inplace=True)
   samp.columns = ['power']
   samp_val =  samp.values
   samp_val = samp_val.reshape(-1,1)
@@ -84,4 +92,5 @@ for k, v in night1_gp:
   temp_dic = {}
   temp_dic["on"] = on_cycles
   temp_dic["off"] = off_cycles
-  dic[k] = temp_dic
+  dic[str(k)] = temp_dic
+  #%%
