@@ -6,7 +6,14 @@ Created on Tue Jan  2 08:54:04 2018
 
 @author: haroonr
 """
-
+#%%
+import pandas as pd
+from sklearn.cluster import KMeans
+import numpy as np
+from itertools import groupby
+from collections import OrderedDict,Counter
+from AD_support import *
+#%%
 def perform_clustering(samp,clusters):
   #TODO: this has not been completed yet
   # http://scikit-learn.org/stable/modules/generated/sklearn.cluster.KMeans.html#sklearn.cluster.KMeans

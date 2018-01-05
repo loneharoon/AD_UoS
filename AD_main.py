@@ -31,27 +31,11 @@ myapp = "Freezer_1"
 app_data = df_samp[myapp]
 print(app_data.head(1))
 print(app_data.tail(1))
-#%%perform clustering
-samp = app_data['2014-03-07'].to_frame()
-samp.columns = ['power']
-samp_val =  samp.values
-samp_val = samp_val.reshape(-1,1)
-#FIXME: you can play with clustering options
-kobj = perform_clustering(samp_val,clusters=2)
-samp['cluster'] = kobj.labels_
-samp = re_organize_clusterlabels(samp)
-   
-#%% perfom stats on cycles
-temp1 = [(k,sum(1 for i in g)) for k,g in groupby(samp.cluster.values)]
-temp1 = pd.DataFrame(temp1,columns=['cluster','samples'])
-#temp1['duration'] = temp1['cluster_length'] * data_sampling_time
-off_cycles =list(temp1[temp1.cluster==0].samples)
-on_cycles =list(temp1[temp1.cluster==1].samples)
 #%% create training stats
 """" 1. get data
      2. divide it into 4 contexts 
      3. divide each into day wise
-     4. calculate above stats """"
+     4. calculate above stats """
 myapp = "Freezer_1"
 # set training data duration
 train_data =  df_samp[myapp]['2014-03']
@@ -85,14 +69,24 @@ for k,v in test_data_daywise:     # context wise division
   test_contexts['night_2_gp'] = v.between_time("18:00","23:59")
   test_contexts_daywise[str(k)] = test_contexts
 #%%
-res_dic = {}
+test_stats = {}
 for day,data in test_contexts_daywise.items():
   print("testing for day {}".format(day))
   temp = {}
   for context,con_data in data.items():
     temp[context] = create_testing_stats(con_data)
-  res_dic[day] = temp
+  test_stats[day] = temp
+#%% AD logic starts now
+# test_stats - contains stats computed on test day
+#contexts_stats - contains stats computed from training data    
+    
+for day,data in test_stats.items():
+  for contxt,contxt_stats in data.items():
+    print(contxt_stats)
+    # be clear - contexts_stats are obtained from training data and contxt is test day stats
+    train_results = contexts_stats[contxt] # all relevant train stats
+    test_results  = contxt_stats
     
     
- #test_result_contextscreate_testing_stats(contexts_stats)
+  
   
