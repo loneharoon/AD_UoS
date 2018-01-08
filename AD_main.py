@@ -15,6 +15,7 @@ import numpy as np
 from itertools import groupby
 from collections import OrderedDict,Counter
 from AD_support import *
+from datetime import datetime
 #%%
 dir = "/Volumes/MacintoshHD2/Users/haroonr/Detailed_datasets/REFITT/CLEAN_REFIT_081116/"
 home = "House1.csv"
@@ -57,7 +58,7 @@ for k,v in contexts_daywise.items():
   print("trainins stats of context {} is done".format(k))
 #%% TESTING STAGE STARTS
 #prepare test data
-test_data =  df_samp[myapp]['2014-04-01']
+test_data =  df_samp[myapp]['2014-04-01':'2014-06-30']
 test_data_daywise = test_data.groupby(test_data.index.date) # daywise grouping
 test_contexts_daywise = {} 
 for k,v in test_data_daywise:     # context wise division
@@ -74,33 +75,50 @@ for day,data in test_contexts_daywise.items():
   print("testing for day {}".format(day))
   temp = {}
   for context,con_data in data.items():
-    temp[context] = create_testing_stats(con_data)
+    temp[context] = create_testing_stats(con_data,context)
   test_stats[day] = temp
 #%% AD logic starts now
 # test_stats - contains stats computed on test day
-#contexts_stats - contains stats computed from training data    
-    result = []
+#contexts_stats - contains stats computed from training data   
+          
+import logging
+import logging.handlers
+LOG_FILENAME = '/Volumes/MacintoshHD2/Users/haroonr/Downloads/REFIT_log/logfile_REFIT.log'
+my_logger = logging.getLogger('MyLogger')
+my_logger.setLevel(logging.INFO)
+# Add the log message handler to the logger
+handler = logging.handlers.RotatingFileHandler(
+              LOG_FILENAME, maxBytes=5000, backupCount=5)
+my_logger.addHandler(handler)
+
+result = []
+num_std = 2.5
 for day,data in test_stats.items():
   for contxt,contxt_stats in data.items():
-    print(contxt_stats)
-    # be clear - word contexts_stats represents training data and word contxt represents test day stats
+    #be clear - word contexts_stats represents training data and word contxt represents test day stats
     train_results = contexts_stats[contxt] # all relevant train stats
     test_results  = contxt_stats
     temp_res = {}
-    temp_res['timestamp'] = day
+    temp_res['timestamp'] = datetime.strptime(day,'%Y-%m-%d')
     temp_res['context'] = contxt
     temp_res['status'] = 0
     temp_res['anomtype'] = ' '
-    if (test_results['ON_duration']['mean'] >=  train_results['ON_duration']['mean'] + 1.0* train_results['ON_duration']['std']) and (test_results['OFF_duration']['mean'] >=  train_results['OFF_duration']['mean'] + 1.0* train_results['OFF_duration']['std']):
+    if (test_results['ON_duration']['mean'] >=  train_results['ON_duration']['mean'] + num_std* train_results['ON_duration']['std']) and (test_results['OFF_duration']['mean'] >=  train_results['OFF_duration']['mean'] + num_std* train_results['OFF_duration']['std']):
        temp_res['status'] = 0
-    elif test_results['ON_duration']['mean'] >=  train_results['ON_duration']['mean'] + 1.0* train_results['ON_duration']['std']:
+       my_logger.info(day + ":" + context + "is not elongated anomaly as off time was also longer")
+    elif test_results['ON_duration']['mean'] >=  train_results['ON_duration']['mean'] + num_std* train_results['ON_duration']['std']:
        temp_res['status'] = 1
        temp_res['anomtype'] = "long"
-    elif test_results['ON_cycles']['mean'] >=  train_results['ON_cycles']['mean'] + 1.0* train_results['ON_cycles']['std']:
+       my_logger.info(day + ":"+ context + ", elongated anomaly" + ", train_stats duration, " + str(train_results['ON_duration']['mean']) + ":"+str(train_results['ON_duration']['std']) + "; test_stats duration, " + str(test_results['ON_duration']['mean']) )
+    elif test_results['ON_cycles']['mean'] >=  train_results['ON_cycles']['mean'] + num_std* train_results['ON_cycles']['std']:
        temp_res['status'] = 1
        temp_res['anomtype'] = "frequent"
+       my_logger.info(day + ":"+context +  ", frequent anomaly" + ", train_stats frequency, " + str(train_results['ON_cycles']['mean']) + ":"+str(train_results['ON_cycles']['std']) + "; test_stats frequency, " + str(test_results['ON_cycles']['mean']) )
     result.append(temp_res)
-    
+res_df = pd.DataFrame.from_dict(result)
+res_df = res_df.sort_values('timestamp')
+res_df[res_df.status==1]
+res_df[res_df.status==1].shape[0]
       
     
     

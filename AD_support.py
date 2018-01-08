@@ -96,7 +96,7 @@ def create_training_stats(traindata):
   summ_dic['OFF_cycles'] = {'mean':round(np.mean(OFF_cycles),0), 'std':round(np.std(OFF_cycles),3)}
   return (summ_dic)
 
-def create_testing_stats(testdata):
+def create_testing_stats(testdata,k):
   """ this method computes cycle frequences and durations for the test day data
   Input: pandas series of power data
   Output: Stats computed in form of dictionary """
@@ -109,10 +109,10 @@ def create_testing_stats(testdata):
   #rule: if more than 50% are nan then I drop that day from calculcations othewise I drop nan readings only
   if nan_obs:  
     if nan_obs >= 0.50*samp.shape[0]:
-      print("More than 50percent obs missing hence drop day {} ".format(k))
+      print("More than 50percent obs missing hence dropping context {} ".format(k))
       #continue
     elif nan_obs < 0.50*samp.shape[0]:
-      print("dropping  {} nan observations for day {}".format(nan_obs,k))
+      print("dropping  {} nan observations for context {}".format(nan_obs,k))
       samp.dropna(inplace=True)
   samp.columns = ['power']
   samp_val =  samp.values
