@@ -17,17 +17,22 @@ from collections import Counter,OrderedDict
 exec(open("/Volumes/MacintoshHD2/Users/haroonr/Dropbox/UniOfStra/AD/disaggregation_codes/LBM_features_support.py").read())
 #%%
 dir = "/Volumes/MacintoshHD2/Users/haroonr/Detailed_datasets/Dataport/mix_homes/default/injected_anomalies/"
-home = "redd_home_6.csv" # meter_2.csv
+home =  "redd_home_6.csv" #"meter_2.csv"# 
 #%%
 df = pd.read_csv(dir+home,index_col="localminute")
 df.index = pd.to_datetime(df.index)
 #%% SPEICIFIC TO iawe and redd home
 res = df.sum(axis=0)
-high_energy_apps = res.nlargest(6).keys() # CONTROL : selects few appliances
-df_new = df[high_energy_apps]
+# since the aggregate has no impact on the population parameters of different applainces so I create a train file or pickle for all appliances
+
+#high_energy_apps = ['use','air1','refrigerator1','laptop','tv','water_filter'] # for aiwe
+#high_energy_apps = ['use','air1','refrigerator1','electric_heat','stove','bathroom_gfi'] # for redd_home
+#df_new = df[high_energy_apps]
+df_new = df
 del df_new['use']# dont need for building population models
-#train_df = df_new.truncate(before="2013-07-13", after="2013-07-20 23:59:59") # for iawe
-train_df = df_new.truncate(before="2011-05-24", after="2011-05-29 23:59:59") # for redd
+#train_df = df_new.truncate(before="2013-07-13", after="2013-08-03 23:59:59") # for iawe
+train_df = df_new.truncate(before="2011-05-24", after="2011-06-12 23:59:59") # for redd [all data given since less training data, lets see how it works]
+train_df = train_df.dropna() # drops rows containing na values
 #%%
 sampling_time =  1 # let's not care here. Set after some visual inference
 lbm_app_features = {}

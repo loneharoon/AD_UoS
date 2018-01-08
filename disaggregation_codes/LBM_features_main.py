@@ -24,7 +24,8 @@ df.index = pd.to_datetime(df.index)
 #%% SPEICIFIC TO DATAPORT HOMES
 df = df["2014-06-01":"2014-08-29 23:59:59"] # for DATAPORT HOMES
 res = df.sum(axis=0)
-high_energy_apps = res.nlargest(6).keys() # CONTROL : selects few appliances
+#high_energy_apps = res.nlargest(6).keys() # CONTROL : selects few appliances
+high_energy_apps = ['use','air1','furnace1','refrigerator1','microwave1','kitchenapp2']#3538.csv
 df_new = df[high_energy_apps]
 del df_new['use']# dont need for building population models
 train_df = df_new.truncate(before="2014-06-01", after="2014-06-30 23:59:59")
@@ -33,7 +34,7 @@ sampling_time =  1 # let's not care here. Set after some visual inference
 lbm_app_features = {}
 appliances = train_df.columns
 print(appliances)
-state_2_appliances = ['air1','furnace1','refrigerator1'] # for these we create 2 states in HMM otherwise 
+state_2_appliances = ['air1','furnace1','refrigerator1','oven1',] # for these we create 2 states in HMM otherwise 
 #%%
 #appliances = ['air1','refrigerator1']
 for i in appliances:
