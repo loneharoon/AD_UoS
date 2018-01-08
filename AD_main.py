@@ -79,13 +79,31 @@ for day,data in test_contexts_daywise.items():
 #%% AD logic starts now
 # test_stats - contains stats computed on test day
 #contexts_stats - contains stats computed from training data    
-    
+    result = []
 for day,data in test_stats.items():
   for contxt,contxt_stats in data.items():
     print(contxt_stats)
-    # be clear - contexts_stats are obtained from training data and contxt is test day stats
+    # be clear - word contexts_stats represents training data and word contxt represents test day stats
     train_results = contexts_stats[contxt] # all relevant train stats
     test_results  = contxt_stats
+    temp_res = {}
+    temp_res['timestamp'] = day
+    temp_res['context'] = contxt
+    temp_res['status'] = 0
+    temp_res['anomtype'] = ' '
+    if (test_results['ON_duration']['mean'] >=  train_results['ON_duration']['mean'] + 1.0* train_results['ON_duration']['std']) and (test_results['OFF_duration']['mean'] >=  train_results['OFF_duration']['mean'] + 1.0* train_results['OFF_duration']['std']):
+       temp_res['status'] = 0
+    elif test_results['ON_duration']['mean'] >=  train_results['ON_duration']['mean'] + 1.0* train_results['ON_duration']['std']:
+       temp_res['status'] = 1
+       temp_res['anomtype'] = "long"
+    elif test_results['ON_cycles']['mean'] >=  train_results['ON_cycles']['mean'] + 1.0* train_results['ON_cycles']['std']:
+       temp_res['status'] = 1
+       temp_res['anomtype'] = "frequent"
+    result.append(temp_res)
+    
+      
+    
+    
     
     
   
