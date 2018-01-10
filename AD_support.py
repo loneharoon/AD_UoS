@@ -41,6 +41,18 @@ def re_organize_clusterlabels(samp):
      samp.drop('new_cluster',axis=1,inplace=True)
   return (samp)
 
+def compute_boxplot_stats(boxdata):
+  ''' Here i compute all stats of boxplot and return them as dictionary'''
+  boxdict = {}
+  nmedian =  np.median(boxdata)
+  istquat =  np.percentile(boxdata,25)
+  thirdquat =  np.percentile(boxdata,75)
+  iqr = thirdquat - istquat
+  boxdict['nmedian'] = nmedian
+  boxdict['lowerwisker'] =  nmedian - 1.5 * iqr 
+  boxdict['upperwisker'] =  nmedian + 1.5 * iqr
+  return (boxdict)
+
 def create_training_stats(traindata):
   """ this method computes cycle frequences and durations from the training data
   Input: pandas series of power data in the python groupby object
@@ -90,10 +102,15 @@ def create_training_stats(traindata):
   OFF_duration = [ item for sublist in OFF_duration for item in sublist]
  #%
   summ_dic = {}
+  #for boxplot logic  
   summ_dic['ON_duration'] = {'mean':round(np.mean(ON_duration),3), 'std':round(np.std(ON_duration),3)}
+  summ_dic['ON_duration'].update(compute_boxplot_stats(ON_duration))
   summ_dic['OFF_duration'] = {'mean':round(np.mean(OFF_duration),3), 'std':round(np.std(OFF_duration),3)}
+  summ_dic['OFF_duration'].update(compute_boxplot_stats(OFF_duration))
   summ_dic['ON_cycles'] = {'mean':round(np.mean(ON_cycles),0), 'std':round(np.std(ON_cycles),3)}
+  summ_dic['ON_cycles'].update(compute_boxplot_stats(ON_cycles))
   summ_dic['OFF_cycles'] = {'mean':round(np.mean(OFF_cycles),0), 'std':round(np.std(OFF_cycles),3)}
+  summ_dic['OFF_cycles'].update(compute_boxplot_stats(OFF_cycles))
   return (summ_dic)
 
 def create_testing_stats(testdata,k):

@@ -55,7 +55,7 @@ for k,v in contexts.items():
 contexts_stats = {}
 for k,v in contexts_daywise.items():
   contexts_stats[k] = create_training_stats(v)
-  print("trainins stats of context {} is done".format(k))
+  print("training stats of context {} is done".format(k))
 #%% TESTING STAGE STARTS
 #prepare test data
 test_data =  df_samp[myapp]['2014-04-01':'2014-06-30']
@@ -83,16 +83,17 @@ for day,data in test_contexts_daywise.items():
           
 import logging
 import logging.handlers
-LOG_FILENAME = '/Volumes/MacintoshHD2/Users/haroonr/Downloads/REFIT_log/logfile_REFIT.log'
+LOG_FILENAME = '/Volumes/MacintoshHD2/Users/haroonr/Downloads/REFIT_log/logfile_REFIT.out'
 my_logger = logging.getLogger('MyLogger')
 my_logger.setLevel(logging.INFO)
 # Add the log message handler to the logger
 handler = logging.handlers.RotatingFileHandler(
-              LOG_FILENAME, maxBytes=5000, backupCount=5)
+              LOG_FILENAME, maxBytes=9000000, backupCount=0)
 my_logger.addHandler(handler)
 
 result = []
 num_std = 2.5
+dummy_no = 2
 for day,data in test_stats.items():
   for contxt,contxt_stats in data.items():
     #be clear - word contexts_stats represents training data and word contxt represents test day stats
@@ -103,17 +104,17 @@ for day,data in test_stats.items():
     temp_res['context'] = contxt
     temp_res['status'] = 0
     temp_res['anomtype'] = ' '
-    if (test_results['ON_duration']['mean'] >=  train_results['ON_duration']['mean'] + num_std* train_results['ON_duration']['std']) and (test_results['OFF_duration']['mean'] >=  train_results['OFF_duration']['mean'] + num_std* train_results['OFF_duration']['std']):
+    if (test_results['ON_duration']['mean'] >  train_results['ON_duration']['mean'] + num_std* train_results['ON_duration']['std']) and (test_results['OFF_duration']['mean'] >  train_results['OFF_duration']['mean'] + num_std* train_results['OFF_duration']['std']):
        temp_res['status'] = 0
-       my_logger.info(day + ":" + context + "is not elongated anomaly as off time was also longer")
-    elif test_results['ON_duration']['mean'] >=  train_results['ON_duration']['mean'] + num_std* train_results['ON_duration']['std']:
+       my_logger.info(day + ":" + contxt + "is not elongated anomaly as off time was also longer")
+    elif test_results['ON_duration']['mean'] > dummy_no * train_results['ON_duration']['mean'] + num_std* train_results['ON_duration']['std']:
        temp_res['status'] = 1
        temp_res['anomtype'] = "long"
-       my_logger.info(day + ":"+ context + ", elongated anomaly" + ", train_stats duration, " + str(train_results['ON_duration']['mean']) + ":"+str(train_results['ON_duration']['std']) + "; test_stats duration, " + str(test_results['ON_duration']['mean']) )
-    elif test_results['ON_cycles']['mean'] >=  train_results['ON_cycles']['mean'] + num_std* train_results['ON_cycles']['std']:
+       my_logger.info(day + ":"+ contxt + ", elongated anomaly" + ", train_stats duration, " + str(train_results['ON_duration']['mean']) + ":"+str(train_results['ON_duration']['std']) + "; test_stats duration, " + str(test_results['ON_duration']['mean']) )
+    elif test_results['ON_cycles']['mean'] >  dummy_no * train_results['ON_cycles']['mean'] + num_std* train_results['ON_cycles']['std']:
        temp_res['status'] = 1
        temp_res['anomtype'] = "frequent"
-       my_logger.info(day + ":"+context +  ", frequent anomaly" + ", train_stats frequency, " + str(train_results['ON_cycles']['mean']) + ":"+str(train_results['ON_cycles']['std']) + "; test_stats frequency, " + str(test_results['ON_cycles']['mean']) )
+       my_logger.info(day + ":"+contxt +  ", frequent anomaly" + ", train_stats frequency, " + str(train_results['ON_cycles']['mean']) + ":"+str(train_results['ON_cycles']['std']) + "; test_stats frequency, " + str(test_results['ON_cycles']['mean']) )
     result.append(temp_res)
 res_df = pd.DataFrame.from_dict(result)
 res_df = res_df.sort_values('timestamp')
