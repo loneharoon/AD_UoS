@@ -58,7 +58,8 @@ for k,v in contexts_daywise.items():
   print("training stats of context {} is done".format(k))
 #%% TESTING STAGE STARTS
 #prepare test data
-test_data =  df_samp[myapp]['2014-04-01':'2014-06-30']
+test_data =  df_samp[myapp]['2014-04-08':'2014-04-08']
+#test_data =  df_samp[myapp]['2014-04-01']
 test_data_daywise = test_data.groupby(test_data.index.date) # daywise grouping
 test_contexts_daywise = {} 
 for k,v in test_data_daywise:     # context wise division
@@ -75,7 +76,8 @@ for day,data in test_contexts_daywise.items():
   print("testing for day {}".format(day))
   temp = {}
   for context,con_data in data.items():
-    temp[context] = create_testing_stats(con_data,context)
+    #temp[context] = create_testing_stats(con_data,context)
+    temp[context] = create_testing_stats_with_boxplot(con_data,context)
   test_stats[day] = temp
 #%% AD logic starts now
 # test_stats - contains stats computed on test day
@@ -121,9 +123,77 @@ res_df = res_df.sort_values('timestamp')
 res_df[res_df.status==1]
 res_df[res_df.status==1].shape[0]
       
+#%%
+import logging
+import logging.handlers
+LOG_FILENAME = '/Volumes/MacintoshHD2/Users/haroonr/Downloads/REFIT_log/logfile_REFIT_2.out'
+mylogger = logging.getLogger('MyLogger')
+mylogger.setLevel(logging.INFO)
+# Add the log message handler to the logger
+handler = logging.handlers.RotatingFileHandler(
+              LOG_FILENAME, maxBytes=9000000, backupCount=0)
+mylogger.addHandler(handler)
+result = [] 
+for day,data in test_stats.items():
+  for contxt,contxt_stats in data.items():
+    #be clear - word contexts_stats represents training data and word contxt represents test day stats
+    train_results = contexts_stats[contxt] # all relevant train stats
+    test_results  = contxt_stats
+    temp_res = {}
+    temp_res['timestamp'] = datetime.strptime(day,'%Y-%m-%d')
+    temp_res['context']   = contxt
+    temp_res['status']    = 0
+    temp_res['anomtype']  = ' '
+    # sum(np.logical_or(x < low,x>up))
+    lower_ON_outlier  = sum( test_results['ON_duration'] < train_results['ON_duration']['lowerwisker'] )
+    higher_ON_outlier = sum(test_results['ON_duration'] > train_results['ON_duration']['upperwisker']  )
+    ON_duration_outlier = lower_ON_outlier + higher_ON_outlier
+      
+    lower_OFF_outlier = sum(test_results['OFF_duration'] < train_results['OFF_duration']['lowerwisker'] )
+    higher_OFF_outlier = sum(test_results['OFF_duration'] > train_results['OFF_duration']['upperwisker'] )
+    OFF_duration_outlier = lower_OFF_outlier + higher_OFF_outlier
     
+    lower_ON_cycles  =   test_results['ON_cycles'] < train_results['ON_cycles']['lowerwisker'] 
+    higher_ON_cycles =   test_results['ON_cycles'] > train_results['ON_cycles']['upperwisker']  
+    ON_cycles_outlier = lower_ON_cycles + higher_ON_cycles
     
+    lower_OFF_cycles  =   test_results['OFF_cycles'] < train_results['OFF_cycles']['lowerwisker']  
+    higher_OFF_cycles =   test_results['OFF_cycles'] > train_results['OFF_cycles']['upperwisker'] 
+    OFF_cycles_outlier = lower_OFF_cycles + higher_OFF_cycles
+        #logging
+    if lower_ON_outlier:
+      mylogger.info(day+":"+" lower_ON_outlier_count: "+ str(lower_ON_outlier)+ " lower_wisker: "+ str(train_results['ON_duration']['lowerwisker']) + ", test_Case : " + str(test_results['ON_duration']))
+    if higher_ON_outlier:
+      mylogger.info(day+":"+" higher_ON_outlier_count: "+ str(higher_ON_outlier)+ " upper_wisker: "+ str(train_results['ON_duration']['upperwisker']) + ", test_Case : " + str(test_results['ON_duration']))
+    if lower_OFF_outlier:
+      mylogger.info(day+":"+" lower_OFF_outlier_count: "+ str(lower_OFF_outlier)+ " lower_wisker: "+ str(train_results['OFF_duration']['lowerwisker']) + ", test_Case : " + str(test_results['OFF_duration']))
+    if higher_OFF_outlier:
+      mylogger.info(day+":"+" higher_OFF_outlier_count: "+ str(higher_OFF_outlier)+ " upper_wisker: "+ str(train_results['OFF_duration']['upperwisker']) + ", test_Case : " + str(test_results['OFF_duration']))
+
+    if lower_ON_cycles:
+      mylogger.info(day+":"+" lower_ON_cycles_count: "+ str(lower_ON_cycles)+ " lower_wisker: "+ str(train_results['ON_cycles']['lowerwisker']) + ", test_Case : " + str(test_results['ON_cycles']))
+    if higher_ON_cycles:
+      mylogger.info(day+":"+" higher_ON_cyclesr_count: "+ str(higher_ON_cycles)+ " upper_wisker: "+ str(train_results['ON_cycles']['upperwisker']) + ", test_Case : " + str(test_results['ON_cycles']))
+    if lower_OFF_cycles:
+      mylogger.info(day+":"+" lower_OFF_cycles_count: "+ str(lower_OFF_cycles)+ " lower_wisker: "+ str(train_results['OFF_cycles']['lowerwisker']) + ", test_Case : " + str(test_results['OFF_cycles']))
+    if higher_OFF_cycles:
+      mylogger.info(day+":"+" higher_OFF_cycles_count: "+ str(higher_OFF_cycles)+ " upper_wisker: "+ str(train_results['OFF_cycles']['upperwisker']) + ", test_Case : " + str(test_results['OFF_cycles']))  
     
+    if ON_duration_outlier and OFF_duration_outlier:
+      temp_res['status'] = 0
+      print ("non anomalous")
+    elif ON_duration_outlier:
+      temp_res['status'] = 1
+      temp_res['anomtype'] = 'elongated'
+    elif ON_cycles_outlier:
+      temp_res['status'] = 1
+      temp_res['anomtype'] = 'frequent'
+    result.append(temp_res)
+res_df = pd.DataFrame.from_dict(result)
+res_df = res_df.sort_values('timestamp')
+res_df[res_df.status==1].shape[0]      
+res_df[res_df.status==1]    
     
-  
-  
+#%%
+
+#sum(test_stats['2014-04-01']['day_1_gp']['ON_cycles'] < contexts_stats['day_1_gp']['ON_cycles']['lowerwisker'])

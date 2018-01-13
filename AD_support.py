@@ -40,7 +40,7 @@ def re_organize_clusterlabels(samp):
      samp.cluster = samp.new_cluster
      samp.drop('new_cluster',axis=1,inplace=True)
   return (samp)
-
+#%%
 def compute_boxplot_stats(boxdata):
   ''' Here i compute all stats of boxplot and return them as dictionary'''
   boxdict = {}
@@ -52,7 +52,7 @@ def compute_boxplot_stats(boxdata):
   boxdict['lowerwisker'] =  nmedian - 1.5 * iqr 
   boxdict['upperwisker'] =  nmedian + 1.5 * iqr
   return (boxdict)
-
+#%%
 def create_training_stats(traindata):
   """ this method computes cycle frequences and durations from the training data
   Input: pandas series of power data in the python groupby object
@@ -112,7 +112,7 @@ def create_training_stats(traindata):
   summ_dic['OFF_cycles'] = {'mean':round(np.mean(OFF_cycles),0), 'std':round(np.std(OFF_cycles),3)}
   summ_dic['OFF_cycles'].update(compute_boxplot_stats(OFF_cycles))
   return (summ_dic)
-
+#%%
 def create_testing_stats(testdata,k):
   """ this method computes cycle frequences and durations for the test day data
   Input: pandas series of power data
@@ -164,4 +164,47 @@ def create_testing_stats(testdata,k):
   summ_dic['OFF_duration'] = {'mean':round(np.mean(temp_dic["off"]),3), 'std':round(np.std(temp_dic["off"]),3)}
   summ_dic['ON_cycles'] = {'mean':round(np.mean(temp_dic[1]),0), 'std':round(np.std(temp_dic[1]),3)}
   summ_dic['OFF_cycles'] = {'mean':round(np.mean(temp_dic[0]),0), 'std':round(np.std(temp_dic[0]),3)}
+  return (summ_dic)
+#%%
+def create_testing_stats_with_boxplot(testdata,k):
+  """  """
+  temp_dic = {}
+  #for k, v in testdata:
+    #print(k)
+  samp = testdata.to_frame()
+  # handle nans in data
+  nan_obs = int(samp.isnull().sum())
+  #rule: if more than 50% are nan then I drop that day from calculcations othewise I drop nan readings only
+  if nan_obs:  
+    if nan_obs >= 0.50*samp.shape[0]:
+      print("More than 50percent obs missing hence dropping context {} ".format(k))
+      #continue
+    elif nan_obs < 0.50*samp.shape[0]:
+      print("dropping  {} nan observations for context {}".format(nan_obs,k))
+      samp.dropna(inplace=True)
+  samp.columns = ['power']
+  samp_val =  samp.values
+  samp_val = samp_val.reshape(-1,1)
+  #FIXME: you can play with clustering options
+  kobj = perform_clustering(samp_val,clusters=2)
+  samp['cluster'] = kobj.labels_
+  samp = re_organize_clusterlabels(samp)
+  tempval = [(k,sum(1 for i in g)) for k,g in groupby(samp.cluster.values)]
+  tempval = pd.DataFrame(tempval,columns=['cluster','samples'])
+  off_cycles =list(tempval[tempval.cluster==0].samples)
+  on_cycles =list(tempval[tempval.cluster==1].samples)
+  temp_dic["on"] = on_cycles
+  temp_dic["off"] = off_cycles
+  cycle_stat = Counter(tempval.cluster)
+  temp_dic.update(cycle_stat)
+#  summ_dic = {}
+#  summ_dic['ON_duration'] = {'mean':round(np.mean(temp_dic["on"]),3), 'std':round(np.std(temp_dic["on"]),3)}
+#  summ_dic['OFF_duration'] = {'mean':round(np.mean(temp_dic["off"]),3), 'std':round(np.std(temp_dic["off"]),3)}
+#  summ_dic['ON_cycles'] = {'mean':round(np.mean(temp_dic[1]),0), 'std':round(np.std(temp_dic[1]),3)}
+#  summ_dic['OFF_cycles'] = {'mean':round(np.mean(temp_dic[0]),0), 'std':round(np.std(temp_dic[0]),3)}
+  summ_dic = {}
+  summ_dic['ON_duration'] = temp_dic["on"]
+  summ_dic['OFF_duration'] = temp_dic["off"]
+  summ_dic['ON_cycles'] = temp_dic[1]
+  summ_dic['OFF_cycles'] = temp_dic[0]
   return (summ_dic)
