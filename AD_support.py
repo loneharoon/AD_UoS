@@ -45,8 +45,8 @@ def compute_boxplot_stats(boxdata):
   ''' Here i compute all stats of boxplot and return them as dictionary'''
   boxdict = {}
   nmedian =  np.median(boxdata)
-  istquat =  np.percentile(boxdata,25)
-  thirdquat =  np.percentile(boxdata,75)
+  istquat =  np.percentile(boxdata,0)
+  thirdquat =  np.percentile(boxdata,100)
   iqr = thirdquat - istquat
   boxdict['nmedian'] = nmedian
   boxdict['lowerwisker'] =  nmedian - 1.5 * iqr 
