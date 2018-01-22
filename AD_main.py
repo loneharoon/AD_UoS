@@ -58,13 +58,13 @@ contexts_stats = OrderedDict()
 print
 for k,v in contexts_daywise.items():
   print("CONTEXT IS {}".format(k))
-  contexts_stats[k] = create_training_stats(v,sampling_type=data_sampling_type,sampling_rate=data_sampling_time) # minutes or seconds
+  contexts_stats[k] = create_training_stats(v,sampling_type=data_sampling_type,sampling_rate=data_sampling_time) 
   
   #print("training stats of context {} is done".format(k))
 #%% TESTING STAGE STARTS
 #prepare test data
-test_data =  df_samp[myapp]['2014-04-08':'2014-08-30']
-#test_data =  df_samp[myapp]['2014-08-01']
+#test_data =  df_samp[myapp]['2014-04-08':'2014-08-30']
+test_data =  df_samp[myapp]['2014-08-01']
 test_data_daywise = test_data.groupby(test_data.index.date) # daywise grouping
 test_contexts_daywise = OrderedDict()
 for k,v in test_data_daywise:     # context wise division
@@ -82,7 +82,7 @@ for day,data in test_contexts_daywise.items():
   temp = OrderedDict()
   for context,con_data in data.items():
     #temp[context] = create_testing_stats(con_data,context)
-    res = create_testing_stats_with_boxplot(con_data,context)
+    res = create_testing_stats_with_boxplot(con_data,context,sampling_type=data_sampling_type,sampling_rate=data_sampling_time)
     if res!= False:
       temp[context] = res
     else:
@@ -108,14 +108,23 @@ with open(LOG_FILENAME,'a') as mylogger:
       temp_res['status']    = 0
       temp_res['anomtype']  = ' '
       # sum(np.logical_or(x < low,x>up))
-      lower_ON_outlier  = sum( test_results['ON_duration'] < train_results['ON_duration']['lowerwisker'] )
-      higher_ON_outlier = sum(test_results['ON_duration'] > train_results['ON_duration']['upperwisker']  )
-      ON_duration_outlier = lower_ON_outlier + higher_ON_outlier
+      #duratation logic
+      lower_ON_duration_outlier  = sum( test_results['ON_duration'] < train_results['ON_duration']['lowerwisker'] )
+      higher_ON_duration_outlier = sum(test_results['ON_duration'] > train_results['ON_duration']['upperwisker']  )
+      ON_duration_outlier = lower_ON_duration_outlier + higher_ON_duration_outlier
         
-      lower_OFF_outlier = sum(test_results['OFF_duration'] < train_results['OFF_duration']['lowerwisker'] )
-      higher_OFF_outlier = sum(test_results['OFF_duration'] > train_results['OFF_duration']['upperwisker'] )
-      OFF_duration_outlier = lower_OFF_outlier + higher_OFF_outlier
-      
+      lower_OFF_duration_outlier = sum(test_results['OFF_duration'] < train_results['OFF_duration']['lowerwisker'] )
+      higher_OFF_duration_outlier = sum(test_results['OFF_duration'] > train_results['OFF_duration']['upperwisker'] )
+      OFF_duration_outlier = lower_OFF_duration_outlier + higher_OFF_duration_outlier
+      #energy logic
+      lower_ON_energy_outlier  = sum( test_results['ON_energy'] < train_results['ON_energy']['lowerwisker'] )
+      higher_ON_energy_outlier = sum(test_results['ON_energy'] > train_results['ON_energy']['upperwisker']  )
+      ON_energy_outlier = lower_ON_energy_outlier + higher_ON_energy_outlier
+        
+      lower_OFF_energy_outlier = sum(test_results['OFF_energy'] < train_results['OFF_energy']['lowerwisker'] )
+      higher_OFF_energy_outlier = sum(test_results['OFF_energy'] > train_results['OFF_energy']['upperwisker'] )
+      OFF_energy_outlier = lower_OFF_energy_outlier + higher_OFF_energy_outlier
+      #cycles logic
       lower_ON_cycles  =   test_results['ON_cycles'] < train_results['ON_cycles']['lowerwisker'] 
       higher_ON_cycles =   test_results['ON_cycles'] > train_results['ON_cycles']['upperwisker']  
       #ON_cycles_outlier = lower_ON_cycles + higher_ON_cycles
@@ -125,15 +134,25 @@ with open(LOG_FILENAME,'a') as mylogger:
       lower_OFF_cycles  =   test_results['OFF_cycles'] < train_results['OFF_cycles']['lowerwisker']  
       higher_OFF_cycles =   test_results['OFF_cycles'] > train_results['OFF_cycles']['upperwisker'] 
       OFF_cycles_outlier = lower_OFF_cycles + higher_OFF_cycles
-          #logging
-      if lower_ON_outlier:
-        mylogger.write(day+":"+contxt+":"+" lower_ON_outlier_count: "+ str(lower_ON_outlier)+ " lower_wisker: "+ str(train_results['ON_duration']['lowerwisker']) + ", test_Case : " + str(test_results['ON_duration'])+"\n")
-      if higher_ON_outlier:
-        mylogger.write(day+":"+contxt+":"+" higher_ON_outlier_count: "+ str(higher_ON_outlier)+ " upper_wisker: "+ str(train_results['ON_duration']['upperwisker']) + ", test_Case : " + str(test_results['ON_duration'])+"\n")
-      if lower_OFF_outlier:
-        mylogger.write(day+":"+contxt+":"+" lower_OFF_outlier_count: "+ str(lower_OFF_outlier)+ " lower_wisker: "+ str(train_results['OFF_duration']['lowerwisker']) + ", test_Case : " + str(test_results['OFF_duration'])+"\n")
-      if higher_OFF_outlier:
-        mylogger.write(day+":"+contxt+":"+" higher_OFF_outlier_count: "+ str(higher_OFF_outlier)+ " upper_wisker: "+ str(train_results['OFF_duration']['upperwisker']) + ", test_Case : " + str(test_results['OFF_duration'])+"\n")
+          #logging on duration basis
+      if lower_ON_duration_outlier:
+        mylogger.write(day+":"+contxt+":"+" lower_ON_duration_outlier_count: "+ str(lower_ON_duration_outlier)+ " lower_wisker: "+ str(train_results['ON_duration']['lowerwisker']) + ", test_Case : " + str(test_results['ON_duration'])+"\n")
+      if higher_ON_duration_outlier:
+        mylogger.write(day+":"+contxt+":"+" higher_ON_duration_outlier_count: "+ str(higher_ON_duration_outlier)+ " upper_wisker: "+ str(train_results['ON_duration']['upperwisker']) + ", test_Case : " + str(test_results['ON_duration'])+"\n")
+      if lower_OFF_duration_outlier:
+        mylogger.write(day+":"+contxt+":"+" lower_OFF_duration_outlier_count: "+ str(lower_OFF_duration_outlier)+ " lower_wisker: "+ str(train_results['OFF_duration']['lowerwisker']) + ", test_Case : " + str(test_results['OFF_duration'])+"\n")
+      if higher_OFF_duration_outlier:
+        mylogger.write(day+":"+contxt+":"+" higher_OFF_duration_outlier_count: "+ str(higher_OFF_duration_outlier)+ " upper_wisker: "+ str(train_results['OFF_duration']['upperwisker']) + ", test_Case : " + str(test_results['OFF_duration'])+"\n")
+  
+          #logging on energy basis
+      if lower_ON_energy_outlier:
+        mylogger.write(day+":"+contxt+":"+" lower_ON_energy_outlier_count: "+ str(lower_ON_energy_outlier)+ " lower_wisker: "+ str(train_results['ON_energy']['lowerwisker']) + ", test_Case : " + str(test_results['ON_energy'])+"\n")
+      if higher_ON_energy_outlier:
+        mylogger.write(day+":"+contxt+":"+" higher_ON_energy_outlier_count: "+ str(higher_ON_energy_outlier)+ " upper_wisker: "+ str(train_results['ON_energy']['upperwisker']) + ", test_Case : " + str(test_results['ON_energy'])+"\n")
+      if lower_OFF_energy_outlier:
+        mylogger.write(day+":"+contxt+":"+" lower_OFF_energy_outlier_count: "+ str(lower_OFF_energy_outlier)+ " lower_wisker: "+ str(train_results['OFF_energy']['lowerwisker']) + ", test_Case : " + str(test_results['OFF_energy'])+"\n")
+      if higher_OFF_energy_outlier:
+        mylogger.write(day+":"+contxt+":"+" higher_OFF_energy_outlier_count: "+ str(higher_OFF_energy_outlier)+ " upper_wisker: "+ str(train_results['OFF_energy']['upperwisker']) + ", test_Case : " + str(test_results['OFF_duration'])+"\n")
   
 #      if lower_ON_cycles:
 #        mylogger.write(day+":"+contxt+":"+" lower_ON_cycles_count: "+ str(lower_ON_cycles)+ " lower_wisker: "+ str(train_results['ON_cycles']['lowerwisker']) + ", test_Case : " + str(test_results['ON_cycles'])+"\n")
@@ -149,13 +168,19 @@ with open(LOG_FILENAME,'a') as mylogger:
         print ("non anomalous on {} with context {}".format(day,contxt))
       elif ON_duration_outlier:
         temp_res['status'] = 1
-        temp_res['anomtype'] = 'elongated'
-        print ("Elongated anomaloy on {} with context {}".format(day,contxt))
+        temp_res['anomtype'] = 'elongated_duration'
+        print ("Elongated duration anomaly on {} with context {}".format(day,contxt))
       elif ON_cycles_outlier:
         temp_res['status'] = 1
         temp_res['anomtype'] = 'frequent'
-        print ("Frequent anomaloy on {} with context {}".format(day,contxt))
+        print ("Frequent anomaly on {} with context {}".format(day,contxt))
       result.append(temp_res)
+      # energy logic starts now
+      if ON_energy_outlier:
+        temp_res['status'] = 1
+        temp_res['anomtype'] = 'elongated_energy'
+        print ("Elongated energy anomaly on {} with context {}".format(day,contxt))
+        result.append(temp_res)
 res_df = pd.DataFrame.from_dict(result)
 res_df = res_df.sort_values('timestamp')
 res_df[res_df.status==1].shape[0]      
