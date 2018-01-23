@@ -15,7 +15,7 @@ import numpy as np
 from itertools import groupby
 from collections import OrderedDict,Counter
 from AD_support import *
-from datetime import datetime
+from datetime import datetime,timedelta
 #%%
 dir = "/Volumes/MacintoshHD2/Users/haroonr/Detailed_datasets/REFITT/CLEAN_REFIT_081116/"
 home = "House1.csv"
@@ -95,7 +95,7 @@ for day,data in test_contexts_daywise.items():
 num_std = 2.5
 dummy_no = 2.5
 LOG_FILENAME = '/Volumes/MacintoshHD2/Users/haroonr/Downloads/REFIT_log/logfile_REFIT.csv'
-with open(LOG_FILENAME,'a') as mylogger:
+with ope(LOG_FILENAME,'a') as mylogger:
 
   mylogger.write("\n*****NEW ITERATION at time {}*************\n".format(datetime.now()))
   result = [] 
@@ -128,6 +128,33 @@ res_df = pd.DataFrame.from_dict(result)
 res_df = res_df.sort_values('timestamp')
 res_df[res_df.status==1].shape[0]
 res_df[res_df.status==1]
-#%%
+p = res_df[res_df.status==1]
+#%% rectify timestamps by including appropriate context information
+updated_timestamp = []
+for i in range(0,res_df['context'].shape[0]):
+  context = res_df['context'][i]
+  timestamp = res_df['timestamp'][i]
+  if context == 'night_1_gp':
+    timestamp =  timestamp + timedelta(hours=3)
+  elif context == 'day_1_gp':
+    timestamp =  timestamp + timedelta(hours=9)
+  elif context == 'day_2_gp':
+    timestamp =  timestamp + timedelta(hours=15)
+  elif context == 'night_2_gp':
+    timestamp =  timestamp + timedelta(hours=21)
+  updated_timestamp.append(timestamp)
+res_df['updated_timestamp'] =  updated_timestamp   
 
-#sum(test_stats['2014-04-01']['day_1_gp']['ON_cycles'] < contexts_stats['day_1_gp']['ON_cycles']['lowerwisker'])
+#%%
+# Compute different accuracies
+house_no = 1
+appliance = "Freezer_1"
+gt = read_REFIT_groundtruth()
+select_house = gt.House_No==house_no
+select_appliance = gt.Appliance==appliance
+gt_sub = gt[select_house & select_appliance]
+#%%
+x= p.timestamp
+y= gt_sub['start_time'][0]
+z= gt_sub['end_time'][0]
+if (x >= y).values[0] & (x <= z).values[0]:
