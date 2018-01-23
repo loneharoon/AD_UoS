@@ -40,7 +40,8 @@ print(app_data.tail(1))
      4. calculate above stats """
 myapp = "Freezer_1"
 # set training data duration
-train_data =  df_samp[myapp]['2014-03-07']
+#train_data =  df_samp[myapp]['2014-03-07']
+train_data =  df_samp[myapp]['2014-03']
 # divide data according to  4 contexts [defined by times]
 contexts = OrderedDict()
 contexts['night_1_gp'] = train_data.between_time("00:00","05:59")
@@ -63,8 +64,8 @@ for k,v in contexts_daywise.items():
   #print("training stats of context {} is done".format(k))
 #%% TESTING STAGE STARTS
 #prepare test data
-#test_data =  df_samp[myapp]['2014-04-08':'2014-08-30']
-test_data =  df_samp[myapp]['2014-08-01']
+test_data =  df_samp[myapp]['2014-04-08':'2014-08-30']
+#test_data =  df_samp[myapp]['2014-08-01']
 test_data_daywise = test_data.groupby(test_data.index.date) # daywise grouping
 test_contexts_daywise = OrderedDict()
 for k,v in test_data_daywise:     # context wise division
@@ -91,7 +92,8 @@ for day,data in test_contexts_daywise.items():
 
       
 #%% Anomaly detection logic
-
+num_std = 2.5
+dummy_no = 2.5
 LOG_FILENAME = '/Volumes/MacintoshHD2/Users/haroonr/Downloads/REFIT_log/logfile_REFIT.csv'
 with open(LOG_FILENAME,'a') as mylogger:
 
@@ -106,86 +108,26 @@ with open(LOG_FILENAME,'a') as mylogger:
       temp_res['timestamp'] = datetime.strptime(day,'%Y-%m-%d')
       temp_res['context']   = contxt
       temp_res['status']    = 0
-      temp_res['anomtype']  = ' '
-      # sum(np.logical_or(x < low,x>up))
-      #duratation logic
-      lower_ON_duration_outlier  = sum( test_results['ON_duration'] < train_results['ON_duration']['lowerwisker'] )
-      higher_ON_duration_outlier = sum(test_results['ON_duration'] > train_results['ON_duration']['upperwisker']  )
-      ON_duration_outlier = lower_ON_duration_outlier + higher_ON_duration_outlier
-        
-      lower_OFF_duration_outlier = sum(test_results['OFF_duration'] < train_results['OFF_duration']['lowerwisker'] )
-      higher_OFF_duration_outlier = sum(test_results['OFF_duration'] > train_results['OFF_duration']['upperwisker'] )
-      OFF_duration_outlier = lower_OFF_duration_outlier + higher_OFF_duration_outlier
-      #energy logic
-      lower_ON_energy_outlier  = sum( test_results['ON_energy'] < train_results['ON_energy']['lowerwisker'] )
-      higher_ON_energy_outlier = sum(test_results['ON_energy'] > train_results['ON_energy']['upperwisker']  )
-      ON_energy_outlier = lower_ON_energy_outlier + higher_ON_energy_outlier
-        
-      lower_OFF_energy_outlier = sum(test_results['OFF_energy'] < train_results['OFF_energy']['lowerwisker'] )
-      higher_OFF_energy_outlier = sum(test_results['OFF_energy'] > train_results['OFF_energy']['upperwisker'] )
-      OFF_energy_outlier = lower_OFF_energy_outlier + higher_OFF_energy_outlier
-      #cycles logic
-      lower_ON_cycles  =   test_results['ON_cycles'] < train_results['ON_cycles']['lowerwisker'] 
-      higher_ON_cycles =   test_results['ON_cycles'] > train_results['ON_cycles']['upperwisker']  
-      #ON_cycles_outlier = lower_ON_cycles + higher_ON_cycles
-      #lower ON cycles will include OFF cases
-      ON_cycles_outlier =  higher_ON_cycles
-      
-      lower_OFF_cycles  =   test_results['OFF_cycles'] < train_results['OFF_cycles']['lowerwisker']  
-      higher_OFF_cycles =   test_results['OFF_cycles'] > train_results['OFF_cycles']['upperwisker'] 
-      OFF_cycles_outlier = lower_OFF_cycles + higher_OFF_cycles
-          #logging on duration basis
-      if lower_ON_duration_outlier:
-        mylogger.write(day+":"+contxt+":"+" lower_ON_duration_outlier_count: "+ str(lower_ON_duration_outlier)+ " lower_wisker: "+ str(train_results['ON_duration']['lowerwisker']) + ", test_Case : " + str(test_results['ON_duration'])+"\n")
-      if higher_ON_duration_outlier:
-        mylogger.write(day+":"+contxt+":"+" higher_ON_duration_outlier_count: "+ str(higher_ON_duration_outlier)+ " upper_wisker: "+ str(train_results['ON_duration']['upperwisker']) + ", test_Case : " + str(test_results['ON_duration'])+"\n")
-      if lower_OFF_duration_outlier:
-        mylogger.write(day+":"+contxt+":"+" lower_OFF_duration_outlier_count: "+ str(lower_OFF_duration_outlier)+ " lower_wisker: "+ str(train_results['OFF_duration']['lowerwisker']) + ", test_Case : " + str(test_results['OFF_duration'])+"\n")
-      if higher_OFF_duration_outlier:
-        mylogger.write(day+":"+contxt+":"+" higher_OFF_duration_outlier_count: "+ str(higher_OFF_duration_outlier)+ " upper_wisker: "+ str(train_results['OFF_duration']['upperwisker']) + ", test_Case : " + str(test_results['OFF_duration'])+"\n")
-  
-          #logging on energy basis
-      if lower_ON_energy_outlier:
-        mylogger.write(day+":"+contxt+":"+" lower_ON_energy_outlier_count: "+ str(lower_ON_energy_outlier)+ " lower_wisker: "+ str(train_results['ON_energy']['lowerwisker']) + ", test_Case : " + str(test_results['ON_energy'])+"\n")
-      if higher_ON_energy_outlier:
-        mylogger.write(day+":"+contxt+":"+" higher_ON_energy_outlier_count: "+ str(higher_ON_energy_outlier)+ " upper_wisker: "+ str(train_results['ON_energy']['upperwisker']) + ", test_Case : " + str(test_results['ON_energy'])+"\n")
-      if lower_OFF_energy_outlier:
-        mylogger.write(day+":"+contxt+":"+" lower_OFF_energy_outlier_count: "+ str(lower_OFF_energy_outlier)+ " lower_wisker: "+ str(train_results['OFF_energy']['lowerwisker']) + ", test_Case : " + str(test_results['OFF_energy'])+"\n")
-      if higher_OFF_energy_outlier:
-        mylogger.write(day+":"+contxt+":"+" higher_OFF_energy_outlier_count: "+ str(higher_OFF_energy_outlier)+ " upper_wisker: "+ str(train_results['OFF_energy']['upperwisker']) + ", test_Case : " + str(test_results['OFF_duration'])+"\n")
-  
-#      if lower_ON_cycles:
-#        mylogger.write(day+":"+contxt+":"+" lower_ON_cycles_count: "+ str(lower_ON_cycles)+ " lower_wisker: "+ str(train_results['ON_cycles']['lowerwisker']) + ", test_Case : " + str(test_results['ON_cycles'])+"\n")
-      if higher_ON_cycles:
-        mylogger.write(day+":"+contxt+":"+" higher_ON_cyclesr_count: "+ str(higher_ON_cycles)+ " upper_wisker: "+ str(train_results['ON_cycles']['upperwisker']) + ", test_Case : " + str(test_results['ON_cycles'])+"\n")
-#      if lower_OFF_cycles:
-#        mylogger.write(day+":"+contxt+":"+" lower_OFF_cycles_count: "+ str(lower_OFF_cycles)+ " lower_wisker: "+ str(train_results['OFF_cycles']['lowerwisker']) + ", test_Case : " + str(test_results['OFF_cycles'])+"\n")
-#      if higher_OFF_cycles:
-#        mylogger.write(day+":"+contxt+":"+" higher_OFF_cycles_count: "+ str(higher_OFF_cycles)+ " upper_wisker: "+ str(train_results['OFF_cycles']['upperwisker']) + ", test_Case : " + str(test_results['OFF_cycles'])+"\n")  
-      
-      if ON_duration_outlier and OFF_duration_outlier:
-        temp_res['status'] = 0
-        print ("non anomalous on {} with context {}".format(day,contxt))
-      elif ON_duration_outlier:
+      temp_res['anomtype']  = np.float("Nan")
+      # rule 3 of unum
+#      if np.mean(test_results['ON_energy'] >  train_results['ON_energy']['mean'] + num_std* train_results['ON_energy']['std']) and (np.mean(test_results['OFF_energy']) >  train_results['OFF_energy']['mean'] + num_std* train_results['OFF_energy']['std']):
+#        temp_res['status'] = 0
+#        mylogger.write(day + ":" + contxt + "is not elongated anomaly as off time was also longer \n")
+#      # rule 1 of unum
+      if np.mean(test_results['ON_energy']) > dummy_no * train_results['ON_energy']['mean'] + num_std* train_results['ON_energy']['std']:
         temp_res['status'] = 1
-        temp_res['anomtype'] = 'elongated_duration'
-        print ("Elongated duration anomaly on {} with context {}".format(day,contxt))
-      elif ON_cycles_outlier:
+        temp_res['anomtype'] = "long"
+        mylogger.write(day + ":"+ contxt + ", elongated anomaly" + ", train_stats duration, " + str(train_results['ON_energy']['mean']) + ":"+str(train_results['ON_energy']['std']) + "; test_stats energy, " + str(np.mean(test_results['ON_energy'])) + "\n" )
+            # rule 2 of unum
+      elif np.mean(test_results['ON_cycles']) >  dummy_no * train_results['ON_cycles']['mean'] + num_std* train_results['ON_cycles']['std']:
         temp_res['status'] = 1
-        temp_res['anomtype'] = 'frequent'
-        print ("Frequent anomaly on {} with context {}".format(day,contxt))
+        temp_res['anomtype'] = "frequent"
+        mylogger.write(day + ":"+contxt +  ", frequent anomaly" + ", train_stats frequency, " + str(train_results['ON_cycles']['mean']) + ":"+str(train_results['ON_cycles']['std']) + "; test_stats frequency, " + str(np.mean(test_results['ON_cycles'])) + "\n"  )
       result.append(temp_res)
-      # energy logic starts now
-      if ON_energy_outlier:
-        temp_res['status'] = 1
-        temp_res['anomtype'] = 'elongated_energy'
-        print ("Elongated energy anomaly on {} with context {}".format(day,contxt))
-        result.append(temp_res)
 res_df = pd.DataFrame.from_dict(result)
 res_df = res_df.sort_values('timestamp')
-res_df[res_df.status==1].shape[0]      
-res_df[res_df.status==1]    
-    
+res_df[res_df.status==1].shape[0]
+res_df[res_df.status==1]
 #%%
 
 #sum(test_stats['2014-04-01']['day_1_gp']['ON_cycles'] < contexts_stats['day_1_gp']['ON_cycles']['lowerwisker'])
