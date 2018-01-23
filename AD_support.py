@@ -14,6 +14,23 @@ from itertools import groupby
 from collections import OrderedDict,Counter
 from AD_support import *
 #%%
+def read_REFIT_groundtruth():
+  
+  ''' This function reads and formats REFIT's groundtruth file
+  return: intelligible pandas dataframe'''
+  gt_file = "/Volumes/MacintoshHD2/Users/haroonr/Dropbox/UniOfStra/AD/anomaly_explanation.csv"
+  gt_df  = pd.read_csv(gt_file)
+  df_temp =  [(i.split(';')[0],i.split(';')[1]) for i in gt_df.Time_Duration.values]
+  df_temp =  pd.DataFrame(df_temp)
+  df_temp.columns = ["start_time","end_time"]
+  
+  start_times = [pd.to_datetime(val.replace('"','')) if val.rfind('"')>=0 else pd.to_datetime(val.replace('“','')) for val in df_temp['start_time']]
+  end_times = [pd.to_datetime(val.replace('"','')) if val.rfind('"')>=0 else pd.to_datetime(val.replace('”','')) for val in df_temp['end_time']]
+  gt_df['start_time'] = start_times
+  gt_df['end_time'] = end_times
+  return(gt_df)
+
+#%%
 def perform_clustering(samp,clusters):
   #TODO: this has not been completed yet
   # http://scikit-learn.org/stable/modules/generated/sklearn.cluster.KMeans.html#sklearn.cluster.KMeans
