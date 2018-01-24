@@ -184,9 +184,22 @@ def create_testing_stats_with_boxplot(testdata,k,sampling_type,sampling_rate):
   if np.std(samp_val) <= 1:# contains observations with same values, basically forward filled values
     print("Dropping context {} from analysis as it contains same readings".format(k))
     return (False)
-  kobj = perform_clustering(samp_val,clusters=2)
-  samp['cluster'] = kobj.labels_
-  samp = re_organize_clusterlabels(samp)
+  elif np.std(samp_val) <= 5:
+    print("Only one state in context {} found".format(k))
+    if samp_val[2] > 10:
+      temp_lab = [1]* (samp_val.shape[0]-1)
+      temp_lab.append(0)
+      samp['cluster'] = temp_lab
+    else:
+      temp_lab = [0]* (samp_val.shape[0]-1)
+      temp_lab.append(1)
+      samp['cluster'] = temp_lab
+  else:
+    kobj = perform_clustering(samp_val,clusters=2)
+    samp['cluster'] = kobj.labels_
+    samp = re_organize_clusterlabels(samp)
+  
+  print(samp)
   tempval = [(k,sum(1 for i in g)) for k,g in groupby(samp.cluster.values)]
   tempval = pd.DataFrame(tempval,columns=['cluster','samples'])
   #%energy computation logic for eacy cycle
@@ -203,9 +216,9 @@ def create_testing_stats_with_boxplot(testdata,k,sampling_type,sampling_rate):
   off_cycles =list(tempval[tempval.cluster==0].samples)
   on_cycles =list(tempval[tempval.cluster==1].samples)
   off_energy =list(tempval[tempval.cluster==0].energy_state)
-  print(off_energy)
+  #print(off_energy)
   on_energy =list(tempval[tempval.cluster==1].energy_state)
-  print(on_energy)
+  #print(on_energy)
   temp_dic["on_energy"] = on_energy
   temp_dic["off_energy"] = off_energy
   temp_dic["on"] = on_cycles
