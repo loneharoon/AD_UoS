@@ -1,4 +1,7 @@
 import utils as uutil
+import cluster_file as cf
+import numpy as np
+import pandas as pd
 
 def co_decoding(train_dset,test_dset):
     train_agg_meter,train_sub_meters = divide_dataset_in_appliances(train_dset)
@@ -36,7 +39,7 @@ def co_training(train_sub_meters):
 def train_on_chunk(chunk, meter, max_num_clusters, num_on_states,model):
     #from IPython import embed
     #embed()
-    states = cluster(chunk, max_num_clusters, num_on_states)
+    states = cf.cluster(chunk, max_num_clusters, num_on_states)
     model.append({
         'states': states,
         'meter': meter})
