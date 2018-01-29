@@ -54,12 +54,7 @@ fhmm_result  =  fhmm_decoding(train_dset,test_dset) # dissagreation
 #%%
 
 #co_rmse = compute_rmse(co_result['actaul_power'],co_result['decoded_power'])
-#%%
-#fhmm_rmse = pd.DataFrame.from_dict(fhmm_rmse)
-#co_rmse =pd.DataFrame.from_dict(co_rmse)
 
-#fhmm_rmse.to_csv(savedir+"fhmm_rmse_"+hos)
-#co_rmse.to_csv(savedir+"co_rmse_"+hos)
 #%%
 fhmm_rmse = acmat.compute_rmse(fhmm_result['actaul_power'],fhmm_result['decoded_power'])
 print(fhmm_rmse)
@@ -72,7 +67,10 @@ print(fhmm_kolter)
 #%%
 
 norm_fhmm = acmat.accuracy_metric_norm_error(fhmm_result)
-#norm_co = accuracy_metric_norm_error(co_result)
+mae = acmat.compute_mae(fhmm_result['actaul_power'],fhmm_result['decoded_power'])
+print(mae)
+confusion_mat = call_confusion_metrics_on_disagg(fhmm_result['actaul_power'],fhmm_result['decoded_power'])
+pd.DataFrame.from_dict(confusion_mat)
 #%%
 concat_res = pd.concat([fhmm_rmse,co_rmse,norm_fhmm,norm_co],axis=1)
 concat_res.columns = ['fhmm_rmse','co_rmse','fhmm_norm','co_norm']
