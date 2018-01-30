@@ -43,7 +43,6 @@ def compute_mae(gt,pred):
 def diss_accu_metric_kolter_1(dis_result,aggregate):
     pred = dis_result['decoded_power']
     gt = dis_result['actaul_power']
-    error = []
     numerator = 0
     for app in gt.columns:
         numerator = numerator + sum(abs(pred[app].values - gt[app].values))
@@ -54,20 +53,30 @@ def diss_accu_metric_kolter_1(dis_result,aggregate):
 def diss_accu_metric_kolter_exact(dis_result,aggregate):
     pred = dis_result['decoded_power']
     gt = dis_result['actaul_power']
-    error = []
     numerator = 0
     for app in gt.columns:
         numerator = numerator + sum(abs(pred[app].values - gt[app].values))
     denominator = aggregate*1.0 # to make it float
     return(1- (numerator/(2*denominator)))
+ #%%   
+def diss_accu_metric_kolter_appliance_wise(dis_result):
+   '''This metric is taken from Makonins paper: Nonintrusive Load Monitoring (NILM) Performance Evaluation A unified approach for accuracy reportin'''
+   pred = dis_result['decoded_power']
+   gt = dis_result['actaul_power']
+   accur = OrderedDict()
+   for app in gt.columns:
+     numerator = sum(abs(pred[app].values - gt[app].values))
+     denominator = sum(gt[app].values)
+     accur[app] = 1-(numerator/(2*denominator))
+   return(pd.Series(accur))
 
 
+#%%
 
 def diss_accu_metric_kolter_2(dis_result, aggregate):
     # dis_result = co_result
     pred = dis_result['decoded_power']
     gt = dis_result['actaul_power']
-    error = []
     numerator = 0
     for app in gt.columns:
         numerator = sum(abs(pred[app].values - gt[app].values))
@@ -132,12 +141,13 @@ def compute_EEFI_AEFI_metrics(gt,pred):
     ''' compute eefi(estimated energy  fraction index), aefi (actual energy fraction index) or metric (fraction of toal energy asssigned correctly  of NILMTK paper)'''
     estimated_total = np.sum(pred.apply(np.sum,axis=0))
     actual_total = np.sum(gt.apply(np.sum,axis=0))
-    result_dict = {}
+    result_dict = OrderedDict()
     for app in pred.columns:
         aefi = np.sum(gt[app].values)/actual_total
         eefi = np.sum(gt[app].values)/estimated_total
-        result_dict[app] = { 'AEFI' : aefi , 'EEFI' : eefi }
+        oneminusdivison  = 1 - (eefi/aefi)
+        differencedivion = abs(aefi-eefi)/aefi 
+        result_dict[app] = OrderedDict({ 'AEFI' : aefi , 'EEFI' : eefi , 'MinDiv' : oneminusdivison , 'DifDiv' : differencedivion})
     return(pd.DataFrame.from_dict(result_dict))
 
-    
-    
+  #%%

@@ -66,11 +66,14 @@ fhmm_kolter2 = acmat.diss_accu_metric_kolter_exact(fhmm_result,aggregate)
 print(fhmm_kolter2)
 norm_fhmm = acmat.accuracy_metric_norm_error(fhmm_result)
 print(norm_fhmm)
+kolter_appliance = acmat.diss_accu_metric_kolter_appliance_wise(fhmm_result)
+print(kolter_appliance)
 mae = acmat.compute_mae(fhmm_result['actaul_power'],fhmm_result['decoded_power'])
 print(mae)
-confusion_mat = acmat.call_confusion_metrics_on_disagg(fhmm_result['actaul_power'],fhmm_result['decoded_power'],power_threshold=10)
-pd.DataFrame.from_dict(confusion_mat)
+confus_mat = acmat.call_confusion_metrics_on_disagg(fhmm_result['actaul_power'],fhmm_result['decoded_power'],power_threshold=10)
+pd.DataFrame.from_dict(confus_mat)
 acmat.compute_EEFI_AEFI_metrics(fhmm_result['actaul_power'],fhmm_result['decoded_power'])
+
 #%%
 gt= fhmm_result['actaul_power']
 pred= fhmm_result['decoded_power']
