@@ -36,9 +36,9 @@ def compute_means_fhmm(list_means):
     '''
     #list_of_appliances_centroids=[ [appliance[i][0] for i in range(len(appliance))] for appliance in list_B]
     states_combination=list(itertools.product(*list_means))
-    print states_combination
+    #print states_combination
     num_combinations=len(states_combination)
-    print num_combinations
+    #print num_combinations
     means_stacked=np.array([sum(x) for x in states_combination])
     means=np.reshape(means_stacked,(num_combinations,1)) 
     cov=np.tile(5*np.identity(1), (num_combinations, 1, 1))
@@ -131,12 +131,12 @@ def sort_learnt_parameters(startprob, means, covars, transmat):
 
 def create_combined_hmm(model):
     from IPython import embed
-    print ("p0")
+    #print ("p0")
     list_pi=[model[appliance].startprob_ for appliance in model]
-    print ("p1")
+    #print ("p1")
     list_A=[model[appliance].transmat_ for appliance in model]
     list_means=[model[appliance].means_.flatten().tolist() for appliance in model]
-    print ("p2")
+    #print ("p2")
     pi_combined=compute_pi_fhmm(list_pi)
     A_combined=compute_A_fhmm(list_A)
     [mean_combined, cov_combined]=compute_means_fhmm(list_means)

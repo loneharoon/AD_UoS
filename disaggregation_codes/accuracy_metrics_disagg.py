@@ -91,13 +91,14 @@ def accuracy_metric_gemello(dis_result):
 
 #%%%% CONFUSION METRICS
 #%%
-def call_confusion_metrics_on_disagg(test_dset,predict_df):
-    #test_dset = fhmm_result['actaul_power']['air1']
-    #predict_df = fhmm_result['decoded_power']['air1']  
-    #actual = test_dset >= on_power_threshold
-    #predict = predict_df >= on_power_threshold
-    #compute_confusion_metrics(when_on_actual,when_on_predict) 
-    on_power_threshold = 50
+def call_confusion_metrics_on_disagg(test_dset,predict_df,power_threshold):
+#    test_dset = fhmm_result['actaul_power']['Freezer_1']
+#    predict_df = fhmm_result['decoded_power']['Freezer_1']
+#    on_power_threshold = 10
+#    actual = test_dset >= on_power_threshold
+#    predict = predict_df >= on_power_threshold
+#    compute_confusion_metrics(actual,predict) 
+    on_power_threshold = power_threshold
     appliances  = predict_df.columns
     results =  OrderedDict()
     for app in appliances:

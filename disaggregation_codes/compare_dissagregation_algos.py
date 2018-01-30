@@ -1,4 +1,6 @@
 """
+FILE TAKE FROM OUR FIRST WORK ON DISAGGREGATION. 
+OBSELTE NOW
 This file explicitly computes dissaggregation error metrics on minutes level data. Data used is entirely dataport
 and approaches tested include CO and FHMM
 Created on 
