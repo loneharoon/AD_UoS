@@ -31,9 +31,19 @@ df_samp.rename(columns={'Aggregate':'use'},inplace=True) # renaming agg column
 data_vec = df_samp['use'].values.tolist()
 delta_p = [round(data_vec[i+1]-data_vec[i],2) for i in range(0,len(data_vec)-1)]
 T = 80;
-Sigma = 15;
-Ri = 0.05;
-events = [True if delta_p[i] > T or delta_p[i] < -T else False for i in range(0, len(delta_p))]
-
+sigma = 15;
+ri = 0.05;
+events = [i for i in range(0, len(delta_p)) if(delta_p[i] > T or delta_p[i] < -T)]
 T_Positive = 40;
 T_Negative = -40;
+event =  [i for i in range(0, len(delta_p)) if delta_p[i] > T_Positive or delta_p[i] < T_Negative ]
+clusters = []
+
+pp = list(set(event)-set(clusters)) 
+#TODO pending wrong
+#%%
+# inputs event, delta_p,sigma
+gspclustering(event,delta_p,sigma)
+  #%%
+
+#%%
