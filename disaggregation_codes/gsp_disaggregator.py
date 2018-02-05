@@ -43,58 +43,68 @@ ri = 0.05;
 T_Positive = 40;
 T_Negative = -40;
 event =  [i for i in range(0, len(delta_p)) if (delta_p[i] > T_Positive or delta_p[i] < T_Negative) ]
-clusters = []
+sigmas = [sigma,sigma/2,sigma/4,sigma/8,sigma/14,sigma/32,sigma/64]
+precluster = []
 #%%
-for i in range(2000): ## change limit
-  if i==0:
-    event = sorted(list(set(event)-set(clusters))) 
-  else:
-    event = sorted(list(set(event)-set(clusters[(i-1)])) )
-  if not len(event):
-    print('event list got empty')
-    break
-  else:
-    clus = gspclustering_event2(event,delta_p,sigma);
-    clusters.append(clus)
-#TODO pending wrong
+for k in range(0,len(sigmas)):
+  clusters = []
+  print('k val is {}'.format(k))
+  for i in range(2000): ## change limit
+    if i==0:
+      event = sorted(list(set(event)-set(clusters))) 
+    else:
+      event = sorted(list(set(event)-set(clusters[(i-1)])) )
+    if not len(event):
+      print('event list got empty')
+      print('i got empty at value {}'.format(i))
+      break
+    else:
+      clus = gspclustering_event2(event,delta_p,sigmas[k]);
+      clusters.append(clus)
+  jt =  johntable(clusters,precluster,delta_p,ri)
+  events_updated = find_new_events(clusters,delta_p,ri)
+  events_updated = sorted(events_updated)
+  event = events_updated
+  precluster = jt
 #%%
 
 #%%
-precluster = []
+
 delt_p
 ri
 tt = np.array(clusters)
-#%%
-%function [FinalCluster] = JohnTable(Clusters,PreCluster,DelP,Ti)
-
-FinalCluster = precluster;
-
-for i in range(0,len(clusters)):
-    if abs(std2(DelP(Clusters(i,find(Clusters(i,:)>0))))/mean(DelP(Clusters(i,find(Clusters(i,:)>0)))))<=Ti
-        FinalCluster(size(FinalCluster,1)+1,1:length(find(Clusters(i,:)>0))) = Clusters(i,find(Clusters(i,:)>0));
-    end
-end
 
 #%%
-def johntable(clusters,delta_p,ri):
-  Finalcluster = []
-  for h in range(0,len(clusters)):  
-    if (abs(statistics.stdev([delta_p[i] for i in clusters[h]])/statistics.mean([delta_p[i] for i in clusters[h]]))) <= ri :
-      Finalcluster.append([delta_p[i] for i in clusters[h]])
-  return Finalcluster
+
 #%%
 
-def johntable(clusters,delta_p,ri):
+#%%
+
+def johntable(clusters,precluster,delta_p,ri):
   import math
-  Finalcluster = []
   for h in range(0,len(clusters)):  
     stds = np.std([delta_p[i] for i in clusters[h]],ddof=1)
     if(math.isnan(stds)):
       stds = 0
     means = np.mean([delta_p[i] for i in clusters[h]])
     if abs(stds/means) <= ri :
-      Finalcluster.append([i for i in clusters[h]])
-  return Finalcluster
+      precluster.append([i for i in clusters[h]])
+  return precluster
+
+#%%
+def find_new_events(clusters,delta_p,ri):
+  ''' This differs from johntable function in line containing divison statemen'''
+  import math
+  newevents = []
+  for h in range(0,len(clusters)):  
+    stds = np.std([delta_p[i] for i in clusters[h]],ddof=1)
+    if(math.isnan(stds)):
+      stds = 0
+    means = np.mean([delta_p[i] for i in clusters[h]])
+    if abs(stds/means) > ri :
+      newevents.append([i for i in clusters[h]])
+  newevents = [subitem for item in newevents for subitem in item]
+  return newevents
 
 
 
