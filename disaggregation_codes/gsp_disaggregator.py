@@ -22,7 +22,7 @@ import matplotlib.pyplot as plt
 #data_file = fl['main'].flatten().tolist()  
 reddhome= "/Volumes/MacintoshHD2/Users/haroonr/Detailed_datasets/Redd_dataset/house3/"
 main = pd.read_csv(reddhome+"main_meters.csv",index_col="Index")
-main = main[0:10000]
+main = main[0:30000]
 main['aggregate'] = main.apply(sum,axis=1)
 main['timestamp'] = pd.to_datetime(main.index).astype(np.int64) //10**9
 iam = pd.read_csv(reddhome+"sub_meters.csv",index_col="Index")
@@ -84,13 +84,13 @@ if len(event) > 0:
 #%% Code ClusterTable_3_H6.m
 
 
-#%%
+#%%   iam related data
 Ls = 10
 L = iam_sub.shape[0]
 iam_sub = iam_sub[0:4000]
 del_iam = iam_sub.apply(lambda x: [round(x[i+1]-x[i],2) for i in range(0,len(x)-1)],axis=0)
 del_iam.keys()
-#%%
+#%% Pairing module starts from here
 time = main['timestamp'].values.tolist()
 time_main= iam_sub['timestamp'].values.tolist()
 Table_1 =  np.zeros((len(Finalcluster),5))
@@ -111,73 +111,53 @@ FinalTable = []
 for i in range(len(sort_means)):
   sorted_cluster.append(Finalcluster[sort_means[i]])
   FinalTable.append(Table_1[sort_means[i]].tolist())
-#%%
-L = len(data_vec)-1
+#%% 
+#L = len(data_vec)-1
 DelP = [round(data_vec[i+1]-data_vec[i],2) for i in range(0,len(data_vec)-1)]
 Newcluster_1 = []
 Newtable = []
 for i in range(0,len(FinalTable)):
-  if (FinalTable[i][0]>=2):
+  if (FinalTable[i][0]>=5):
     Newcluster_1.append(sorted_cluster[i])
     Newtable.append(FinalTable[i])
 Newcluster = Newcluster_1
+#%%
 for i in range(0,len(FinalTable)):
-  if(FinalTable[i][0] < 2 ):
+  if(FinalTable[i][0] < 5 ):
     for j in range(len(sorted_cluster[i])):
       count =  []
       for k in range(len(Newcluster)):
         count.append(norm.pdf(DelP[sorted_cluster[i][j]],Newtable[k][1],Newtable[k][2]))
       asv = [h == max(count) for h in count]
-      if len(asv) == 1:
+      if sum(asv) == 1:
         johnIndex = count.index(max(count))
       elif DelP[sorted_cluster[i][j]] > 0:
+        print("case1",i,j)
         tablemeans = [r[1] for r in Newtable]
         tempelem = [r for r in tablemeans if r < DelP[sorted_cluster[i][j]]][0]
         johnIndex = tablemeans.index(tempelem)
       else:
+        print("case else",i,j)
         tablemeans = [r[1] for r in Newtable]
         tempelem = [r for r in tablemeans if r > DelP[sorted_cluster[i][j]]].pop()
         johnIndex = tablemeans.index(tempelem)
       Newcluster[johnIndex].append(sorted_cluster[i][j])
     
   
-#%% pairing module code
-tic;
-L = length(meter)-1;
-% set L as a easier number
-DelP(1:L) = meter(2:L+1) - meter(1:L);
 
-[FinalTable,Clusters_2] = ClusterTable_3_H6(FinalCluster,DelP);
-NewCluster_1 = [];
-NewTable = [];
-for i = 1:size(FinalTable,1)
-    if FinalTable(i,1)>=5
-        NewCluster_1(size(NewCluster_1,1)+1,1:FinalTable(i,1)) = Clusters_2(i,find(Clusters_2(i,:)>0));
-        NewTable(size(NewTable,1)+1,:) = FinalTable(i,:);
-    end
-end
-NewCluster = NewCluster_1;
-for i = 1:size(FinalTable,1)
-    if FinalTable(i,1)<5
-        for j = 1:FinalTable(i,1)
-            Count = zeros(1,size(NewCluster,1));
-            for k = 1: size(NewCluster,1)
-                Count(k) = normpdf(DelP(Clusters_2(i,j)),NewTable(k,2),NewTable(k,3));
-            end
-            asv = find(Count == max(Count));
-            if length(asv) == 1
-                JohnIndex = asv;
-            else
-                if  DelP(Clusters_2(i,j)) >0
-                    JohnIndex = find(NewTable(:,2) < DelP(Clusters_2(i,j)),1,'first');
-                else
-                    JohnIndex = find(NewTable(:,2) > DelP(Clusters_2(i,j)),1,'last');
-                end
-            end
-            NewCluster(JohnIndex(1),length(find(NewCluster(JohnIndex(1),:)>0))+1) = Clusters_2(i,j);
-        end
-    end
-end
-[NT,NC] = ClusterTable_3_H6(NewCluster,DelP);
-toc;
-#%%
+#%% create mat files
+import scipy.io
+iam_sub.keys()
+spath = "/Volumes/MacintoshHD2/Users/haroonr/Documents/MATLAB/"
+scipy.io.savemat(spath+"refrigerator",mdict={'refrigerator':iam_sub['refrigerator'].values.tolist()})
+scipy.io.savemat(spath+"disposal",mdict={'disposal':iam_sub['disposal'].values.tolist()})
+scipy.io.savemat(spath+"dishwaser",mdict={'dishwaser':iam_sub['dishwaser'].values.tolist()})
+scipy.io.savemat(spath+"kitchen_outlets",mdict={'kitchen_outlets':iam_sub['kitchen_outlets'].values.tolist()})
+
+scipy.io.savemat(spath+"microwave",mdict={'microwave':iam_sub['microwave'].values.tolist()})
+scipy.io.savemat(spath+"lighting",mdict={'lighting':iam_sub['lighting'].values.tolist()})
+scipy.io.savemat(spath+"kitchen_outlets.1",mdict={'kitchen_outlets.1':iam_sub['kitchen_outlets.1'].values.tolist()})
+
+scipy.io.savemat(spath+"time",mdict={'time':iam_sub['timestamp'].values.tolist()})
+scipy.io.savemat(spath+"time_main",mdict={'time_main':time_main})
+
