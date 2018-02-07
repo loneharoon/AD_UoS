@@ -15,6 +15,7 @@ from scipy.stats import norm
 sys.path.append('/Volumes/MacintoshHD2/Users/haroonr/Dropbox/UniOfStra/AD/disaggregation_codes/')
 import accuracy_metrics_disagg as acmat
 import matplotlib.pyplot as plt
+import gsp_support as gsp
 #%%
 #import scipy.io
 #fpath = "/Volumes/MacintoshHD2/Users/haroonr/Documents/MATLAB/main.mat"
@@ -72,10 +73,10 @@ for k in range(0,len(sigmas)):
       print('i got empty at value {}'.format(i))
       break
     else:
-      clus = gspclustering_event2(event,delta_p,sigmas[k]);
+      clus = gsp.gspclustering_event2(event,delta_p,sigmas[k]);
       clusters.append(clus)
-  jt =  johntable(clusters,Finalcluster,delta_p,ri)
-  events_updated = find_new_events(clusters,delta_p,ri)
+  jt =  gsp.johntable(clusters,Finalcluster,delta_p,ri)
+  events_updated = gsp.find_new_events(clusters,delta_p,ri)
   events_updated = sorted(events_updated)
   event = events_updated
   Finalcluster = jt
@@ -90,7 +91,7 @@ L = iam_sub.shape[0]
 iam_sub = iam_sub[0:4000]
 del_iam = iam_sub.apply(lambda x: [round(x[i+1]-x[i],2) for i in range(0,len(x)-1)],axis=0)
 del_iam.keys()
-#%% Pairing module starts from here
+#%% reducing number of clusters
 time = main['timestamp'].values.tolist()
 time_main= iam_sub['timestamp'].values.tolist()
 Table_1 =  np.zeros((len(Finalcluster),5))
@@ -142,8 +143,21 @@ for i in range(0,len(FinalTable)):
         tempelem = [r for r in tablemeans if r > DelP[sorted_cluster[i][j]]].pop()
         johnIndex = tablemeans.index(tempelem)
       Newcluster[johnIndex].append(sorted_cluster[i][j])
+#%%
+# Use Newtable and Newclusters for pairing 
+clus_means = [i[1] for i in Newtable]
+pairs = []
+
+# TODO: handle case for pending clusters which do not cluster  and sometimes more than one positive cluster might will pair with same neg. cluster
+for i in range(len(clus_means)):
+  if clus_means[i] > 0: # postive edge
+    neg_edges = [ (clus_means[i] + clus_means[j],j) for j in range(i+1,len(clus_means)) if clus_means[j] < 0] # find all neg edges and their location in tuple form
+    edge_mag = [j[0] for j in neg_edges] # list only edge mags
+    match_loc = neg_edges[edge_mag.index(min(edge_mag))][1]
+    pairs.append((i,match_loc))
     
-  
+
+      
 
 #%% create mat files
 import scipy.io
