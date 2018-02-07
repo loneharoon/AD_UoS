@@ -14,4 +14,6 @@ Following cases are present in REFIT data
 Failures/Insights:
 1. Boxplot rule fails becuase it is sensitive to small changes.
 
+FHMM:
+1. Number of states for an appliance are detected via clustering. No manual need to specify. Same as done in toolkit
 '''
