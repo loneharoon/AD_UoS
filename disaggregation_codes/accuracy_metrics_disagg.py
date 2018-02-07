@@ -21,7 +21,7 @@ def compute_rmse(gt,pred):
 def accuracy_metric_norm_error(dis_result):
     '''Metric taken from Nipuns NILMTK paper:Normalised error in assigned power'''
     pred = dis_result['decoded_power']
-    gt = dis_result['actaul_power']
+    gt = dis_result['actual_power']
     error = {}
     for app in gt.columns:
         numerator = np.nansum(abs(pred[app].values - gt[app].values))
@@ -42,7 +42,7 @@ def compute_mae(gt,pred):
 #%%
 def diss_accu_metric_kolter_1(dis_result,aggregate):
     pred = dis_result['decoded_power']
-    gt = dis_result['actaul_power']
+    gt = dis_result['actual_power']
     numerator = 0
     for app in gt.columns:
         numerator = numerator + sum(abs(pred[app].values - gt[app].values))
@@ -52,7 +52,7 @@ def diss_accu_metric_kolter_1(dis_result,aggregate):
 
 def diss_accu_metric_kolter_exact(dis_result,aggregate):
     pred = dis_result['decoded_power']
-    gt = dis_result['actaul_power']
+    gt = dis_result['actual_power']
     numerator = 0
     for app in gt.columns:
         numerator = numerator + sum(abs(pred[app].values - gt[app].values))
@@ -62,7 +62,7 @@ def diss_accu_metric_kolter_exact(dis_result,aggregate):
 def diss_accu_metric_kolter_appliance_wise(dis_result):
    '''This metric is taken from Makonins paper: Nonintrusive Load Monitoring (NILM) Performance Evaluation A unified approach for accuracy reportin'''
    pred = dis_result['decoded_power']
-   gt = dis_result['actaul_power']
+   gt = dis_result['actual_power']
    accur = OrderedDict()
    for app in gt.columns:
      numerator = sum(abs(pred[app].values - gt[app].values))
@@ -76,7 +76,7 @@ def diss_accu_metric_kolter_appliance_wise(dis_result):
 def diss_accu_metric_kolter_2(dis_result, aggregate):
     # dis_result = co_result
     pred = dis_result['decoded_power']
-    gt = dis_result['actaul_power']
+    gt = dis_result['actual_power']
     numerator = 0
     for app in gt.columns:
         numerator = sum(abs(pred[app].values - gt[app].values))
@@ -88,7 +88,7 @@ def accuracy_metric_gemello(dis_result):
     '''This per appliance accuracy metric is used in Gamello. Paper mentions that it is based on works 1,7 mentioned in gamello paper'''
     ### this fails when there are 0 values in the denominator
     pred = dis_result['decoded_power']
-    gt = dis_result['actaul_power']
+    gt = dis_result['actual_power']
     per_accu = {}
     for app in gt.columns:
         per_error = (abs(pred[app].values - gt[app].values)/ (gt[app] * 1.0)) * 100
