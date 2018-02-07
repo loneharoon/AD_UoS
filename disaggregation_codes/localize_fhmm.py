@@ -8,7 +8,7 @@ import matplotlib.pyplot as plt
 from collections import OrderedDict
 from hmmlearn import hmm
 from IPython import embed
-import time
+import time, cluster_file
 
 def fhmm_decoding(train_dset,test_dset):
 
@@ -19,7 +19,11 @@ def fhmm_decoding(train_dset,test_dset):
     appliances = train_sub_meters.columns
     for appliance in appliances:
     # print appliance;
-        model[appliance] =  hmm.GaussianHMM(n_components=3,covariance_type="full")
+        max_num_clusters = 3 
+        states = cluster_file.cluster(train_sub_meters[appliance], max_num_clusters)
+        num_total_states = len(states)
+        #print (appliance,num_total_states)
+        model[appliance] =  hmm.GaussianHMM(n_components=num_total_states,covariance_type="full")
         temp =  train_sub_meters[appliance].values.reshape(len(train_sub_meters[appliance]),1)
         model[appliance].fit(temp)
     # sort all the parameters and update new models with these 
@@ -46,7 +50,7 @@ def fhmm_decoding(train_dset,test_dset):
     # create dataframe of results
     decoded_power = pd.DataFrame(decoded_power)
     decoded_power.index = test_agg_meter.index
-    ret_result = {'actaul_power':test_sub_meters,'decoded_power':decoded_power}
+    ret_result = {'actual_power':test_sub_meters,'decoded_power':decoded_power}
     return(ret_result)
 
 def divide_dataset_in_appliances(df):
