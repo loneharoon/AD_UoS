@@ -10,7 +10,7 @@ def co_decoding(train_dset,test_dset):
     state_combinations = None
     mains = test_agg_meter
     decoded_power = disaggregate_chunk(state_combinations,mains,model)
-    ret_result = {'actaul_power':test_sub_meters,'decoded_power':decoded_power}
+    ret_result = {'actual_power':test_sub_meters,'decoded_power':decoded_power}
     return(ret_result)
 
 def co_training(train_sub_meters):
@@ -21,7 +21,7 @@ def co_training(train_sub_meters):
     if num_meters > 12:
         max_num_clusters = 2
     else:
-        max_num_clusters = 2
+        max_num_clusters = 3
     for i in range(len(l)):
         #print("Training model for submeter '{}'".format(meter))
         #power_series = meter.power_series(**load_kwargs)
