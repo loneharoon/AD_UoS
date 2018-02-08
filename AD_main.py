@@ -15,8 +15,9 @@ from itertools import groupby
 from collections import OrderedDict,Counter
 from AD_support import *
 from datetime import datetime,timedelta
-import standardize_column_names
+import standardize_column_names as scn
 import AD_support as ads
+import re
 #%%
 dir = "/Volumes/MacintoshHD2/Users/haroonr/Detailed_datasets/REFITT/CLEAN_REFIT_081116/"
 home = "House10.csv"
@@ -28,35 +29,33 @@ print("*****RESAMPLING********")
 df_samp = df_sub.resample('1T',label='right',closed='right').mean()
 data_sampling_time = 1 #in minutes
 data_sampling_type = "minutes" # or seconds
-standardize_column_names.rename_appliances(home,df_samp)
+scn.rename_appliances(home,df_samp)
 #%% select particular appliance for anomaly detection
 df_samp.columns
-myapp = "Fridge_Freezer"
+myapp = "Chest_Freezer"
 train_data =  df_samp[myapp]['2014-04-01' : '2014-04-30'] # home 3 freezer
-test_data =  df_samp[myapp]['2014-05-01':'2014-05-03'] # home 3
+#test_data =  df_samp[myapp]['2014-05-01':'2014-05-03'] # home 3
+test_data =  df_samp[myapp]['2014-05-01':'2014-05-31'] # home 3
 train_results = ads.AD_refit_training(train_data,data_sampling_type,data_sampling_time)
-test_results  = ads.AD_refit_testing(test_data,data_sampling_type,data_sampling_time)      
-  
-  
-  
-  #print("training stats of context {} is done".format(k))
-
-
-      
+test_results  = ads.AD_refit_testing(test_data,data_sampling_type,data_sampling_time)            
 #%% Anomaly detection logic
 num_std = 2
 alpha = 2.5
 res_df = ads.anomaly_detection_algorithm(test_results,train_results,alpha,num_std)
- 
+result_sub = res_df[res_df.status==1]
+
 #%%
 # Compute different accuracies
-house_no = 1
-appliance = "Freezer_1"
-gt = read_REFIT_groundtruth()
-select_house = gt.House_No==house_no
-select_appliance = gt.Appliance==appliance
-gt_sub = gt[select_house & select_appliance]
-gt_sub
+#house_no = 1
+house_no =  int(re.findall('\d+',home)[0])
+appliance = scn.reverse_lookup(home,myapp) # find actual name of appliance in anomaly database
+#appliance = "Freezer_1"
+day_start = test_data.first_valid_index()
+day_end = test_data.last_valid_index()
+print('both S and NS anomalies selected')
+gt,ob = tidy_gt_and_ob(house_no,appliance,day_start,day_end,result_sub)
+  
+        
 #%%
 x= p.timestamp
 y= gt_sub['start_time'][0]

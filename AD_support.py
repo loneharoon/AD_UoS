@@ -181,7 +181,7 @@ def  create_testing_stats_with_boxplot(testdata,k,sampling_type,sampling_rate):
   samp_val =  samp.values
   samp_val = samp_val.reshape(-1,1)
   #FIXME: you can play with clustering options
-  if np.std(samp_val) <= 1:# contains observations with same values, basically forward filled values
+  if np.std(samp_val) <= 0.2:# contains observations with same values, basically forward filled values
     print("Dropping context {} from analysis as it contains same readings".format(k))
     return (False)
   elif np.std(samp_val) <= 5: # when applaince reamins ON for full context genuinely
@@ -266,7 +266,7 @@ def anomaly_detection_algorithm(test_stats,contexts_stats,alpha,num_std):
           mylogger.write(day + ":"+contxt +  ", frequent anomaly" + ", train_stats frequency, " + str(train_results['ON_cycles']['mean']) + ":"+str(train_results['ON_cycles']['std']) + "; test_stats frequency, " + str(np.mean(test_results['ON_cycles'])) + "\n"  )
         result.append(temp_res)
   res_df = pd.DataFrame.from_dict(result)
-  #%% rectify timestamps by including appropriate context information
+  #% rectify timestamps by including appropriate context information
   updated_timestamp = []
   for i in range(0,res_df['context'].shape[0]):
       context = res_df['context'][i]
@@ -283,48 +283,7 @@ def anomaly_detection_algorithm(test_stats,contexts_stats,alpha,num_std):
   res_df['updated_timestamp'] =  updated_timestamp  
   return(res_df) # returns only anomaly packets
   
-#%%
-###
-def create_testing_stats(testdata,k):
-  """ this method computes cycle frequences and durations for the test day data
-  Input: pandas series of power data
-  Output: Stats computed in form of dictionary """
-  temp_dic = {}
-  #for k, v in testdata:
-    #print(k)
-  samp = testdata.to_frame()
-  # handle nans in data
-  nan_obs = int(samp.isnull().sum())
-  #rule: if more than 50% are nan then I drop that day from calculcations othewise I drop nan readings only
-  if nan_obs:  
-    if nan_obs >= 0.50*samp.shape[0]:
-      print("More than 50percent obs missing hence dropping context {} ".format(k))
-      return
-    elif nan_obs < 0.50*samp.shape[0]:
-      print("dropping  {} nan observations for context {}".format(nan_obs,k))
-      samp.dropna(inplace=True)
-  samp.columns = ['power']
-  samp_val =  samp.values
-  samp_val = samp_val.reshape(-1,1)
-  #FIXME: you can play with clustering options
-  kobj = perform_clustering(samp_val,clusters=2)
-  samp['cluster'] = kobj.labels_
-  samp = re_organize_clusterlabels(samp)
-  tempval = [(k,sum(1 for i in g)) for k,g in groupby(samp.cluster.values)]
-  tempval = pd.DataFrame(tempval,columns=['cluster','samples'])
-  off_cycles =list(tempval[tempval.cluster==0].samples)
-  on_cycles =list(tempval[tempval.cluster==1].samples)
-  temp_dic["on"] = on_cycles
-  temp_dic["off"] = off_cycles
-  cycle_stat = Counter(tempval.cluster)
-  temp_dic.update(cycle_stat)
 
-  summ_dic = {}
-  summ_dic['ON_duration'] = {'mean':round(np.mean(temp_dic["on"]),3), 'std':round(np.std(temp_dic["on"]),3)}
-  summ_dic['OFF_duration'] = {'mean':round(np.mean(temp_dic["off"]),3), 'std':round(np.std(temp_dic["off"]),3)}
-  summ_dic['ON_cycles'] = {'mean':round(np.mean(temp_dic[1]),0), 'std':round(np.std(temp_dic[1]),3)}
-  summ_dic['OFF_cycles'] = {'mean':round(np.mean(temp_dic[0]),0), 'std':round(np.std(temp_dic[0]),3)}
-  return (summ_dic)
 #%%
 def AD_refit_training(train_data,data_sampling_type,data_sampling_time):
     
@@ -382,3 +341,31 @@ def AD_refit_testing(test_data,data_sampling_type,data_sampling_time):
           continue   
       test_stats[day] = temp
     return test_stats
+#%%
+def tidy_gt_and_ob(house_no,appliance,day_start,day_end,result_sub):
+    '''In this I re_format gt and observed results for calculating end results '''
+    gt = read_REFIT_groundtruth()
+    select_house = gt.House_No==house_no
+    select_appliance = gt.Appliance==appliance
+    gt_sub = gt[select_house & select_appliance]
+    gt_appliance = deepcopy (gt_sub[(gt_sub.start_time >= day_start) & (gt_sub.end_time <= day_end)])
+    columns = gt_appliance.columns.values.tolist()
+    columns.append('day')
+    gt_df = pd.DataFrame(columns= columns)
+    for i in range(len(gt_appliance)):
+        start = gt_appliance.start_time.iloc[i].date()
+        end = gt_appliance.end_time.iloc[i].date()
+        temp = gt_appliance.iloc[i]
+         # if anomaly continued on more than one day then duplicate rows for th e range
+        days = pd.date_range(start,end)
+        temp2 = pd.DataFrame([temp]*len(days))
+        temp2['day'] = days
+        gt_df = gt_df.append(temp2) 
+        
+    #% # Now format observed results properly
+    result_appliance = deepcopy(result_sub)
+    # convert timestamp to dates
+    result_appliance['day']= result_appliance.updated_timestamp.apply(lambda x: x.date()).tolist()
+    # remove duplicated entries
+    result_appliance = result_appliance[~result_appliance.duplicated('day')]
+    return gt_df,result_appliance  
