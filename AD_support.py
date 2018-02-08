@@ -12,7 +12,7 @@ from sklearn.cluster import KMeans
 import numpy as np
 from itertools import groupby
 from collections import OrderedDict,Counter
-from AD_support import *
+from datetime import datetime,timedelta
 #%%
 def read_REFIT_groundtruth():
   
@@ -155,13 +155,13 @@ def create_training_stats(traindata,sampling_type,sampling_rate):
   summ_dic['OFF_cycles'] = {'mean':round(np.mean(OFF_cycles),0), 'std':round(np.std(OFF_cycles),3)}
   summ_dic['OFF_cycles'].update(compute_boxplot_stats(OFF_cycles))
   #for debugging purpose
-  print(compute_boxplot_stats(ON_duration))
-  print(compute_boxplot_stats(OFF_duration))
-  print(compute_boxplot_stats(ON_cycles))
+#  print(compute_boxplot_stats(ON_duration))
+#  print(compute_boxplot_stats(OFF_duration))
+ # print(compute_boxplot_stats(ON_cycles))
   return (summ_dic)
 
 #%%
-def create_testing_stats_with_boxplot(testdata,k,sampling_type,sampling_rate):
+def  create_testing_stats_with_boxplot(testdata,k,sampling_type,sampling_rate):
   """  """
   temp_dic = {}
   #for k, v in testdata:
@@ -184,22 +184,21 @@ def create_testing_stats_with_boxplot(testdata,k,sampling_type,sampling_rate):
   if np.std(samp_val) <= 1:# contains observations with same values, basically forward filled values
     print("Dropping context {} from analysis as it contains same readings".format(k))
     return (False)
-  elif np.std(samp_val) <= 5:
+  elif np.std(samp_val) <= 5: # when applaince reamins ON for full context genuinely
     print("Only one state in context {} found".format(k))
     if samp_val[2] > 10:
       temp_lab = [1]* (samp_val.shape[0]-1)
       temp_lab.append(0)
       samp['cluster'] = temp_lab
-    else:
+    else:# when applaince reamins OFF for full context genuinely
       temp_lab = [0]* (samp_val.shape[0]-1)
       temp_lab.append(1)
       samp['cluster'] = temp_lab
-  else:
+  else: # normal case, on and off states of appliance
     kobj = perform_clustering(samp_val,clusters=2)
     samp['cluster'] = kobj.labels_
     samp = re_organize_clusterlabels(samp)
   
-  print(samp)
   tempval = [(k,sum(1 for i in g)) for k,g in groupby(samp.cluster.values)]
   tempval = pd.DataFrame(tempval,columns=['cluster','samples'])
   #%energy computation logic for eacy cycle
@@ -233,6 +232,57 @@ def create_testing_stats_with_boxplot(testdata,k,sampling_type,sampling_rate):
   summ_dic['ON_cycles'] = temp_dic[1]
   summ_dic['OFF_cycles'] = temp_dic[0]
   return (summ_dic)
+#%% Anomaly detection logic
+def anomaly_detection_algorithm(test_stats,contexts_stats,alpha,num_std):
+  ''' this function defines the anomaly detection logic '''
+  LOG_FILENAME = '/Volumes/MacintoshHD2/Users/haroonr/Downloads/REFIT_log/logfile_REFIT.csv'
+  with open(LOG_FILENAME,'a') as mylogger:
+  
+    mylogger.write("\n*****NEW ITERATION at time {}*************\n".format(datetime.now()))
+    result = [] 
+    for day,data in test_stats.items():
+      for contxt,contxt_stats in data.items():
+        #be clear - word contexts_stats represents training data and word contxt represents test day stats
+        train_results = contexts_stats[contxt] # all relevant train stats
+        test_results  = contxt_stats
+        temp_res = {}
+        temp_res['timestamp'] = datetime.strptime(day,'%Y-%m-%d')
+        temp_res['context']   = contxt # denotes part of the day
+        temp_res['status']    = 0 # is anomaly
+        temp_res['anomtype']  = np.float("Nan") # anomaly type
+        # rule 3 of unum
+  #      if np.mean(test_results['ON_energy'] >  train_results['ON_energy']['mean'] + num_std* train_results['ON_energy']['std']) and (np.mean(test_results['OFF_energy']) >  train_results['OFF_energy']['mean'] + num_std* train_results['OFF_energy']['std']):
+  #        temp_res['status'] = 0
+  #        mylogger.write(day + ":" + contxt + "is not elongated anomaly as off time was also longer \n")
+  #      # rule 1 of unum
+        if np.mean(test_results['ON_energy']) > alpha * train_results['ON_energy']['mean'] + num_std* train_results['ON_energy']['std']:
+          temp_res['status'] = 1
+          temp_res['anomtype'] = "long"
+          mylogger.write(day + ":"+ contxt + ", elongated anomaly" + ", train_stats duration, " + str(train_results['ON_energy']['mean']) + ":"+str(train_results['ON_energy']['std']) + "; test_stats energy, " + str(np.mean(test_results['ON_energy'])) + "\n" )
+              # rule 2 of unum
+        elif np.mean(test_results['ON_cycles']) >  alpha * train_results['ON_cycles']['mean'] + num_std* train_results['ON_cycles']['std']:
+          temp_res['status'] = 1
+          temp_res['anomtype'] = "frequent"
+          mylogger.write(day + ":"+contxt +  ", frequent anomaly" + ", train_stats frequency, " + str(train_results['ON_cycles']['mean']) + ":"+str(train_results['ON_cycles']['std']) + "; test_stats frequency, " + str(np.mean(test_results['ON_cycles'])) + "\n"  )
+        result.append(temp_res)
+  res_df = pd.DataFrame.from_dict(result)
+  #%% rectify timestamps by including appropriate context information
+  updated_timestamp = []
+  for i in range(0,res_df['context'].shape[0]):
+      context = res_df['context'][i]
+      timestamp = res_df['timestamp'][i]
+      if context == 'night_1_gp':
+        timestamp =  timestamp + timedelta(hours=3)
+      elif context == 'day_1_gp':
+        timestamp =  timestamp + timedelta(hours=9)
+      elif context == 'day_2_gp':
+        timestamp =  timestamp + timedelta(hours=15)
+      elif context == 'night_2_gp':
+        timestamp =  timestamp + timedelta(hours=21)
+      updated_timestamp.append(timestamp)
+  res_df['updated_timestamp'] =  updated_timestamp  
+  return(res_df) # returns only anomaly packets
+  
 #%%
 ###
 def create_testing_stats(testdata,k):
@@ -275,3 +325,60 @@ def create_testing_stats(testdata,k):
   summ_dic['ON_cycles'] = {'mean':round(np.mean(temp_dic[1]),0), 'std':round(np.std(temp_dic[1]),3)}
   summ_dic['OFF_cycles'] = {'mean':round(np.mean(temp_dic[0]),0), 'std':round(np.std(temp_dic[0]),3)}
   return (summ_dic)
+#%%
+def AD_refit_training(train_data,data_sampling_type,data_sampling_time):
+    
+    #%create training stats
+    """" 1. get data
+         2. divide it into 4 contexts 
+         3. divide each into day wise
+         4. calculate above stats """
+    # set training data duration
+    #train_data =  df_samp[myapp]['2014-03-07']
+    #train_data =  df_samp[myapp]['2014-03']
+    
+    # divide data according to  4 contexts [defined by times]
+    contexts = OrderedDict()
+    contexts['night_1_gp'] = train_data.between_time("00:00","05:59")
+    contexts['day_1_gp'] = train_data.between_time("06:00","11:59")
+    contexts['day_2_gp'] = train_data.between_time("12:00","17:59")
+    contexts['night_2_gp'] = train_data.between_time("18:00","23:59")
+    #%
+    # create groups within contexts day wise, this will allow us to catch stats at day level otherwise preserving boundaries between different days might become difficult
+    contexts_daywise = OrderedDict()
+    for k,v in contexts.items():
+      contexts_daywise[k] = v.groupby(v.index.date)
+     #% Compute stats context wise
+    contexts_stats = OrderedDict()
+    #%
+    for k,v in contexts_daywise.items():
+      print("CONTEXT IS {}".format(k))
+      contexts_stats[k] = create_training_stats(v,sampling_type=data_sampling_type,sampling_rate=data_sampling_time) 
+    return contexts_stats
+#%%
+def AD_refit_testing(test_data,data_sampling_type,data_sampling_time):
+    
+    test_data_daywise = test_data.groupby(test_data.index.date) # daywise grouping
+    test_contexts_daywise = OrderedDict()
+    for k,v in test_data_daywise:     # context wise division
+      #print(str(k))
+      test_contexts= OrderedDict()
+      test_contexts['night_1_gp'] = v.between_time("00:00","05:59")
+      test_contexts['day_1_gp']   = v.between_time("06:00","11:59")
+      test_contexts['day_2_gp']   = v.between_time("12:00","17:59")
+      test_contexts['night_2_gp'] = v.between_time("18:00","23:59")
+      test_contexts_daywise[str(k)] = test_contexts
+    #%
+    test_stats = OrderedDict()
+    for day,data in test_contexts_daywise.items():
+      print("testing for day {}".format(day))
+      temp = OrderedDict()
+      for context,con_data in data.items():
+        #temp[context] = create_testing_stats(con_data,context)
+        res = create_testing_stats_with_boxplot(con_data,context,sampling_type=data_sampling_type,sampling_rate=data_sampling_time)
+        if res!= False:
+          temp[context] = res
+        else:
+          continue   
+      test_stats[day] = temp
+    return test_stats
