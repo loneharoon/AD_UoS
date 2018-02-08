@@ -14,7 +14,7 @@ def fhmm_decoding(train_dset,test_dset):
 
     train_agg_meter,train_sub_meters = divide_dataset_in_appliances(train_dset)
     test_agg_meter,test_sub_meters = divide_dataset_in_appliances(test_dset)
-    #train model for each applaince
+    #train model for each taapplaince
     model = OrderedDict()
     appliances = train_sub_meters.columns
     for appliance in appliances:

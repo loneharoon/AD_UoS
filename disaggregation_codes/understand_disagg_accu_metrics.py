@@ -33,7 +33,8 @@ df_samp = df_sub.resample('1T',label='right',closed='right').mean()
 data_sampling_time = 1 #in minutes
 data_sampling_type = "minutes" # or seconds
 df_samp.drop('Issues',axis=1,inplace=True)
-df_samp.rename(columns={'Aggregate':'use'},inplace=True) # renaming agg column
+#df_samp.rename(columns={'Aggregate':'use'},inplace=True) # renaming agg column
+rename_appliances(home,df_samp)
 #%%
 #res = df.sum(axis=0)
 #high_energy_apps = res.nlargest(6).keys() # CONTROL : selects few appliances

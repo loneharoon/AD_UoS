@@ -155,8 +155,11 @@ for i in range(len(clus_means)):
     edge_mag = [j[0] for j in neg_edges] # list only edge mags
     match_loc = neg_edges[edge_mag.index(min(edge_mag))][1]
     pairs.append((i,match_loc))
-    
-
+#%% Now     
+for i in range(len(pairs)):
+  pos_cluster = sorted(Newcluster[pairs[i][0]])
+  neg_cluster = sorted(Newcluster[pairs[i][1]])
+  
       
 
 #%% create mat files

@@ -10,7 +10,7 @@ from IPython.core.display import HTML, display
 from collections import OrderedDict
 import datetime
 import pytz
-from nilmtk.datastore import HDFDataStore, CSVDataStore
+#from nilmtk.datastore import HDFDataStore, CSVDataStore
 
 # Python 2/3 compatibility
 from six import iteritems
@@ -303,27 +303,27 @@ def timestamp_is_naive(timestamp):
         return False
 
 
-def get_datastore(filename, format, mode='a'):
-    """
-    Parameters
-    ----------
-    filename : string
-    format : 'CSV' or 'HDF'
-    mode : 'a' (append) or 'w' (write), optional
-
-    Returns
-    -------
-    metadata : dict
-    """
-    if filename is not None:
-        if format == 'HDF':
-            return HDFDataStore(filename, mode)
-        elif format == 'CSV':
-            return CSVDataStore(filename)
-        else:
-            raise ValueError('format not recognised')
-    else:
-        ValueError('filename is None')
+#def get_datastore(filename, format, mode='a'):
+#    """
+#    Parameters
+#    ----------
+#    filename : string
+#    format : 'CSV' or 'HDF'
+#    mode : 'a' (append) or 'w' (write), optional
+#
+#    Returns
+#    -------
+#    metadata : dict
+#    """
+#    if filename is not None:
+#        if format == 'HDF':
+#            return HDFDataStore(filename, mode)
+#        elif format == 'CSV':
+#            return CSVDataStore(filename)
+#        else:
+#            raise ValueError('format not recognised')
+#    else:
+#        ValueError('filename is None')
 
 
 def normalise_timestamp(timestamp, freq):
