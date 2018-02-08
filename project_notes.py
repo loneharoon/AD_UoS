@@ -7,6 +7,7 @@ Created on Tue Jan 16 22:45:22 2018
 """
 #%%
 """
+
 Following cases are present in REFIT data
 1. Na Values
 2. Days were data is already filled so only contionous high values [needs to be identifed in algorithm]
@@ -16,4 +17,9 @@ Failures/Insights:
 
 FHMM:
 1. Number of states for an appliance are detected via clustering. No manual need to specify. Same as done in toolkit
+
+CO:
+    
+    
+    
 '''

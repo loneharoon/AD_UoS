@@ -11,13 +11,14 @@ import warnings
 warnings.filterwarnings("ignore")
 import numpy as np
 import pandas as pd
-import sys
+import sys,pickle,time
 sys.path.append('/Volumes/MacintoshHD2/Users/haroonr/Dropbox/UniOfStra/AD/disaggregation_codes/')
 import accuracy_metrics_disagg as acmat
 import localize_fhmm,co,standardize_column_names
 import matplotlib.pyplot as plt
 from copy import deepcopy
 #from standardize_column_names import rename_appliances
+import latent_Bayesian_melding as LBM
 #%%
 dir = "/Volumes/MacintoshHD2/Users/haroonr/Detailed_datasets/REFITT/CLEAN_REFIT_081116/"
 home = "House10.csv"
@@ -54,15 +55,65 @@ if denoised:
 train_dset = df_selected['2014-04-01':'2014-04-30']
 train_dset.dropna(inplace=True)
 #test_dset = df_samp['2014-04-01':'2014-04-04']
-test_dset = df_selected['2014-04-01']
-#test_dset.dropna(inplace=True)
-#%%
+test_dset = df_selected['2014-04-01':]
+test_dset.dropna(inplace=True)
+#%% RUN fHMM
+save_dir = "/Volumes/MacintoshHD2/Users/haroonr/Detailed_datasets/REFITT/Intermediary_results/"
 fhmm_result  =  localize_fhmm.fhmm_decoding(train_dset,test_dset) # dissagreation
-#co_result = co.co_decoding(train_dset,test_dset)
-#fhmm_result = co_result
-norm_fhmm = acmat.accuracy_metric_norm_error(fhmm_result)
-print(norm_fhmm)
+filename = save_dir+"fhmm/"+ home.split('.')[0]+'.pkl'
+handle = open(filename,'wb')
+#https://docs.python.org/2/library/pickle.html
+pickle.dump(fhmm_result,handle)
+handle.close()
+#%% RUN CO
+co_result = co.co_decoding(train_dset,test_dset)
+filename = save_dir+"co/" + home.split('.')[0]+'.pkl'
+handle = open(filename,'wb')
+pickle.dump(co_result,handle)
+handle.close()
+#%% RUN LBM
+model_path= "/Volumes/MacintoshHD2/Users/haroonr/Detailed_datasets/REFITT/Intermediary_results/lbm/population_models/"
+population_parameters = model_path +  home.split('.')[0] +'.pkl'
+meterdata= test_dset
+main_meter = 'use'
+filetype = 'pkl'
+lbm_result ={}
+mains = meterdata[main_meter]
+meterlist = meterdata.columns.tolist()
+meterlist.remove(main_meter)
+lbm = LBM.LatentBayesianMelding()
+#meterlist=["refrigerator1",'bedroom1']
+individual_model = lbm.import_model(meterlist, population_parameters,filetype)
+mains_group = mains.groupby(mains.index.date)
+res = []
+start = time.clock()
+for key,val in mains_group:
+    print(key)
+    try:    
+        results = lbm.disaggregate_chunk(val)
+        infApplianceReading = results['inferred appliance energy']
+        res.append(infApplianceReading)
+    except:
+        print ("** LBM exception on {}**".format(key))
+    continue    
+print('LBM time taken {}'.format(time.clock()-start))  
+infreadings = pd.concat(res)
+#%%
+infreadings.rename(columns={'mains':'use'},inplace=True)
+lbm_result['decoded_power'] = infreadings
+lbm_result['actual_power'] = meterdata
+#infApplianceReading.to_csv(dissagg_result_save+"lbm/" + hos)
+save_dir = "/Volumes/MacintoshHD2/Users/haroonr/Detailed_datasets/REFITT/Intermediary_results/"
+filename = save_dir+"lbm/"+ home.split('.')[0]+'.pkl'
+handle = open(filename,'wb')
+#https://docs.python.org/2/library/pickle.html
+pickle.dump(fhmm_result,handle)
+handle.close()
 
+#%%
+#fhmm_result = co_result
+#norm_fhmm = acmat.accuracy_metric_norm_error(fhmm_result)
+#print(norm_fhmm)
 #%%
 gt= fhmm_result['actual_power']
 pred= fhmm_result['decoded_power']
@@ -77,3 +128,7 @@ for app in pred.columns:
     pred1.plot(ax=axes[count],color="black")
     count = count+1
 plt.show()
+#%%
+pkl_file = open(filename, 'rb')
+data1 = pickle.load(pkl_file)
+#pprint.pprint(data1)
