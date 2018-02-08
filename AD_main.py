@@ -49,13 +49,16 @@ result_sub = res_df[res_df.status==1]
 #house_no = 1
 house_no =  int(re.findall('\d+',home)[0])
 appliance = scn.reverse_lookup(home,myapp) # find actual name of appliance in anomaly database
-#appliance = "Freezer_1"
 day_start = test_data.first_valid_index()
 day_end = test_data.last_valid_index()
 print('both S and NS anomalies selected')
 gt,ob = tidy_gt_and_ob(house_no,appliance,day_start,day_end,result_sub)
-  
-        
+confusion_matrix(gt.day.values,ob.day.values)
+gt_day = gt.day.values
+ob_day = ob.day.values
+tp=tn=fp=fn = 0
+for i in gt_day:
+    
 #%%
 x= p.timestamp
 y= gt_sub['start_time'][0]
