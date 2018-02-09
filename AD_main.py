@@ -1,24 +1,25 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-This scritp contains the AD logic for refit HOMES
+This scritp contains the AD logic for refit HOMES. 
+It contains logic for anomoaly detection and computing detection accuracy. It does not relate to disaggregation
 Created on Tue Jan  2 08:53:47 2018
 
 @author: haroonr
 """
 #%%
 import pandas as pd
-import matplotlib.pyplot as plt
-from sklearn.cluster import KMeans
-import numpy as np
-from itertools import groupby
-from collections import OrderedDict,Counter
-from AD_support import *
-from datetime import datetime,timedelta
+#import matplotlib.pyplot as plt
+#from sklearn.cluster import KMeans
+#import numpy as np
+#from itertools import groupby
+#from collections import OrderedDict,Counter
+#from AD_support import *
+#from datetime import datetime,timedelta
 import standardize_column_names as scn
 import AD_support as ads
 import re
-from __future__ import division
+
 #%%
 dir = "/Volumes/MacintoshHD2/Users/haroonr/Detailed_datasets/REFITT/CLEAN_REFIT_081116/"
 home = "House10.csv"
@@ -55,7 +56,7 @@ day_end = test_data.last_valid_index()
 print('both S and NS anomalies selected')
 gt,ob = ads.tidy_gt_and_ob(house_no,appliance,day_start,day_end,result_sub)
 #confusion_matrix(gt.day.values,ob.day.values)
-precision,recall, fscore = ads.compute_confusion_metrics(gt,ob)
+precision,recall, fscore = ads.compute_AD_confusion_metrics(gt,ob)
 print(precision,recall, fscore)  
     
 #%%
