@@ -40,6 +40,7 @@ def fhmm_decoding(train_dset,test_dset):
     learnt_model_combined = fhm.create_combined_hmm(new_learnt_models)
     temp1 = test_agg_meter.values.reshape(len(test_agg_meter),1)
     print('\nTesting done\n')
+    print('Running in predict stage now\n')
     start_time = time.time()
     new_learnt_states = learnt_model_combined.predict(temp1)
     print('time taken %f seconds' %(time.time() - start_time))
