@@ -18,6 +18,7 @@ from datetime import datetime,timedelta
 import standardize_column_names as scn
 import AD_support as ads
 import re
+from __future__ import division
 #%%
 dir = "/Volumes/MacintoshHD2/Users/haroonr/Detailed_datasets/REFITT/CLEAN_REFIT_081116/"
 home = "House10.csv"
@@ -52,18 +53,13 @@ appliance = scn.reverse_lookup(home,myapp) # find actual name of appliance in an
 day_start = test_data.first_valid_index()
 day_end = test_data.last_valid_index()
 print('both S and NS anomalies selected')
-gt,ob = tidy_gt_and_ob(house_no,appliance,day_start,day_end,result_sub)
-confusion_matrix(gt.day.values,ob.day.values)
-gt_day = gt.day.values
-ob_day = ob.day.values
-tp=tn=fp=fn = 0
-for i in gt_day:
+gt,ob = ads.tidy_gt_and_ob(house_no,appliance,day_start,day_end,result_sub)
+#confusion_matrix(gt.day.values,ob.day.values)
+precision,recall, fscore = ads.compute_confusion_metrics(gt,ob)
+print(precision,recall, fscore)  
     
 #%%
-x= p.timestamp
-y= gt_sub['start_time'][0]
-z= gt_sub['end_time'][0]
-if (x >= y).values[0] & (x <= z).values[0]:
+
 #%% visualise specific data portion
 dat = "2014-05-03"
 test_data[dat].plot()

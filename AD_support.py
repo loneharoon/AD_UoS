@@ -10,9 +10,11 @@ Created on Tue Jan  2 08:54:04 2018
 import pandas as pd
 from sklearn.cluster import KMeans
 import numpy as np
+from copy import deepcopy
 from itertools import groupby
 from collections import OrderedDict,Counter
 from datetime import datetime,timedelta
+from __future__ import division
 #%%
 def read_REFIT_groundtruth():
   
@@ -357,8 +359,10 @@ def tidy_gt_and_ob(house_no,appliance,day_start,day_end,result_sub):
         end = gt_appliance.end_time.iloc[i].date()
         temp = gt_appliance.iloc[i]
          # if anomaly continued on more than one day then duplicate rows for th e range
-        days = pd.date_range(start,end)
-        temp2 = pd.DataFrame([temp]*len(days))
+        #days = pd.date_range(start,end) # this creates timestamp object, so dump it 
+        total_days = (end - start).days + 1
+        days = [start + datetime.timedelta(days=x) for x in range(0, total_days)]
+        temp2 = pd.DataFrame([temp]*total_days)
         temp2['day'] = days
         gt_df = gt_df.append(temp2) 
         
@@ -369,3 +373,20 @@ def tidy_gt_and_ob(house_no,appliance,day_start,day_end,result_sub):
     # remove duplicated entries
     result_appliance = result_appliance[~result_appliance.duplicated('day')]
     return gt_df,result_appliance  
+#%%
+def compute_confusion_metrics(gt,ob):
+    gt_day = gt.day.values
+    ob_day = ob.day.values
+    tp=fp=fn = 0
+    for i in ob_day:
+        if i in gt_day:
+            tp = tp + 1
+        else:
+            fp = fp + 1 
+    for j in gt_day:
+        if j not in ob_day:
+            fn = fn + 1      
+    precision = tp/(tp + fp)
+    recall = tp/(tp + fn)
+    fscore= 2*(precision * recall)/(precision+recall)
+    return round(precision,2), round(recall,2),round(fscore,2)  
