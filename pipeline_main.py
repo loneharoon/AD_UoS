@@ -28,9 +28,10 @@ myapp = "Chest_Freezer"
 train_power =   data_dic['train_power']
 decoded_power = data_dic['decoded_power']
 actual_power  = data_dic['actual_power']
-
+#TODO : SETME
 train_data =  train_power[myapp]
-test_data =   decoded_power[myapp][:'2014-10-24']
+test_data =   decoded_power[myapp]
+#test_data =   decoded_power[myapp][:'2014-10-24'] # house10
 
 data_sampling_time = 1 #in minutes
 data_sampling_type = "minutes" # or seconds
@@ -40,8 +41,9 @@ test_results  = ads.AD_refit_testing(test_data,data_sampling_type,data_sampling_
 num_std = 2
 alpha = 2.5
 res_df = ads.anomaly_detection_algorithm(test_results,train_results,alpha,num_std)
+#result_sub = res_df[res_df.status==1]
 result_sub = res_df[res_df.status==1]
-
+# TODO : set me
 #%%
 # Compute anomaly detection accuracies
 #house_no = 1
