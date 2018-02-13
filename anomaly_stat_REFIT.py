@@ -39,11 +39,20 @@ dfx = remap_appliances_ifrequired(df,re_map)
 Counter(dfx.Appliance) # prints all anomalies
 Counter(dfx[dfx.Status=='S'].Appliance) # prints only sure anomalies
  #%% Find home where specifid_appliance's anomaly occured more
- tg_appliance = "Freezer"
+ tg_appliance = "ElectricHeater"
  Counter(dfx[(dfx.Appliance == tg_appliance) & (dfx.Status=='S')].House_No )
  
 OR
  
 dfx[(dfx.Appliance == tg_appliance) & (dfx.Status=='S')].groupby('House_No').size()
 dfx[(dfx.Appliance == tg_appliance) & (dfx.Status=='S')].groupby('House_No').size().sum()
- #%5
+ #%%
+ #find dates of specific appliance anomalies
+ 
+ app ="Freezer"
+ home = 1
+ dfx[(dfx.House_No ==home) &(dfx.Appliance == app) & (dfx.Status=='S') ]
+ #%% FIRE QUERIES ON ORIGINAL DATAFRAME. WHOSE APPLAINCE NAMES ARE NOT MAPPED
+ app ="ElectricHeater"
+ home = 1
+ df[(df.House_No ==home) &(df.Appliance == app) & (df.Status=='S') ]
