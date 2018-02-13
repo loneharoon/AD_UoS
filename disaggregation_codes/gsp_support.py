@@ -6,8 +6,9 @@ Created on Fri Feb  2 12:09:27 2018
 
 @author: haroonr
 """
-import numpy as np
 
+from __future__ import division 
+import numpy as np
 #%%
 def gspclustering_event2(event,delta_p,sigma):
   winL = 1000
