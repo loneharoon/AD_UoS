@@ -1,12 +1,12 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-This is the main file frow where entire project starts. It will do disagg an AD too
+This in one of the main files. It calls different disaggregation approaches and saves the disagg (and gt too) results in a folder. Note it does not contain any AD logic
 Created on Wed Feb  7 09:00:08 2018
 
 @author: haroonr
 """
-
+#%%
 import warnings
 warnings.filterwarnings("ignore")
 import numpy as np
@@ -21,7 +21,7 @@ from copy import deepcopy
 import latent_Bayesian_melding as LBM
 #%%
 dir = "/Volumes/MacintoshHD2/Users/haroonr/Detailed_datasets/REFITT/CLEAN_REFIT_081116/"
-home = "House10.csv"
+home = "House20.csv"
 df = pd.read_csv(dir+home,index_col="Time")
 df.index = pd.to_datetime(df.index)
 #df_sub = df["2014-03-01":'2014-04-30']
@@ -55,18 +55,21 @@ if denoised:
 train_dset = df_selected['2014-04-01':'2014-04-30']
 train_dset.dropna(inplace=True)
 #test_dset = df_samp['2014-04-01':'2014-04-04']
-test_dset = df_selected['2014-04-01':]
+test_dset = df_selected['2014-05-01':'2014-12-31']
 test_dset.dropna(inplace=True)
 #%% RUN fHMM
 save_dir = "/Volumes/MacintoshHD2/Users/haroonr/Detailed_datasets/REFITT/Intermediary_results/"
 fhmm_result  =  localize_fhmm.fhmm_decoding(train_dset,test_dset) # dissagreation
+fhmm_result['train_power'] = train_dset
 filename = save_dir+"fhmm/"+ home.split('.')[0]+'.pkl'
 handle = open(filename,'wb')
 #https://docs.python.org/2/library/pickle.html
 pickle.dump(fhmm_result,handle)
 handle.close()
 #%% RUN CO
+save_dir = "/Volumes/MacintoshHD2/Users/haroonr/Detailed_datasets/REFITT/Intermediary_results/"
 co_result = co.co_decoding(train_dset,test_dset)
+co_result['train_power'] = train_dset
 filename = save_dir+"co/" + home.split('.')[0]+'.pkl'
 handle = open(filename,'wb')
 pickle.dump(co_result,handle)
@@ -102,6 +105,7 @@ infreadings = pd.concat(res)
 infreadings.rename(columns={'mains':'use'},inplace=True)
 lbm_result['decoded_power'] = infreadings
 lbm_result['actual_power'] = meterdata
+lbm_result['train_power'] = train_dset
 #infApplianceReading.to_csv(dissagg_result_save+"lbm/" + hos)
 save_dir = "/Volumes/MacintoshHD2/Users/haroonr/Detailed_datasets/REFITT/Intermediary_results/"
 filename = save_dir+"lbm/"+ home.split('.')[0]+'.pkl'

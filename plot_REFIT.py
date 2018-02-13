@@ -16,16 +16,16 @@ from matplotlib.backends.backend_pdf import PdfPages
 import inspect
 #%%
 dir = "/Volumes/MacintoshHD2/Users/haroonr/Detailed_datasets/REFITT/CLEAN_REFIT_081116/"
-home = "House10.csv"
+home = "House21.csv"
 #savedir = "/Volumes/MacintoshHD2/Users/haroonr/Dropbox/UniOfStrat/temp_plots/"
 df = pd.read_csv(dir+home,index_col="Time")
 df.index = pd.to_datetime(df.index)
 #%% ALl appliances single day plot
-df['2014-03-26'].plot(subplots=True)
+df['2014-03-27'].plot(subplots=True)
 #%% SELECTED appliances single day plot
-df['2014-03-02'][['Aggregate','Dishwasher']].plot(subplots=True)
+df['2014-06-13'][['Aggregate','Fridge-Freezer']].plot(subplots=True)
 #%% SINGLE appliance single DAY PLOT
-daydat = df['2014-10-04']['Freezer']
+daydat = df['2015-02-13']['Fridge-Freezer']
 daydat.plot() 
 
 #%% prepare data for facet plotting
