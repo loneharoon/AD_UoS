@@ -18,6 +18,7 @@ import accuracy_metrics_disagg as acmat
 import matplotlib.pyplot as plt
 import gsp_support as gsp
 from collections import OrderedDict
+from copy import deepcopy
 #%%
 #import scipy.io
 #fpath = "/Volumes/MacintoshHD2/Users/haroonr/Documents/MATLAB/main.mat"
@@ -25,7 +26,7 @@ from collections import OrderedDict
 #data_file = fl['main'].flatten().tolist()  
 reddhome= "/Volumes/MacintoshHD2/Users/haroonr/Detailed_datasets/Redd_dataset/house3/"
 main = pd.read_csv(reddhome+"main_meters.csv",index_col="Index")
-main = main[0:30000]
+main = main[0:90000]
 main['aggregate'] = main.apply(sum,axis=1)
 main['timestamp'] = pd.to_datetime(main.index).astype(np.int64) //10**9
 iam = pd.read_csv(reddhome+"sub_meters.csv",index_col="Index")
@@ -33,7 +34,6 @@ keep = ['refrigerator','disposal','dishwaser','kitchen_outlets', 'kitchen_outlet
 iam_sub = iam[keep]
 iam_sub['timestamp'] = pd.to_datetime(iam_sub.index).astype(np.int64) //10**9
 #main['aggregate'] = main.apply(sum,axis=1)
-
 #%%
 #dir = "/Volumes/MacintoshHD2/Users/haroonr/Detailed_datasets/REFITT/CLEAN_REFIT_081116/"
 #home = "House1.csv"
@@ -71,8 +71,7 @@ for k in range(0,len(sigmas)):
     else:
       event = sorted(list(set(event)-set(clusters[(i-1)])) )
     if not len(event):
-      print('event list got empty')
-      print('i got empty at value {}'.format(i))
+      print('Event list got empty at value {}'.format(i))
       break
     else:
       clus = gsp.gspclustering_event2(event,delta_p,sigmas[k]);
@@ -87,17 +86,12 @@ if len(event) > 0:
 #%% Code ClusterTable_3_H6.m
 
 
-#%%   iam related data
-Ls = 10
-L = iam_sub.shape[0]
-iam_sub = iam_sub[0:4000]
-del_iam = iam_sub.apply(lambda x: [round(x[i+1]-x[i],2) for i in range(0,len(x)-1)],axis=0)
-del_iam.keys()
+
 #%% reducing number of clusters
-time = main['timestamp'].values.tolist()
-time_main= iam_sub['timestamp'].values.tolist()
+#time = main['timestamp'].values.tolist()
+#time_main= iam_sub['timestamp'].values.tolist()
 Table_1 =  np.zeros((len(Finalcluster),5))
-winsize = 20
+#winsize = 20
 for i in range(len(Finalcluster)):
   Table_1[i,0] = len(Finalcluster[i])
   Table_1[i,1] = np.mean([delta_p[j] for j in Finalcluster[i]])
@@ -153,16 +147,35 @@ pairs = []
 # TODO: handle case for pending clusters which do not cluster  and sometimes more than one positive cluster might will pair with same neg. cluster
 for i in range(len(clus_means)):
   if clus_means[i] > 0: # postive edge
-    neg_edges = [ (clus_means[i] + clus_means[j],j) for j in range(i+1,len(clus_means)) if clus_means[j] < 0] # find all neg edges and their location in tuple form
-    edge_mag = [j[0] for j in neg_edges] # list only edge mags
+    neg_edges = [ (abs(clus_means[i] + clus_means[j]),j) for j in range(i+1,len(clus_means)) if clus_means[j] < 0] # find all neg edges and their location in tuple form
+    edge_mag = [j[0] for j in neg_edges] # 0 corresponds to list magnitude in the tuple
     match_loc = neg_edges[edge_mag.index(min(edge_mag))][1]
     pairs.append((i,match_loc))
+
 #%% Now
-appliance_pairs = feature_matching_module(pairs,DelP)
-power_series = generate_appliance_powerseries(appliance_pairs)
+appliance_pairs = gsp.feature_matching_module(pairs,DelP, Newcluster)
+power_series = gsp.generate_appliance_powerseries(appliance_pairs,DelP)
 
 #%%
-
+pairs_temp = deepcopy(pairs)
+dic_def = defaultdict(list)
+for value,key in pairs:
+    dic_def[key].append(value)
+#%%
+updated_pairs= []
+for neg_edge in dic_def.keys():
+    #neg_edge= 35
+    pos_edges = dic_def[neg_edge]
+    if len(pos_edges) >1:
+        candidates = [abs(clus_means[edge]+ clus_means[neg_edge]) for edge in pos_edges]
+        good_pos_edge =  [el_pos for el_pos in range(len(candidates)) if candidates[el_pos] == min(candidates)][0]
+        good_pair = (pos_edges[good_pos_edge],neg_edge)
+    else:
+        good_pair = (pos_edges[0],neg_edge)
+    updated_pairs.append(good_pair)
+    
+        
+        
 
 #%% create mat files
 import scipy.io
@@ -179,4 +192,9 @@ scipy.io.savemat(spath+"kitchen_outlets.1",mdict={'kitchen_outlets.1':iam_sub['k
 
 scipy.io.savemat(spath+"time",mdict={'time':iam_sub['timestamp'].values.tolist()})
 scipy.io.savemat(spath+"time_main",mdict={'time_main':time_main})
-
+#%%   iam related data
+#Ls = 10
+#L = iam_sub.shape[0]
+#iam_sub = iam_sub[0:4000]
+#del_iam = iam_sub.apply(lambda x: [round(x[i+1]-x[i],2) for i in range(0,len(x)-1)],axis=0)
+#del_iam.keys()

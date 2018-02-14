@@ -93,7 +93,7 @@ def find_new_events(clusters,delta_p,ri):
   return newevents
 
 #%%
-def feature_matching_module(pairs,DelP):
+def feature_matching_module(pairs,DelP,Newcluster):
     alpha = 0.7
     beta = 0.3
     appliance_pairs = OrderedDict()
