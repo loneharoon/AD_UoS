@@ -159,13 +159,13 @@ def feature_matching_module(pairs,DelP,Newcluster):
              pair = (start_pos,neg_set[best_pos])
              state_pairs.append(pair)
       appliance_pairs[i] = state_pairs
-      return appliance_pairs
+    return appliance_pairs
 #%%
 def generate_appliance_powerseries(appliance_pairs,DelP):
     ''' generates full power series of appliances'''
+    appliance_signature = OrderedDict()
     for i in range(len(appliance_pairs)):
         events = appliance_pairs[i]
-        appliance_signature = OrderedDict()
         timeseq= []
         powerseq  = []
         for event in events:

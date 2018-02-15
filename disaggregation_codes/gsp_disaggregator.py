@@ -19,21 +19,23 @@ import matplotlib.pyplot as plt
 import gsp_support as gsp
 from collections import OrderedDict
 from copy import deepcopy
+from collections import defaultdict
 #%%
 #import scipy.io
 #fpath = "/Volumes/MacintoshHD2/Users/haroonr/Documents/MATLAB/main.mat"
 #fl = scipy.io.loadmat(fpath)
 #data_file = fl['main'].flatten().tolist()  
-reddhome= "/Volumes/MacintoshHD2/Users/haroonr/Detailed_datasets/Redd_dataset/house3/"
-main = pd.read_csv(reddhome+"main_meters.csv",index_col="Index")
-main = main[0:90000]
-main['aggregate'] = main.apply(sum,axis=1)
-main['timestamp'] = pd.to_datetime(main.index).astype(np.int64) //10**9
-iam = pd.read_csv(reddhome+"sub_meters.csv",index_col="Index")
-keep = ['refrigerator','disposal','dishwaser','kitchen_outlets', 'kitchen_outlets.1','lighting','microwave']
-iam_sub = iam[keep]
-iam_sub['timestamp'] = pd.to_datetime(iam_sub.index).astype(np.int64) //10**9
+# READING REDD FILES
+#reddhome= "/Volumes/MacintoshHD2/Users/haroonr/Detailed_datasets/Redd_dataset/house3/"
+#main = pd.read_csv(reddhome+"main_meters.csv",index_col="Index")
+#main = main[0:90000]
 #main['aggregate'] = main.apply(sum,axis=1)
+#main['timestamp'] = pd.to_datetime(main.index).astype(np.int64) //10**9
+#iam = pd.read_csv(reddhome+"sub_meters.csv",index_col="Index")
+#keep = ['refrigerator','disposal','dishwaser','kitchen_outlets', 'kitchen_outlets.1','lighting','microwave']
+#iam_sub = iam[keep]
+#iam_sub['timestamp'] = pd.to_datetime(iam_sub.index).astype(np.int64) //10**9
+
 #%%
 #dir = "/Volumes/MacintoshHD2/Users/haroonr/Detailed_datasets/REFITT/CLEAN_REFIT_081116/"
 #home = "House1.csv"
@@ -47,15 +49,24 @@ iam_sub['timestamp'] = pd.to_datetime(iam_sub.index).astype(np.int64) //10**9
 #data_sampling_type = "minutes" # or seconds
 #df_samp.drop('Issues',axis=1,inplace=True)
 #df_samp.rename(columns={'Aggregate':'use'},inplace=True) # renaming agg column
+#%% READING REFIT HOME 10 SELECTED
+readdir = "/Volumes/MacintoshHD2/Users/haroonr/Detailed_datasets/REFITT/REFIT_selected/"
+home = "gsp_refit_home10.csv"
+df = pd.read_csv(readdir+home,index_col="Time")
+df.index = pd.to_datetime(df.index)
+main =  df['Aggregate'].values.tolist() # len= 426732
+main = main[0:50000] # 3 days data
+
+
 #%%
 #data_vec = df_samp['use'].values.tolist()
 #data_vec = data_file[19:10000]
-data_vec =  main['aggregate'].values.tolist()
+data_vec =  main
 delta_p = [round(data_vec[i+1]-data_vec[i],2) for i in range(0,len(data_vec)-1)]
 #T = 80;
 sigma = 15;
 ri = 0.05;
-#events = [i for i in range(0, len(delta_p)) if(delta_p[i] > T or delta_p[i] < -T)]
+
 T_Positive = 40;
 T_Negative = -40;
 event =  [i for i in range(0, len(delta_p)) if (delta_p[i] > T_Positive or delta_p[i] < T_Negative) ]
@@ -87,20 +98,16 @@ if len(event) > 0:
 
 
 
-#%% reducing number of clusters
+#%% Here i count number of members of each cluster, their mean and standard deviation ans store such stats in Table_1. Next, I sort 'Finalcluster' according to cluster means in decreasing order. 
 #time = main['timestamp'].values.tolist()
 #time_main= iam_sub['timestamp'].values.tolist()
-Table_1 =  np.zeros((len(Finalcluster),5))
-#winsize = 20
+Table_1 =  np.zeros((len(Finalcluster),4))
 for i in range(len(Finalcluster)):
   Table_1[i,0] = len(Finalcluster[i])
   Table_1[i,1] = np.mean([delta_p[j] for j in Finalcluster[i]])
   Table_1[i,2] = np.std([delta_p[j] for j in Finalcluster[i]],ddof=1)
-  Table_1[i,3] =  abs(Table_1[i,3]/ Table_1[i,2])
-  #for j in range(len(Finalcluster[i])):
-   # judgestart =  
-
-#time < time_main[Finalcluster[i][j] + Ls-1] -winsize
+  Table_1[i,3] =  abs(Table_1[i,2]/ Table_1[i,1])
+#%%
 sort_means = np.argsort(Table_1[:,1]).tolist() # returns positions of sorted array
 sort_means.reverse() # gives decreasing order
 sorted_cluster =[]
@@ -109,18 +116,18 @@ for i in range(len(sort_means)):
   sorted_cluster.append(Finalcluster[sort_means[i]])
   FinalTable.append(Table_1[sort_means[i]].tolist())
 #%% 
-#L = len(data_vec)-1
+# Here I reduce number of clusters. I keep clusters with more than or equal 5 members as such and in next cell I merge cluster with less than 5 members to clusters with more than 5 members 
 DelP = [round(data_vec[i+1]-data_vec[i],2) for i in range(0,len(data_vec)-1)]
 Newcluster_1 = []
 Newtable = []
 for i in range(0,len(FinalTable)):
-  if (FinalTable[i][0]>=5):
+  if (FinalTable[i][0]>=10):
     Newcluster_1.append(sorted_cluster[i])
     Newtable.append(FinalTable[i])
 Newcluster = Newcluster_1
-#%%
+#%% merge cluster with less than 5 members to clusters with more than 5 members 
 for i in range(0,len(FinalTable)):
-  if(FinalTable[i][0] < 5 ):
+  if(FinalTable[i][0] < 10 ):
     for j in range(len(sorted_cluster[i])):
       count =  []
       for k in range(len(Newcluster)):
@@ -139,8 +146,18 @@ for i in range(0,len(FinalTable)):
         tempelem = [r for r in tablemeans if r > DelP[sorted_cluster[i][j]]].pop()
         johnIndex = tablemeans.index(tempelem)
       Newcluster[johnIndex].append(sorted_cluster[i][j])
+# updating table means in new table
+Table_2 =  np.zeros((len(Newcluster),4))
+for i in range(len(Newcluster)):
+  Table_2[i,0] = len(Newcluster[i])
+  Table_2[i,1] = np.mean([delta_p[j] for j in Newcluster[i]])
+  Table_2[i,2] = np.std([delta_p[j] for j in Newcluster[i]],ddof=1)
+  Table_2[i,3] =  abs(Table_2[i,2]/ Table_2[i,1])
+Newtable = Table_2
 #%%
 # Use Newtable and Newclusters for pairing 
+# Newtable: contains mean and standard deviation of updated clusters
+# Newclusters: contains updated clusters after merge
 clus_means = [i[1] for i in Newtable]
 pairs = []
 
@@ -151,12 +168,8 @@ for i in range(len(clus_means)):
     edge_mag = [j[0] for j in neg_edges] # 0 corresponds to list magnitude in the tuple
     match_loc = neg_edges[edge_mag.index(min(edge_mag))][1]
     pairs.append((i,match_loc))
-
-#%% Now
-appliance_pairs = gsp.feature_matching_module(pairs,DelP, Newcluster)
-power_series = gsp.generate_appliance_powerseries(appliance_pairs,DelP)
-
 #%%
+# while looking at pairs, we find that there are cases where more than one positive edge has piaired with more than one negative edge. To solve this issue, we fill process again this pairing process. step 1: save this in default dic by negative edge wise step 2: see with which positive edge matches the negative edge matches the most
 pairs_temp = deepcopy(pairs)
 dic_def = defaultdict(list)
 for value,key in pairs:
@@ -174,9 +187,19 @@ for neg_edge in dic_def.keys():
         good_pair = (pos_edges[0],neg_edge)
     updated_pairs.append(good_pair)
     
-        
-        
-
+#%% Now
+appliance_pairs = gsp.feature_matching_module(updated_pairs,DelP, Newcluster)
+power_series = gsp.generate_appliance_powerseries(appliance_pairs,DelP)
+plt.plot(power_series[0].power)
+#%%
+fig,axes = plt.subplots(nrows=9,ncols=2,sharex=False,sharey=False,figsize=(12,15))
+app =0
+for ax in range(len(power_series)//2):
+    axes[ax,0].plot(power_series[app].timestamp,power_series[app].power)
+    app+=1
+    axes[ax,1].plot(power_series[app].timestamp,power_series[app].power)
+    app+=1
+fig.savefig("gsp.png")
 #%% create mat files
 import scipy.io
 iam_sub.keys()
