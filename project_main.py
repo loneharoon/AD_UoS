@@ -17,15 +17,17 @@ import accuracy_metrics_disagg as acmat
 import localize_fhmm,co,standardize_column_names
 import matplotlib.pyplot as plt
 from copy import deepcopy
-#from standardize_column_names import rename_appliances
+from standardize_column_names import rename_appliances
 import latent_Bayesian_melding as LBM
 #%%
-dir = "/Volumes/MacintoshHD2/Users/haroonr/Detailed_datasets/REFITT/CLEAN_REFIT_081116/"
-home = "House20.csv"
+#dir = "/Volumes/MacintoshHD2/Users/haroonr/Detailed_datasets/REFITT/CLEAN_REFIT_081116/"
+dir = "/Volumes/MacintoshHD2/Users/haroonr/Detailed_datasets/REFITT/REFIT_selected/"
+home = "House16.csv"
 df = pd.read_csv(dir+home,index_col="Time")
 df.index = pd.to_datetime(df.index)
 #df_sub = df["2014-03-01":'2014-04-30']
-df_sub = df["2014-04-01":] # since before march their are calibration issues
+#df_sub = df["2014-04-01":] # since before march their are calibration issues
+df_sub = deepcopy(df[:])
 #%% Resampling data
 resample = 'True'
 data_sampling_time = 1 #in minutes
@@ -36,6 +38,8 @@ if resample:
   standardize_column_names.rename_appliances(home,df_samp) # this renames columns
   #df_samp.rename(columns={'Aggregate':'use'},inplace=True) # renaming agg column
   print("*****RESAMPling DONE********")
+  if home == "House16.csv":
+      df_samp = df_samp[df_samp.index!= '2014-03-08'] # after resamping this day gets created 
 else:
   df_samp = deepcopy(df_sub)
   df_samp.drop('Issues',axis=1,inplace=True)
@@ -52,16 +56,22 @@ if denoised:
     df_selected['use'] = df_selected[iams].sum(axis=1)
     print('**********DENOISED DATA*************8')
 #%%
-train_dset = df_selected['2014-04-01':'2014-04-30']
+#train_dset = df_selected['2014-04-01':'2014-04-30'] # home10
+#train_dset = df_selected['2014-05-01':'2014-05-31'] # home20
+#train_dset = df_selected['2014-07-01':'2014-07-31'] # home18
+train_dset = df_selected['2014-03-01':'2014-03-31'] # home16
 train_dset.dropna(inplace=True)
-#test_dset = df_samp['2014-04-01':'2014-04-04']
-test_dset = df_selected['2014-05-01':'2014-12-31']
+
+#test_dset = df_selected['2014-05-01':] #home 10
+#test_dset = df_selected['2014-06-01':] #home 20
+#test_dset = df_selected['2014-08-01':] #home 18
+test_dset = df_selected['2014-04-01':] #home 16
 test_dset.dropna(inplace=True)
 #%% RUN fHMM
 save_dir = "/Volumes/MacintoshHD2/Users/haroonr/Detailed_datasets/REFITT/Intermediary_results/"
 fhmm_result  =  localize_fhmm.fhmm_decoding(train_dset,test_dset) # dissagreation
 fhmm_result['train_power'] = train_dset
-filename = save_dir+"fhmm/"+ home.split('.')[0]+'.pkl'
+filename = save_dir+"fhmm/selected/"+ home.split('.')[0]+'.pkl'
 handle = open(filename,'wb')
 #https://docs.python.org/2/library/pickle.html
 pickle.dump(fhmm_result,handle)
@@ -70,7 +80,7 @@ handle.close()
 save_dir = "/Volumes/MacintoshHD2/Users/haroonr/Detailed_datasets/REFITT/Intermediary_results/"
 co_result = co.co_decoding(train_dset,test_dset)
 co_result['train_power'] = train_dset
-filename = save_dir+"co/" + home.split('.')[0]+'.pkl'
+filename = save_dir+"co/selected/" + home.split('.')[0]+'.pkl'
 handle = open(filename,'wb')
 pickle.dump(co_result,handle)
 handle.close()
