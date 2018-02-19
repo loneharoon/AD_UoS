@@ -122,7 +122,7 @@ def create_training_stats(traindata,sampling_type,sampling_rate):
     #%energy computation logic for eacy cycle
     samp['state_no']  = np.repeat(range(tempval.shape[0]),tempval['samples'])
     samp_groups = samp.groupby(samp.state_no)
-    energy_state= [np.sum(v.power) for k,v in samp_groups]
+    energy_state= [np.sum(v.power)/1000 for k,v in samp_groups] # dividing by 1000 to convert watts to Killowats as in next steps I want to compute KWH instead of WH (watthour)
     if sampling_type =='minutes':
       energy_state = np.multiply(energy_state, (sampling_rate/60.))
     elif sampling_type == 'seconds':
@@ -226,7 +226,7 @@ def  create_testing_stats_with_boxplot(testdata,k,sampling_type,sampling_rate):
   #%energy computation logic for eacy cycle
   samp['state_no']  = np.repeat(range(tempval.shape[0]),tempval['samples'])
   samp_groups = samp.groupby(samp.state_no)
-  temp_energy_state= [np.sum(v.power) for k,v in samp_groups]
+  temp_energy_state= [np.sum(v.power)/1000 for k,v in samp_groups] # dividing by 1000 to convert watts to Killowats as in next steps I want to compute KWH instead of WH (watthour) 
   if sampling_type =='minutes':
     temp_energy_state = np.multiply(temp_energy_state, (sampling_rate/60.)) # energy formula
   elif sampling_type == 'seconds':
@@ -270,18 +270,18 @@ def anomaly_detection_algorithm(test_stats,contexts_stats,alpha,num_std):
         temp_res = {}
         temp_res['timestamp'] = datetime.strptime(day,'%Y-%m-%d')
         temp_res['context']   = contxt # denotes part of the day
-        temp_res['status']    = 0 # is anomaly
+        temp_res['status']    = 0 # 1 will mean anomalous
         temp_res['anomtype']  = np.float("Nan") # anomaly type
         # rule 3 of unum
   #      if np.mean(test_results['ON_energy'] >  train_results['ON_energy']['mean'] + num_std* train_results['ON_energy']['std']) and (np.mean(test_results['OFF_energy']) >  train_results['OFF_energy']['mean'] + num_std* train_results['OFF_energy']['std']):
   #        temp_res['status'] = 0
   #        mylogger.write(day + ":" + contxt + "is not elongated anomaly as off time was also longer \n")
-  #      # rule 1 of unum
+  #      # rule 1: if energy conumed too much
         if np.mean(test_results['ON_energy']) > alpha * train_results['ON_energy']['mean'] + num_std* train_results['ON_energy']['std']:
           temp_res['status'] = 1
           temp_res['anomtype'] = "long"
           mylogger.write(day + ":"+ contxt + ", elongated anomaly" + ", train_stats duration, " + str(train_results['ON_energy']['mean']) + ":"+str(train_results['ON_energy']['std']) + "; test_stats energy, " + str(np.mean(test_results['ON_energy'])) + "\n" )
-              # rule 2 of unum
+              # rule 2: if frequen cyclcing occured
         elif np.mean(test_results['ON_cycles']) >  alpha * train_results['ON_cycles']['mean'] + num_std* train_results['ON_cycles']['std']:
           temp_res['status'] = 1
           temp_res['anomtype'] = "frequent"
@@ -303,10 +303,11 @@ def anomaly_detection_algorithm(test_stats,contexts_stats,alpha,num_std):
         timestamp =  timestamp + timedelta(hours=21)
       updated_timestamp.append(timestamp)
   res_df['updated_timestamp'] =  updated_timestamp  
-  return(res_df) # returns only anomaly packets
+  return(res_df[res_df.status ==1]) # returns only anomaly packets
   
 
 #%%
+###
 def AD_refit_training(train_data,data_sampling_type,data_sampling_time):
     
     #%create training stats
