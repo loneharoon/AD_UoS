@@ -308,7 +308,7 @@ def anomaly_detection_algorithm(test_stats,contexts_stats,alpha,num_std):
 
 #%%
 ###
-def AD_refit_training(train_data,data_sampling_type,data_sampling_time):
+def AD_refit_training(train_data,NoOfContexts=4,data_sampling_type,data_sampling_time):
     
     #%create training stats
     """" 1. get data
@@ -320,12 +320,28 @@ def AD_refit_training(train_data,data_sampling_type,data_sampling_time):
     #train_data =  df_samp[myapp]['2014-03']
     
     # divide data according to  4 contexts [defined by times]
-    contexts = OrderedDict()
-    contexts['night_1_gp'] = train_data.between_time("00:00","05:59")
-    contexts['day_1_gp'] = train_data.between_time("06:00","11:59")
-    contexts['day_2_gp'] = train_data.between_time("12:00","17:59")
-    contexts['night_2_gp'] = train_data.between_time("18:00","23:59")
-    #%
+    if NoOfContexts == 1:
+        contexts = OrderedDict()
+        contexts['all24_gp'] = train_data.between_time("00:00","23:59")
+    if NoOfContexts == 2:
+        contexts = OrderedDict()
+        contexts['first12_gp'] = train_data.between_time("00:00","11:59")
+        contexts['last12_gp'] = train_data.between_time("12:00","23:59")
+    if NoOfContexts == 4:
+        contexts = OrderedDict()
+        contexts['night_1_gp'] = train_data.between_time("00:00","05:59")
+        contexts['day_1_gp'] = train_data.between_time("06:00","11:59")
+        contexts['day_2_gp'] = train_data.between_time("12:00","17:59")
+        contexts['night_2_gp'] = train_data.between_time("18:00","23:59")
+    elif  NoOfContexts == 6:
+        contexts = OrderedDict()
+        contexts['first8_gp'] = train_data.between_time("00:00","07:59")
+        contexts['next8_gp'] = train_data.between_time("08:00","15:59")
+        contexts['last8_gp'] = train_data.between_time("16:00","23:59")
+    else :
+        print("Please provide contexts which make sense\n")
+           
+    
     # create groups within contexts day wise, this will allow us to catch stats at day level otherwise preserving boundaries between different days might become difficult
     contexts_daywise = OrderedDict()
     for k,v in contexts.items():
@@ -338,18 +354,39 @@ def AD_refit_training(train_data,data_sampling_type,data_sampling_time):
       contexts_stats[k] = create_training_stats(v,sampling_type=data_sampling_type,sampling_rate=data_sampling_time) 
     return contexts_stats
 #%%
-def AD_refit_testing(test_data,data_sampling_type,data_sampling_time):
+def AD_refit_testing(test_data,NoOfContexts=4,data_sampling_type,data_sampling_time):
     
     test_data_daywise = test_data.groupby(test_data.index.date) # daywise grouping
     test_contexts_daywise = OrderedDict()
     for k,v in test_data_daywise:     # context wise division
       #print(str(k))
-      test_contexts= OrderedDict()
-      test_contexts['night_1_gp'] = v.between_time("00:00","05:59")
-      test_contexts['day_1_gp']   = v.between_time("06:00","11:59")
-      test_contexts['day_2_gp']   = v.between_time("12:00","17:59")
-      test_contexts['night_2_gp'] = v.between_time("18:00","23:59")
-      test_contexts_daywise[str(k)] = test_contexts
+      if NoOfContexts == 1:
+          contexts = OrderedDict()
+          contexts['all24_gp'] = v.between_time("00:00","23:59")
+      if NoOfContexts == 2:
+          contexts = OrderedDict()
+          contexts['first12_gp'] = v.between_time("00:00","11:59")
+          contexts['last12_gp'] = v.between_time("12:00","23:59")
+      if NoOfContexts == 4:
+          contexts = OrderedDict()
+          contexts['night_1_gp'] = v.between_time("00:00","05:59")
+          contexts['day_1_gp'] = v.between_time("06:00","11:59")
+          contexts['day_2_gp'] = v.between_time("12:00","17:59")
+          contexts['night_2_gp'] = v.between_time("18:00","23:59")
+      elif  NoOfContexts == 6:
+          contexts = OrderedDict()
+          contexts['first8_gp'] = v.between_time("00:00","07:59")
+          contexts['next8_gp'] = v.between_time("08:00","15:59")
+          contexts['last8_gp'] = v.between_time("16:00","23:59")
+      else:
+          print("Please provide contexts which make sense\n")
+      test_contexts_daywise[str(k)] = contexts
+#      test_contexts= OrderedDict()
+#      test_contexts['night_1_gp'] = v.between_time("00:00","05:59")
+#      test_contexts['day_1_gp']   = v.between_time("06:00","11:59")
+#      test_contexts['day_2_gp']   = v.between_time("12:00","17:59")
+#      test_contexts['night_2_gp'] = v.between_time("18:00","23:59")
+#      test_contexts_daywise[str(k)] = test_contexts
     #%
     test_stats = OrderedDict()
     for day,data in test_contexts_daywise.items():
