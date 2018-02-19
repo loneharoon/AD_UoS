@@ -33,13 +33,13 @@ CO:
 1. Home 10
 training: month 4
 testing: moths 5, 6,12
-target_appliance:chest freezer
+target_appliance:Chest_freezer
 Issues: NONE
 
 2. Home 20
 training: month 5
 testing: moths 6, 7,8
-target_appliance:freezer
+target_appliance:Freezer
 Issues: NONE
 
 3. Home 18
@@ -51,7 +51,7 @@ Issues: NONE
 4. Home 16
 training: month 2
 testing: moths 4, 5,6
-target_appliance:frige freezer
+target_appliance: Frige_Freezer_1
 Issues: Day 3 March is removed since it contains anomaly
 
 5. Home 1
