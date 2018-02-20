@@ -47,11 +47,16 @@ sigmas = [1,1.5,2,2.5,3,3.5]
 data_sampling_time = 1 #in minutes
 data_sampling_type = "minutes" # or seconds
 #%%
+logfile = '/Volumes/MacintoshHD2/Users/haroonr/Dropbox/UniOfStra/AD/logfile.csv'
+fp = open(logfile,'a')
+fp.write('\n Home is {} \n'.format(home))
+fp.write('columns are: NoOfContexts, alpha, sigma, precision, recall, fscore \n')
+fp.write('********************************\n')
 for i in contexts:
     train_results = ads.AD_refit_training(train_data,data_sampling_type,data_sampling_time, NoOfContexts=i)
     test_results  = ads.AD_refit_testing(test_data,data_sampling_type,data_sampling_time, NoOfContexts=i)            
     for alpha in alphas:
-        alpha = 1
+        #alpha = alpha
         for sigma in sigmas:
             num_std = sigma
             res_df = ads.anomaly_detection_algorithm(test_results,train_results,alpha,num_std)
@@ -66,6 +71,10 @@ for i in contexts:
             #print('both S and NS anomalies selected')
             gt,ob = ads.tidy_gt_and_ob(house_no,appliance,day_start,day_end,result_sub)
             precision,recall, fscore = ads.compute_AD_confusion_metrics(gt,ob)
-            print(alpha,sigma,i,precision,recall, fscore)
-            print('\n')
+            fp.write('{},\t{},\t{},\t{},\t{},\t{}\n'.format(i,alpha,sigma,precision,recall, fscore))
+            #fp.write('\n')
+            #print(alpha,sigma,i,precision,recall, fscore)
+    fp.write('*********************************\n')
+fp.write('****************END*****************\n')
+fp.close()
 
