@@ -21,6 +21,7 @@ def compute_AD_confusion_metrics(gt,ob):
     gt_day = gt.day.values
     ob_day = ob.day.values
     tp=fp=fn = 0
+    precision = recall = fscore = np.nan
     for i in ob_day:
         if i in gt_day:
             tp = tp + 1
@@ -28,11 +29,20 @@ def compute_AD_confusion_metrics(gt,ob):
             fp = fp + 1 
     for j in gt_day:
         if j not in ob_day:
-            fn = fn + 1      
-    precision = tp/(tp + fp)
-    recall = tp/(tp + fn)
-    fscore= 2*(precision * recall)/(precision+recall)
-    return round(precision,2), round(recall,2),round(fscore,2)
+            fn = fn + 1 
+    try:
+        precision = round(tp/(tp + fp),2)
+    except :
+        print ("Precision results in error\n")
+    try:
+        recall = round(tp/(tp + fn),2)
+    except :
+        print ("Recall results in error\n")
+    try:
+        fscore= round(2*(precision * recall)/(precision+recall),2)
+    except :
+        print ("Recall results in error\n")
+    return precision,recall,fscore
 #%%
 def read_REFIT_groundtruth():
   
@@ -348,7 +358,7 @@ def AD_refit_training(train_data,data_sampling_type,data_sampling_time,NoOfConte
     contexts_stats = OrderedDict()
     #%
     for k,v in contexts_daywise.items():
-      print("CONTEXT IS {}".format(k))
+      print("Contexts are {}".format(k))
       contexts_stats[k] = create_training_stats(v,sampling_type=data_sampling_type,sampling_rate=data_sampling_time) 
     return contexts_stats
 #%%
@@ -433,7 +443,7 @@ def AD_refit_testing(test_data,data_sampling_type,data_sampling_time,NoOfContext
     #%
     test_stats = OrderedDict()
     for day,data in test_contexts_daywise.items():
-      print("testing for day {}".format(day))
+      #print("testing for day {}".format(day))
       temp = OrderedDict()
       for context,con_data in data.items():
         #temp[context] = create_testing_stats(con_data,context)
