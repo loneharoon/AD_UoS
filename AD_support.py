@@ -18,6 +18,8 @@ from datetime import datetime,timedelta
 
 #%%
 def compute_AD_confusion_metrics(gt,ob):
+    gt = gt[gt.Status=='S'] # only sure anomalies in ground truth
+    print('\n Computing results w.r.t Sure anomalies only\n')
     gt_day = gt.day.values
     ob_day = ob.day.values
     tp=fp=fn = 0
@@ -483,6 +485,9 @@ def tidy_gt_and_ob(house_no,appliance,day_start,day_end,result_sub):
     result_appliance['day']= result_appliance.updated_timestamp.apply(lambda x: x.date()).tolist()
     # remove duplicated entries
     result_appliance = result_appliance[~result_appliance.duplicated('day')]
+    # drop few columns of gt
+    drop_names = ['Explanation','Time_Duration','Comments','start_time','end_time']
+    gt_df.drop(drop_names,inplace=True,axis=1)
     return gt_df,result_appliance  
 #%%
   
