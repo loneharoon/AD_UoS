@@ -204,7 +204,7 @@ def  create_testing_stats_with_boxplot(testdata,k,sampling_type,sampling_rate):
   #rule: if more than 50% are nan then I drop that day from calculcations othewise I drop nan readings only
   if nan_obs:  
     if nan_obs >= 0.50*samp.shape[0]:
-      print("More than 50percent obs missing hence dropping context {} ".format(k))
+      print("More than 50percent missing hence dropping context {}".format(k))
       return (False)
     elif nan_obs < 0.50*samp.shape[0]:
       print("dropping  {} nan observations for total of {} in context {}".format(nan_obs, samp.shape[0], k))
@@ -219,7 +219,7 @@ def  create_testing_stats_with_boxplot(testdata,k,sampling_type,sampling_rate):
     print("Dropping context {} of day {} from analysis as it contains same readings".format(k,samp.index[0].date()))
     return (False)
   elif np.std(samp_val) <= 5: # when applaince reamins ON for full context genuinely
-    print("Only one state in context {} found".format(k))
+    print("Only one state found in context {} on day {}\n".format(k,samp.index[0].date()))
     if samp_val[2] > 10:
       temp_lab = [1]* (samp_val.shape[0]-1)
       temp_lab.append(0)
@@ -316,40 +316,49 @@ def anomaly_detection_algorithm(test_stats,contexts_stats,alpha,num_std):
       updated_timestamp.append(timestamp)
   res_df['updated_timestamp'] =  updated_timestamp  
   return(res_df[res_df.status ==1]) # returns only anomaly packets
-  
+#%%
+###
+def create_training_stats_ElectricHeater(traindata,sampling_type,sampling_rate):
+#  """ Most of it is copied from create_training_stats() Method. It contains redundancies but it works
+#  Input: pandas series of power data in the python groupby object
+#  Output: Stats computed in form of dictionary """
+    dic = OrderedDict()
+    for k, v in traindata:
+    #print(k)
+        samp = v.to_frame()
+        # handle nans in data
+        nan_obs = int(samp.isnull().sum())
+        #rule: if more than 50% are nan then I drop that day from calculcations othewise I drop nan readings only
+        if nan_obs:  
+          if nan_obs >= 0.50*samp.shape[0]:
+            print("More than 50percent obs missing hence drop day {} ".format(k))
+            #continue
+          elif nan_obs < 0.50*samp.shape[0]:
+            print("dropping  {} nan observations for day {}".format(nan_obs,k))
+            samp.dropna(inplace=True)
+        samp.columns = ['power']
+        samp_val =  samp.values.flatten()
+        energy_state= np.sum(samp_val)/1000  # dividing by 1000 to convert watts to Killowats as in next steps I want to compute KWH instead of WH (watthour)
+        if sampling_type =='minutes':
+          energy_state = np.multiply(energy_state, (sampling_rate/60.))
+        elif sampling_type == 'seconds':
+          energy_state = np.multiply(energy_state, (sampling_rate/3600.)) 
+        dic[str(k)] =  np.round(energy_state,2) 
+    ON_energy = []
+    for k,v in dic.items(): 
+        ON_energy.append(v)
+    summ_dic = {}
+    summ_dic['ON_energy'] = {'mean':round(np.mean(ON_energy),3), 'std':round(np.std(ON_energy),3)}
+    summ_dic['ON_energy'].update(compute_boxplot_stats(ON_energy))
+    return (summ_dic)  
 
 #%%
-def AD_refit_training(train_data,data_sampling_type,data_sampling_time,NoOfContexts):
+def AD_refit_training(train_data,data_sampling_type,data_sampling_time,NoOfContexts,appliance):
     #%create training stats
     """" 1. get data
          2. divide it into 4 contexts 
          3. divide each into day wise
          4. calculate above stats """
-    # set training data duration
-    #train_data =  df_samp[myapp]['2014-03-07']
-    #train_data =  df_samp[myapp]['2014-03']
-    
-    # divide data according to  4 contexts [defined by times]
-#    if NoOfContexts == 1:
-#        contexts = OrderedDict()
-#        contexts['all24_gp'] = train_data.between_time("00:00","23:59")
-#    elif NoOfContexts == 2:
-#        contexts = OrderedDict()
-#        contexts['first12_gp'] = train_data.between_time("00:00","11:59")
-#        contexts['last12_gp'] = train_data.between_time("12:00","23:59")
-#    elif NoOfContexts == 4:
-#        contexts = OrderedDict()
-#        contexts['night_1_gp'] = train_data.between_time("00:00","05:59")
-#        contexts['day_1_gp'] = train_data.between_time("06:00","11:59")
-#        contexts['day_2_gp'] = train_data.between_time("12:00","17:59")
-#        contexts['night_2_gp'] = train_data.between_time("18:00","23:59")
-#    elif  NoOfContexts == 3:
-#        contexts = OrderedDict()
-#        contexts['first8_gp'] = train_data.between_time("00:00","07:59")
-#        contexts['next8_gp'] = train_data.between_time("08:00","15:59")
-#        contexts['last8_gp'] = train_data.between_time("16:00","23:59")
-#    else :
-#        print("Please provide contexts which make sense\n")
     contexts = create_contexts(train_data,NoOfContexts)      
     
     # create groups within contexts day wise, this will allow us to catch stats at day level otherwise preserving boundaries between different days might become difficult
@@ -359,9 +368,16 @@ def AD_refit_training(train_data,data_sampling_type,data_sampling_time,NoOfConte
      #% Compute stats context wise
     contexts_stats = OrderedDict()
     #%
-    for k,v in contexts_daywise.items():
-      print("Contexts are {}".format(k))
-      contexts_stats[k] = create_training_stats(v,sampling_type=data_sampling_type,sampling_rate=data_sampling_time) 
+    if appliance =="ElectricHeater":
+        print("AD module for ElectricHeater called")
+        for k,v in contexts_daywise.items():
+            print("Contexts are {}".format(k))
+            contexts_stats[k] = create_training_stats_ElectricHeater(v,sampling_type=data_sampling_type,sampling_rate=data_sampling_time)
+    else:
+        print("AD module for Freezer called")
+        for k,v in contexts_daywise.items():
+            print("Contexts are {}".format(k))
+            contexts_stats[k] = create_training_stats(v,sampling_type=data_sampling_type,sampling_rate=data_sampling_time) 
     return contexts_stats
 #%%
 def create_contexts(data,NoOfContexts):
@@ -407,55 +423,100 @@ def create_contexts(data,NoOfContexts):
         raise ValueError("Please provide contexts which make sense\n")
     return (contexts)
 #%%
-def AD_refit_testing(test_data,data_sampling_type,data_sampling_time,NoOfContexts):
+def AD_refit_testing(test_data,data_sampling_type,data_sampling_time,NoOfContexts,appliance):
     
     test_data_daywise = test_data.groupby(test_data.index.date) # daywise grouping
     test_contexts_daywise = OrderedDict()
     for k,v in test_data_daywise:     # context wise division
-      #print(str(k))
-#      if NoOfContexts == 1:
-#          contexts = OrderedDict()
-#          contexts['all24_gp'] = v.between_time("00:00","23:59")
-#      elif NoOfContexts == 2:
-#          contexts = OrderedDict()
-#          contexts['first12_gp'] = v.between_time("00:00","11:59")
-#          contexts['last12_gp'] = v.between_time("12:00","23:59")
-#      elif NoOfContexts == 4:
-#          contexts = OrderedDict()
-#          contexts['night_1_gp'] = v.between_time("00:00","05:59")
-#          contexts['day_1_gp'] = v.between_time("06:00","11:59")
-#          contexts['day_2_gp'] = v.between_time("12:00","17:59")
-#          contexts['night_2_gp'] = v.between_time("18:00","23:59")
-#      elif NoOfContexts == 3:
-#          contexts = OrderedDict()
-#          contexts['first8_gp'] = v.between_time("00:00","07:59")
-#          contexts['next8_gp'] = v.between_time("08:00","15:59")
-#          contexts['last8_gp'] = v.between_time("16:00","23:59")
-#      else:
-#          print("Please provide contexts which make sense\n")
-      #contexts = create_contexts(v,NoOfContexts)
-      #test_contexts_daywise[str(k)] = contexts
        test_contexts_daywise[str(k)] = create_contexts(v,NoOfContexts)
-#      test_contexts= OrderedDict()
-#      test_contexts['night_1_gp'] = v.between_time("00:00","05:59")
-#      test_contexts['day_1_gp']   = v.between_time("06:00","11:59")
-#      test_contexts['day_2_gp']   = v.between_time("12:00","17:59")
-#      test_contexts['night_2_gp'] = v.between_time("18:00","23:59")
-#      test_contexts_daywise[str(k)] = test_contexts
-    #%
     test_stats = OrderedDict()
+    
     for day,data in test_contexts_daywise.items():
-      #print("testing for day {}".format(day))
       temp = OrderedDict()
       for context,con_data in data.items():
-        #temp[context] = create_testing_stats(con_data,context)
-        res = create_testing_stats_with_boxplot(con_data,context,sampling_type=data_sampling_type,sampling_rate=data_sampling_time)
-        if res!= False:
-          temp[context] = res
-        else:
-          continue   
+          if appliance=="ElectricHeater":      
+              res = create_testing_stats_with_boxplot_ElectricHeater(con_data,context,sampling_type=data_sampling_type,sampling_rate=data_sampling_time)
+          else:
+              res = create_testing_stats_with_boxplot(con_data,context,sampling_type=data_sampling_type,sampling_rate=data_sampling_time)
+          if res!= False:
+            temp[context] = res
+          else:
+            continue   
       test_stats[day] = temp
     return test_stats
+#%%
+def  create_testing_stats_with_boxplot_ElectricHeater(testdata,k,sampling_type,sampling_rate):
+  """  """
+  #temp_dic = {}
+  summ_dic = OrderedDict()
+  samp = testdata.to_frame()
+  # handle nans in data
+  nan_obs = int(samp.isnull().sum())
+  #rule: if more than 50% are nan then I drop that day from calculcations othewise I drop nan readings only
+  if nan_obs:  
+    if nan_obs >= 0.50*samp.shape[0]:
+      print("More than 50percent missing hence dropping context {}".format(k))
+      return (False)
+    elif nan_obs < 0.50*samp.shape[0]:
+      print("dropping  {} nan observations for total of {} in context {}".format(nan_obs, samp.shape[0], k))
+      samp.dropna(inplace=True)
+  samp.columns = ['power']
+  samp_val =  samp.values.flatten()
+  #samp_val = samp_val.reshape(-1,1)
+  #FIXME: you can play with clustering options
+  if len(samp_val) == 0: # when data is missing  or no data recoreded for the context
+      return(False)
+  if np.std(samp_val) <= 0.2:# contains observations with same values, basically forward filled values
+    print("Dropping context {} of day {} from analysis as it contains same readings".format(k,samp.index[0].date()))
+    return (False)
+  elif np.std(samp_val) <= 5: # when applaince reamins ON for full context genuinely
+    print("Only one state found in context {} on day {}\n".format(k,samp.index[0].date()))
+#    if samp_val[2] > 10:
+#      temp_lab = [1]* (samp_val.shape[0]-1)
+#      temp_lab.append(0)
+#      samp['cluster'] = temp_lab
+#    else:# when applaince reamins OFF for full context genuinely
+#      temp_lab = [0]* (samp_val.shape[0]-1)
+#      temp_lab.append(1)
+#      samp['cluster'] = temp_lab
+#  else: # normal case, on and off states of appliance
+#    kobj = perform_clustering(samp_val,clusters=2)
+#    samp['cluster'] = kobj.labels_
+#    samp = re_organize_clusterlabels(samp)
+#  
+#  tempval = [(k,sum(1 for i in g)) for k,g in groupby(samp.cluster.values)]
+#  tempval = pd.DataFrame(tempval,columns=['cluster','samples'])
+#  #%energy computation logic for eacy cycle
+#  samp['state_no']  = np.repeat(range(tempval.shape[0]),tempval['samples'])
+#  samp_groups = samp.groupby(samp.state_no)
+  temp_energy_state= np.sum(samp_val)/1000  # dividing by 1000 to convert watts to Killowats as in next steps I want to compute KWH instead of WH (watthour) 
+  if sampling_type =='minutes':
+    temp_energy_state = np.multiply(temp_energy_state, (sampling_rate/60.)) # energy formula
+  elif sampling_type == 'seconds':
+    temp_energy_state = np.multiply(temp_energy_state, (sampling_rate/3600.)) # energy formula
+  temp_energy_state =  np.round(temp_energy_state,2)
+
+# #% energy logic ends
+#  off_cycles =list(tempval[tempval.cluster==0].samples)
+#  on_cycles =list(tempval[tempval.cluster==1].samples)
+#  off_energy =list(tempval[tempval.cluster==0].energy_state)
+#  #print(off_energy)
+#  on_energy =list(tempval[tempval.cluster==1].energy_state)
+#  #print(on_energy)
+  #temp_dic["on_energy"] = temp_energy_state
+#  temp_dic["off_energy"] = off_energy
+#  temp_dic["on"] = on_cycles
+#  temp_dic["off"] = off_cycles
+#  cycle_stat = Counter(tempval.cluster)
+#  temp_dic.update(cycle_stat)
+  
+#  summ_dic['ON_duration'] = temp_dic["on"]
+#  summ_dic['OFF_duration'] = temp_dic["off"]
+  summ_dic['ON_energy'] = temp_energy_state
+#  summ_dic['OFF_energy'] = temp_dic["off_energy"]
+#  summ_dic['ON_cycles'] = temp_dic[1]
+#  summ_dic['OFF_cycles'] = temp_dic[0]
+  return (summ_dic)
 #%%
 def tidy_gt_and_ob(house_no,appliance,day_start,day_end,result_sub):
     '''In this I re_format gt and observed results for calculating end results '''
