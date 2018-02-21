@@ -317,6 +317,44 @@ def anomaly_detection_algorithm(test_stats,contexts_stats,alpha,num_std):
   res_df['updated_timestamp'] =  updated_timestamp  
   return(res_df[res_df.status ==1]) # returns only anomaly packets
 #%%
+def anomaly_detection_algorithm_ElectricHeater(test_stats,contexts_stats,alpha,num_std):
+  ''' this function defines the anomaly detection logic '''
+  result = [] 
+  for day,data in test_stats.items():
+      if(len(data)==0):# if dictionary is empty
+         continue
+      for contxt,contxt_stats in data.items():
+        #be clear - word contexts_stats represents training data and word contxt represents test day stats
+        train_results = contexts_stats[contxt] # all relevant train stats
+        test_results  = contxt_stats
+        temp_res = {}
+        temp_res['timestamp'] = datetime.strptime(day,'%Y-%m-%d')
+        temp_res['context']   = contxt # denotes part of the day
+        temp_res['status']    = 0 # 1 will mean anomalous
+        temp_res['anomtype']  = np.float("Nan") # anomaly type
+        if np.mean(test_results['ON_energy']) > alpha * train_results['ON_energy']['mean'] + num_std* train_results['ON_energy']['std']:
+          temp_res['status'] = 1
+          temp_res['anomtype'] = "long"
+        result.append(temp_res)
+     
+  res_df = pd.DataFrame.from_dict(result)
+  #% rectify timestamps by including appropriate context information
+  updated_timestamp = []
+  for i in range(0,res_df['context'].shape[0]):
+      context = res_df['context'][i]
+      timestamp = res_df['timestamp'][i]
+      if context == 'night_1_gp':
+        timestamp =  timestamp + timedelta(hours=3)
+      elif context == 'day_1_gp':
+        timestamp =  timestamp + timedelta(hours=9)
+      elif context == 'day_2_gp':
+        timestamp =  timestamp + timedelta(hours=15)
+      elif context == 'night_2_gp':
+        timestamp =  timestamp + timedelta(hours=21)
+      updated_timestamp.append(timestamp)
+  res_df['updated_timestamp'] =  updated_timestamp  
+  return(res_df[res_df.status ==1]) # returns only anomaly packets
+#%%
 ###
 def create_training_stats_ElectricHeater(traindata,sampling_type,sampling_rate):
 #  """ Most of it is copied from create_training_stats() Method. It contains redundancies but it works
