@@ -10,20 +10,21 @@ import pandas as pd
 #%%
 direc = "/Volumes/MacintoshHD2/Users/haroonr/Detailed_datasets/REFITT/CLEAN_REFIT_081116/"
 savedir = "/Volumes/MacintoshHD2/Users/haroonr/Detailed_datasets/REFITT/REFIT_selected/"
-home = "House16.csv"
+home = "House10.csv"
 df = pd.read_csv(direc+home,index_col="Time")
 df.index = pd.to_datetime(df.index)
 print ('**Be careful while changing name of next calling function**')
-res = subset_House16(df)
+res = subset_House10(df)
 res.to_csv(savedir+home)
 
 
 #%%
 def subset_House10(df):  
     df1 = df['2014-04':'2014-06']
-    df2 = df['2014-12']
-    df_result = pd.concat([df1,df2],axis=0)
-    return df_result
+    #df2 = df['2014-12']
+    #df_result = pd.concat([df1,df2],axis=0)
+    return df1
+    #return df_result
     
 def subset_House20(df):  
     dfx = df['2014-05':'2014-08']

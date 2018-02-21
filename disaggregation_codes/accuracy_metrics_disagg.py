@@ -128,9 +128,12 @@ def compute_confusion_metrics(actual,predict):
                 actual.values == True))
     tn = np.sum(np.logical_and(predict.values == False,
                 actual.values == False))
-    precision = tp/(tp+fp) 
-    recall =  tp/(tp+fn)
-    fscore =  2*(precision*recall)/(precision+recall)
+    try: 
+        precision = tp/(tp+fp) 
+        recall =  tp/(tp+fn)
+        fscore =  2*(precision*recall)/(precision+recall)
+    except ValueError:
+        print ("Denominator results in error\n")
     res['precision'] = precision 
     res['recall'] = recall
     res['f_score'] = fscore

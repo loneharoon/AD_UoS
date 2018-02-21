@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-In this file I Compute LBM features of all appliances for a home and save in a json/pickle file
+In this file I Compute LBM features of all appliances for a REFIT homes and save in a json/pickle file
 Created on Fri Dec 22 15:13:33 2017
 
 @author: haroonr
@@ -11,20 +11,26 @@ Created on Fri Dec 22 15:13:33 2017
 import pandas as pd
 import numpy as np
 from copy import copy,deepcopy
-from hmmlearn import hmm
+#from hmmlearn import hmm
 np.random.seed(42)
-import pickle,sys
-from collections import Counter,OrderedDict
+import sys
+#from collections import Counter,OrderedDict
 #exec(open("/Volumes/MacintoshHD2/Users/haroonr/Dropbox/UniOfStra/AD/disaggregation_codes/LBM_features_support.py").read())
 sys.path.append('/Volumes/MacintoshHD2/Users/haroonr/Dropbox/UniOfStra/AD/disaggregation_codes/')
 import LBM_features_support as lbmsupport
 import standardize_column_names
-#%%
-dir = "/Volumes/MacintoshHD2/Users/haroonr/Detailed_datasets/REFITT/CLEAN_REFIT_081116/"
-home = "House10.csv"
-df = pd.read_csv(dir+home,index_col="Time")
+#%%#
+#dir = "/Volumes/MacintoshHD2/Users/haroonr/Detailed_datasets/REFITT/CLEAN_REFIT_081116/"
+direc = "/Volumes/MacintoshHD2/Users/haroonr/Detailed_datasets/REFITT/REFIT_selected/"
+home = "House1.csv"
+df = pd.read_csv(direc+home,index_col="Time")
 df.index = pd.to_datetime(df.index)
-df_sub = df["2014-04-01":'2014-07-30']
+#df_sub = df["2014-04-01":'2014-07-30']
+#df_sub = df['2014-04-01':'2014-04-30'] # home10
+#df_sub = df['2014-05-01':'2014-05-31'] # home20
+#df_sub = df['2014-07-01':'2014-07-31'] # home18
+#df_sub = df['2014-03-01':'2014-03-31'] # home16
+df_sub = df['2014-12'] # home1
 resample = 'True'
 data_sampling_time = 1 #in minutes
 data_sampling_type = "minutes" # or seconds
@@ -34,6 +40,8 @@ if resample:
   standardize_column_names.rename_appliances(home,df_samp) # this renames columns
   #df_samp.rename(columns={'Aggregate':'use'},inplace=True) # renaming agg column
   print("*****RESAMPling DONE********")
+  if home == "House16.csv":
+      df_samp = df_samp[df_samp.index!= '2014-03-08'] # after resamping this day gets
 else:
   df_samp = deepcopy(df_sub)
   df_samp.drop('Issues',axis=1,inplace=True)
@@ -70,7 +78,7 @@ for i in appliances:
   app_features.update(lbm_sacpar) # merging dictionaries
   lbm_app_features[i] = app_features
 #%% save as pickle format
-save_dir = "/Volumes/MacintoshHD2/Users/haroonr/Detailed_datasets/REFITT/Intermediary_results/lbm/population_models/"
+save_dir = "/Volumes/MacintoshHD2/Users/haroonr/Detailed_datasets/REFITT/Intermediary_results/lbm/population_models/selected/"
 savename = save_dir +  home.split('.')[0] + '.pkl'
 lbmsupport.save_obj(lbm_app_features, savename)
    
