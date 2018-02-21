@@ -214,7 +214,7 @@ def  create_testing_stats_with_boxplot(testdata,k,sampling_type,sampling_rate):
   if len(samp_val) == 0: # when data is missing  or no data recoreded for the context
       return(False)
   if np.std(samp_val) <= 0.2:# contains observations with same values, basically forward filled values
-    print("Dropping context {} from analysis as it contains same readings".format(k))
+    print("Dropping context {} of day {} from analysis as it contains same readings".format(k,samp.index[0].date()))
     return (False)
   elif np.std(samp_val) <= 5: # when applaince reamins ON for full context genuinely
     print("Only one state in context {} found".format(k))
