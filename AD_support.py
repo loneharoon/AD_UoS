@@ -32,6 +32,7 @@ def compute_AD_confusion_metrics(gt,ob):
     for j in gt_day:
         if j not in ob_day:
             fn = fn + 1 
+    print('\n tp {}, fp {}, fn {}\n'.format(tp,fp,fn))
     try:
         precision = round(tp/(tp + fp),2)
     except :
@@ -599,4 +600,44 @@ def compute_noise_percentage(actual_power):
     denominator =  np.sum(aggregate_df)
     noise_percent = (np.sum(numerator)/denominator) *100
     return noise_percent
+ #%%
+def get_selected_home_data(home,df_selected):
+     if home == "House10.csv":
+         train_dset = df_selected['2014-04-01':'2014-04-30'] # home10
+         test_dset = df_selected['2014-05-01':] #home 10
+     elif home == "House20.csv": 
+         train_dset = df_selected['2014-05-01':'2014-05-31'] # home20
+         test_dset = df_selected['2014-06-01':] #home 20
+     elif home == "House18.csv":
+         train_dset = df_selected['2014-07-01':'2014-07-31'] # home18
+         test_dset = df_selected['2014-08-01':] #home 18
+     elif home == "House16.csv":    
+         train_dset = df_selected['2014-03-01':'2014-03-31'] # home16
+         test_dset = df_selected['2014-04-01':] #home 16
+     elif home == "House1.csv":    
+         train_dset = df_selected['2014-12'] # home1
+         test_dset = df_selected['2015-01':'2015-04'] #home 1
+     else :
+         raise ValueError ("Supply data selection details for the home")
+     train_dset.dropna(inplace=True)
+     test_dset.dropna(inplace=True)
+     return train_dset,test_dset
+#%%
+def get_selected_home_appliance(home):
+     if home == "House10.pkl":
+         myapp = "Chest_Freezer"# ho
+     elif home == "House20.pkl": 
+         myapp = "Freezer"# home 
+     elif home == "House18.pkl":
+         myapp = "Fridge_Freezer"# home
+     elif home == "House16.pkl":    
+         myapp = "Fridge_Freezer_1"# home
+     elif home == "House1.pkl":    
+         myapp = "ElectricHeater"# home 
+     else :
+         raise ValueError ("Supply correct home details")
+     return myapp
+
+
+
   
