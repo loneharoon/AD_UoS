@@ -9,6 +9,7 @@ Created on Fri Jan 26 10:23:37 2018
 from __future__ import division
 import numpy as np
 import pandas as pd
+from copy import deepcopy
 from collections import OrderedDict
 #%%
 def compute_rmse(gt,pred):
@@ -21,11 +22,21 @@ def compute_rmse(gt,pred):
 def accuracy_metric_norm_error(dis_result):
     '''Metric taken from Nipuns NILMTK paper:Normalised error in assigned power'''
     pred = dis_result['decoded_power']
-    gt = dis_result['actual_power']
+    gt = deepcopy(dis_result['actual_power'])
+    try:
+        gt = gt.drop(['use'],axis=1)
+    except:
+        print("GT does not contain use column\n")
+    
     error = {}
     for app in gt.columns:
-        numerator = np.nansum(abs(pred[app].values - gt[app].values))
-        denominator = np.nansum(gt[app]) * 1.0
+        gt_app = gt[app]
+        ob_app = pred[app]
+        if abs(len(ob_app) - len(gt_app)) == 1:
+            #sometimes downsampling  results in extra reading, so remove that entry to make both gt and ob readings equal
+            gt_app =  gt_app[:-1]
+        numerator = np.nansum(abs(ob_app.values - gt_app.values))
+        denominator = np.nansum(gt_app) * 1.0
         error[app] = np.divide(numerator,denominator)
     result = pd.DataFrame.from_dict(error, orient='index')
     return result
@@ -101,18 +112,16 @@ def accuracy_metric_gemello(dis_result):
 #%%%% CONFUSION METRICS
 #%%
 def call_confusion_metrics_on_disagg(test_dset,predict_df,power_threshold):
-#    test_dset = fhmm_result['actaul_power']['Freezer_1']
-#    predict_df = fhmm_result['decoded_power']['Freezer_1']
-#    on_power_threshold = 10
-#    actual = test_dset >= on_power_threshold
-#    predict = predict_df >= on_power_threshold
-#    compute_confusion_metrics(actual,predict) 
+    #predict_df = predict_df.drop(['use'],axis=1)
     on_power_threshold = power_threshold
     appliances  = predict_df.columns
     results =  OrderedDict()
     for app in appliances:
         actual = test_dset[app]
         predict = predict_df[app]
+        if abs(len(actual) - len(predict)) == 1:
+            #sometimes downsampling  results in extra reading, so remove that entry to make both gt and ob readings equal
+            actual =  actual[:-1]
         when_on_actual = actual >= on_power_threshold
         when_on_predict = predict >= on_power_threshold
         results[app] = compute_confusion_metrics(when_on_actual,when_on_predict) 

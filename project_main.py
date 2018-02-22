@@ -28,6 +28,7 @@ df = pd.read_csv(dir+home,index_col="Time")
 df.index = pd.to_datetime(df.index)
 df_sub = deepcopy(df[:])
 #% Resampling data
+#TODO : TUNE ME
 resample = True
 data_sampling_time = 1 #in minutes
 data_sampling_type = "minutes" # or seconds
@@ -47,7 +48,8 @@ else:
 energy = df_samp.sum(axis=0)
 high_energy_apps = energy.nlargest(7).keys() # CONTROL : selects few appliances
 df_selected = df_samp[high_energy_apps]
-denoised = False
+#TODO : TUNE ME
+denoised = True
 if denoised:
     # chaning aggregate column
     iams = high_energy_apps.difference(['use'])
@@ -56,6 +58,7 @@ if denoised:
 train_dset,test_dset = ads.get_selected_home_data(home,df_selected)
 #%% RUN fHMM
 save_dir = "/Volumes/MacintoshHD2/Users/haroonr/Detailed_datasets/REFITT/Intermediary_results/"
+#TODO : TUNE ME
 filename = save_dir+"noisy/fhmm/selected/"+ home.split('.')[0]+'.pkl'
 fhmm_result  =  localize_fhmm.fhmm_decoding(train_dset,test_dset) # dissagreation
 fhmm_result['actual_power']['use'] = test_dset['use']
@@ -66,7 +69,8 @@ pickle.dump(fhmm_result,handle)
 handle.close()
 #%% RUN CO
 save_dir = "/Volumes/MacintoshHD2/Users/haroonr/Detailed_datasets/REFITT/Intermediary_results/"
-filename = save_dir+"noisy/co/selected/" + home.split('.')[0]+'.pkl'
+#TODO : TUNE ME
+filename = save_dir+"denoised/co/selected/" + home.split('.')[0]+'.pkl'
 co_result = co.co_decoding(train_dset,test_dset)
 co_result['actual_power']['use'] = test_dset['use'] # appending aggregate column for later use
 co_result['train_power'] = train_dset
@@ -74,7 +78,8 @@ handle = open(filename,'wb')
 pickle.dump(co_result,handle)
 handle.close()
 #%% RUN LBM
-model_path= "/Volumes/MacintoshHD2/Users/haroonr/Detailed_datasets/REFITT/Intermediary_results/lbm/population_models/"
+#TODO : TUNE ME
+model_path= "/Volumes/MacintoshHD2/Users/haroonr/Detailed_datasets/REFITT/Intermediary_results/denoised/lbm/population_models/selected/"
 population_parameters = model_path +  home.split('.')[0] +'.pkl'
 meterdata= test_dset
 main_meter = 'use'
@@ -105,12 +110,13 @@ infreadings.rename(columns={'mains':'use'},inplace=True)
 lbm_result['decoded_power'] = infreadings
 lbm_result['actual_power'] = meterdata
 lbm_result['train_power'] = train_dset
-#infApplianceReading.to_csv(dissagg_result_save+"lbm/" + hos)
-save_dir = "/Volumes/MacintoshHD2/Users/haroonr/Detailed_datasets/REFITT/Intermediary_results/"
-filename = save_dir+"lbm/"+ home.split('.')[0]+'.pkl'
+#%%
+#TODO : TUNE ME
+save_dir = "/Volumes/MacintoshHD2/Users/haroonr/Detailed_datasets/REFITT/Intermediary_results/noisy/lbm/selected/"
+filename = save_dir+ home.split('.')[0]+'.pkl'
 handle = open(filename,'wb')
 #https://docs.python.org/2/library/pickle.html
-pickle.dump(fhmm_result,handle)
+pickle.dump(lbm_result,handle)
 handle.close()
 
 #%%

@@ -9,8 +9,9 @@ Created on Fri Feb  9 09:27:42 2018
 """
 #%%
 ''' Running instructions:
-    1. For each home, first obtain results with CO, next FHMM and finally with submetered, that is last cell of this file
-    2. Read TODO lines break running the code'''
+    1. For each home, first obtain results with FHMM, next CO and immediately with submetered, that is last cell of this file. Remember sumbetered data should be executed immediately after CO, becaue in denoised case, I forgot to add 'aggregate' column to decoded_results. 
+    2. Read TODO lines break running the code
+    3. LBM can be Run too whenever you need'''
 
 #%%
 import pickle
@@ -26,12 +27,13 @@ from copy import deepcopy
 import pipeline_support as ps
 #%% 
 file_location = "/Volumes/MacintoshHD2/Users/haroonr/Detailed_datasets/REFITT/Intermediary_results/"
-logging_file = file_location+"noisy_resultfile.csv"
+#TODO : TUNE ME
+logging_file = file_location+"de_noisy_resultfile.csv"
 resultfile = open(logging_file,'a')
 
 #TODO : TUNE ME
-home = "House1.pkl" # options are: 10,20,18,16,1
-disagg_approach = "fhmm" # options are co,fhmm, lbm
+home = "House16.pkl" # options are: 10,20,18,16,1
+disagg_approach = "lbm" # options are co,fhmm, lbm
 
 NoOfContexts = 4
 alpha = 2
@@ -40,7 +42,7 @@ myapp = ads.get_selected_home_appliance(home)
 
 resultfile.write('*********************NEW HOME*****************\n')
 #TODO : TUNE ME % path for reading pickle files
-method="noisy/"+ disagg_approach+ "/selected/"
+method="denoised/"+ disagg_approach+ "/selected/"
 #method="lbm/selected_results/"
 
 resultfile.write("\n Home is {} and appliance is {}\n ".format(home,myapp))
@@ -52,7 +54,8 @@ resultfile.close()
 train_power =   data_dic['train_power']
 decoded_power = data_dic['decoded_power']
 actual_power  = data_dic['actual_power']
-# TUNE ME
+if disagg_approach=="lbm":
+    data_dic['decoded_power'] = data_dic['decoded_power'].drop(['inferred mains'],axis=1)
 train_data =  train_power[myapp]
 test_data =   decoded_power[myapp]
 #test_data =   decoded_power[myapp][:'2014-10-24'] # house10
