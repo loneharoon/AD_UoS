@@ -292,12 +292,12 @@ def anomaly_detection_algorithm(test_stats,contexts_stats,alpha,num_std):
         if np.mean(test_results['ON_energy']) > alpha * train_results['ON_energy']['mean'] + num_std* train_results['ON_energy']['std']:
           temp_res['status'] = 1
           temp_res['anomtype'] = "long"
-          mylogger.write(day + ":"+ contxt + ", elongated anomaly" + ", train_stats duration, " + str(train_results['ON_energy']['mean']) + ":"+str(train_results['ON_energy']['std']) + "; test_stats energy, " + str(np.mean(test_results['ON_energy'])) + "\n" )
+          #mylogger.write(day + ":"+ contxt + ", elongated anomaly" + ", train_stats duration, " + str(train_results['ON_energy']['mean']) + ":"+str(train_results['ON_energy']['std']) + "; test_stats energy, " + str(np.mean(test_results['ON_energy'])) + "\n" )
               # rule 2: if frequen cyclcing occured
         elif np.mean(test_results['ON_cycles']) >  alpha * train_results['ON_cycles']['mean'] + num_std* train_results['ON_cycles']['std']:
           temp_res['status'] = 1
           temp_res['anomtype'] = "frequent"
-          mylogger.write(day + ":"+contxt +  ", frequent anomaly" + ", train_stats frequency, " + str(train_results['ON_cycles']['mean']) + ":"+str(train_results['ON_cycles']['std']) + "; test_stats frequency, " + str(np.mean(test_results['ON_cycles'])) + "\n"  )
+          #mylogger.write(day + ":"+contxt +  ", frequent anomaly" + ", train_stats frequency, " + str(train_results['ON_cycles']['mean']) + ":"+str(train_results['ON_cycles']['std']) + "; test_stats frequency, " + str(np.mean(test_results['ON_cycles'])) + "\n"  )
         result.append(temp_res)
   res_df = pd.DataFrame.from_dict(result)
   #% rectify timestamps by including appropriate context information
@@ -589,4 +589,14 @@ def tidy_gt_and_ob(house_no,appliance,day_start,day_end,result_sub):
     gt_df.drop(drop_names,inplace=True,axis=1)
     return gt_df,result_appliance  
 #%%
+def compute_noise_percentage(actual_power):
+    '''Metric copied from Stephen Makonins paper '''
+    temp = deepcopy(actual_power)
+    aggregate_df =  temp['use']
+    appliance_df = np.sum(temp.drop(['use'],axis=1),axis=1)
+    
+    numerator = abs(aggregate_df - appliance_df)
+    denominator =  np.sum(aggregate_df)
+    noise_percent = (np.sum(numerator)/denominator) *100
+    return noise_percent
   
