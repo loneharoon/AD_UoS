@@ -13,8 +13,10 @@ from sklearn.cluster import KMeans
 import numpy as np
 from copy import deepcopy
 from itertools import groupby
+import standardize_column_names as scn
 from collections import OrderedDict,Counter
 from datetime import datetime,timedelta
+import re
 
 #%%
 def compute_AD_confusion_metrics(gt,ob):
@@ -637,7 +639,59 @@ def get_selected_home_appliance(home):
      else :
          raise ValueError ("Supply correct home details")
      return myapp
-
-
-
+#%%
+def anomalous_days_from_gt(house_no,appliance,day_start,day_end):
+    ''' This returns anomalous days from the ground truth for the specific applaince '''
+    gt = read_REFIT_groundtruth()
+    select_house = gt.House_No==house_no
+    select_appliance = gt.Appliance==appliance
+    gt_sub = gt[select_house & select_appliance]
+    gt_appliance = deepcopy(gt_sub[(gt_sub.start_time >= day_start) & (gt_sub.end_time <= day_end)])
+    columns = gt_appliance.columns.values.tolist()
+    columns.append('day')
+    gt_df = pd.DataFrame(columns= columns)
+    for i in range(len(gt_appliance)):
+        start = gt_appliance.start_time.iloc[i].date()
+        end = gt_appliance.end_time.iloc[i].date()
+        temp = gt_appliance.iloc[i]
+         # if anomaly continued on more than one day then duplicate rows for th e range
+        #days = pd.date_range(start,end) # this creates timestamp object, so dump it 
+        total_days = (end - start).days + 1
+        days = [start + timedelta(days=x) for x in range(0, total_days)]
+        temp2 = pd.DataFrame([temp]*total_days)
+        temp2['day'] = days
+        gt_df = gt_df.append(temp2)
+    return (gt_df.day)
+#%%
+def get_test_dates(home):
+     ''' return date range of testing data for different homes'''
+     if home == "House10.pkl":
+         start_date= "2014-05-01"
+         end_date = "2014-06-30"
+     elif home == "House20.pkl": 
+         start_date= "2014-06-01"
+         end_date = "2014-08-31"
+     elif home == "House18.pkl":
+         start_date= "2014-08-01"
+         end_date = "2014-10-31"
+     elif home == "House16.pkl":    
+         start_date= "2014-04-01"
+         end_date = "2014-06-30"
+     elif home == "House1.pkl":    
+         start_date= "2015-01-01"
+         end_date = "2015-03-31" 
+     else :
+         raise ValueError ("I don't have mapping of supplied home")
+     return start_date,end_date
+#%%
+def find_my_anomalous_dates_from_gt(home):    
+    myapp = get_selected_home_appliance(home)
+    start_date,end_date = get_test_dates(home)
+    home = home.split('.')[0]+'.csv'
+    appliance = scn.reverse_lookup(home,myapp) # find actual name of appliance in anomaly database
+    assert len(appliance) > 1
+    house_no =  int(re.findall('\d+',home)[0])
+    days_frame = anomalous_days_from_gt(house_no,appliance,start_date,end_date)
+    anom_days = [x.strftime('%Y-%m-%d') for x in days_frame.values.tolist()]
+    return anom_days
   
