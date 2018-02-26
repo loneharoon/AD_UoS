@@ -32,7 +32,7 @@ CO:
 ############################HOme Notes#####################
 1. Home 10
 training: month 4
-testing: moths 5, 6,12
+testing: moths 5, 6
 target_appliance:Chest_freezer
 Issues: NONE
 
