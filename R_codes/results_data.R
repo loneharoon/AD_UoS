@@ -177,7 +177,7 @@ setwd('/Volumes/MacintoshHD2/Users/haroonr/Dropbox/Writings/UoS/plots/')
  h <- h +  labs(x = "Approach ", y='Value', fill="Approach")  + scale_fill_brewer(palette="Set1")
  h <- h + theme(axis.text.x = element_blank(),axis.text = element_text(color="Black",size = 7),legend.text = element_text(size = 7)) 
  h
- ggsave("ad_results.pdf", width = 6, height = 6, units = "in")
+ ggsave("ad_results.pdf", width = 8, height = 6, units = "in")
  
  
  
