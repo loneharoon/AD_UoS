@@ -11,8 +11,9 @@ import sys
 sys.path.append('/Volumes/MacintoshHD2/Users/haroonr/Dropbox/UniOfStra/AD/python_3_codes/')
 from libPMF import EmpiricalPMF
 from libSSHMM import SuperStateHMM, frange
-from libAccuracy import Accuracy
+
 ε = 0.00021
+import pandas as pd
 
 
 
@@ -73,6 +74,7 @@ def perform_testing(test_dset,sshmms,labels,disagg_algo,limit):
           y1 = obs[i]
           
           #start = time() 
+          print(y0,y1)
           (p, k, Pt, cdone, ctotal) = disagg_algo(sshmm, [y0, y1])
           #elapsed = (time() - start)
   
@@ -113,6 +115,15 @@ def perform_testing(test_dset,sshmms,labels,disagg_algo,limit):
           if limit != 'all' and i >= limit:
               print('\n\n *** LIMIT SET: Only testing %d obs. Testing ends now!' % limit)
               break;
-  #handle.close()         
-  return gt,pred      
+  #handle.close() 
+  gt  =  pd.DataFrame.from_records(gt)
+  gt.columns = labels
+  gt.index = test_dset.index
+  pred = pd.DataFrame.from_records(pred)
+  pred.columns = labels   
+  pred.index = test_dset.index  
+  data_dic = {}
+  data_dic['decoded_power'] = pred
+  data_dic['actual_power'] = gt
+  return data_dic    
   #test_times.append((time() - tm_start) / 60)
