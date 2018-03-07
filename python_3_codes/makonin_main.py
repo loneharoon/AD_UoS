@@ -2,20 +2,12 @@
 # -*- coding: utf-8 -*-
 """
 Created on Thu Mar  1 08:54:19 2018
-
+It works in python 3 only
 @author: haroonr
 """
 
-import sys, json
-from statistics import mean
-from time import time
-from datetime import datetime
-#from libDataLoaders import dataset_loader
-#from libFolding import Folding
+import sys,pickle
 sys.path.append('/Volumes/MacintoshHD2/Users/haroonr/Dropbox/UniOfStra/AD/python_3_codes/')
-from libPMF import EmpiricalPMF
-from libSSHMM import SuperStateHMM, frange
-from libAccuracy import Accuracy
 ε = 0.00021
 from copy import deepcopy
 import pandas as pd
@@ -32,6 +24,7 @@ home = "House10.csv"
 df = pd.read_csv(dir+home,index_col="Time")
 df.index = pd.to_datetime(df.index)
 df_sub = deepcopy(df[:])
+#TODO : TUNE ME
 resample = True
 data_sampling_time = 1 #in minutes
 data_sampling_type = "minutes" # or seconds
@@ -71,7 +64,7 @@ max_states = 4 # makonin set 4
 precision = 1 # makonin set 10
 #TODO: FIX ME
 # this defines max aggregate power value as confirmed by Makonin
-max_obs = np.ceil(max(train_dset['use'].values)) + 1
+max_obs = np.ceil(max(df_selected['use'].values)) + 1
 max_obs = float(max_obs)
 max_states = int(max_states)
 #%
@@ -84,7 +77,15 @@ algo_name = 'SparseViterbi'
 limit ="all"
 print('Testing %s algorithm load disagg...' % algo_name)
 disagg_algo = getattr(__import__('algo_' + algo_name, fromlist=['disagg_algo']), 'disagg_algo')
-res = mks.perform_testing(test_dset,sshmms,labels,disagg_algo,limit)
-
+sshmms_result = mks.perform_testing(test_dset,sshmms,labels,disagg_algo,limit)
+sshmms_result['train_power'] = train_dset # required during anomaly detection logic
+#%%
+save_dir = "/Volumes/MacintoshHD2/Users/haroonr/Detailed_datasets/REFITT/Intermediary_results/"
+#TODO : TUNE ME
+filename = save_dir+"noisy/sshmms/selected/"+ home.split('.')[0]+'.pkl'
+handle = open(filename,'wb')
+#https://docs.python.org/2/library/pickle.html
+pickle.dump(sshmms_result,handle)
+handle.close()
 #%%
 
