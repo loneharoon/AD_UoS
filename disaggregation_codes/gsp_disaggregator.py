@@ -55,7 +55,7 @@ home = "gsp_refit_home10.csv"
 df = pd.read_csv(readdir+home,index_col="Time")
 df.index = pd.to_datetime(df.index)
 main =  df['Aggregate'].values.tolist() # len= 426732
-main = main[0:50000] # 3 days data
+main = main[0:5000] # 3 days data
 
 
 #%%
@@ -63,9 +63,10 @@ main = main[0:50000] # 3 days data
 #data_vec = data_file[19:10000]
 data_vec =  main
 delta_p = [round(data_vec[i+1]-data_vec[i],2) for i in range(0,len(data_vec)-1)]
-#T = 80;
-sigma = 15;
-ri = 0.05;
+#delta_p = [data_vec[i+1]-data_vec[i] for i in range(0,len(data_vec)-1)]
+
+sigma = 40;
+ri = 0.1;
 
 T_Positive = 40;
 T_Negative = -40;
@@ -74,24 +75,22 @@ sigmas = [sigma,sigma/2,sigma/4,sigma/8,sigma/14,sigma/32,sigma/64]
 Finalcluster = []
 #%%
 for k in range(0,len(sigmas)):
-  clusters = []
-  print('k val is {}'.format(k))
-  for i in range(2000): ## change limit
-    if i==0:
-      event = sorted(list(set(event)-set(clusters))) 
+    clusters = []     
+    event = sorted(list(set(event)-set(clusters))) 
+    while len(event):
+        clus = gsp.gspclustering_event2(event,delta_p,sigmas[k]);
+        clusters.append(clus)
+        event = sorted(list(set(event)-set(clus)))
+        print(len(event))
+    if k == len(sigmas)-1:
+        # in the last iteration we don't need johntable
+        Finalcluster = Finalcluster + clusters 
     else:
-      event = sorted(list(set(event)-set(clusters[(i-1)])) )
-    if not len(event):
-      print('Event list got empty at value {}'.format(i))
-      break
-    else:
-      clus = gsp.gspclustering_event2(event,delta_p,sigmas[k]);
-      clusters.append(clus)
-  jt =  gsp.johntable(clusters,Finalcluster,delta_p,ri)
-  events_updated = gsp.find_new_events(clusters,delta_p,ri)
-  events_updated = sorted(events_updated)
-  event = events_updated
-  Finalcluster = jt
+        jt = gsp.johntable(clusters,Finalcluster,delta_p,ri)
+        Finalcluster = jt
+        events_updated = gsp.find_new_events(clusters,delta_p,ri)
+        events_updated = sorted(events_updated)
+        event = events_updated
 if len(event) > 0:
   Finalcluster.append(event)
 #%% Code ClusterTable_3_H6.m
@@ -121,13 +120,13 @@ DelP = [round(data_vec[i+1]-data_vec[i],2) for i in range(0,len(data_vec)-1)]
 Newcluster_1 = []
 Newtable = []
 for i in range(0,len(FinalTable)):
-  if (FinalTable[i][0]>=10):
+  if (FinalTable[i][0]>=20):
     Newcluster_1.append(sorted_cluster[i])
     Newtable.append(FinalTable[i])
 Newcluster = Newcluster_1
 #%% merge cluster with less than 5 members to clusters with more than 5 members 
 for i in range(0,len(FinalTable)):
-  if(FinalTable[i][0] < 10 ):
+  if(FinalTable[i][0] < 20 ):
     for j in range(len(sorted_cluster[i])):
       count =  []
       for k in range(len(Newcluster)):
