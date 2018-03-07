@@ -415,7 +415,7 @@ def AD_refit_training(train_data,data_sampling_type,data_sampling_time,NoOfConte
             print("Contexts are {}".format(k))
             contexts_stats[k] = create_training_stats_ElectricHeater(v,sampling_type=data_sampling_type,sampling_rate=data_sampling_time)
     else:
-        print("AD module for Freezer called")
+        print("AD module for {} called".format(appliance))
         for k,v in contexts_daywise.items():
             print("Contexts are {}".format(k))
             contexts_stats[k] = create_training_stats(v,sampling_type=data_sampling_type,sampling_rate=data_sampling_time) 
