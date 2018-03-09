@@ -20,7 +20,7 @@ def gspclustering_event2(event,delta_p,sigma):
   #for k in range(0,len(event),winL):
   for k in range(0,int(np.floor(len(event)/winL))):
     r = []
-    print('k val is = {}'.format(k))
+    #print('k val is = {}'.format(k))
     event_1 =  event[k*winL:((k+1)*winL)]
     # followed as such from the MATLAB code
     r.append(delta_p[event[0]])
@@ -96,9 +96,9 @@ def find_new_events(clusters,delta_p,ri):
   return newevents
 
 #%%
-def feature_matching_module(pairs,DelP,Newcluster):
-    alpha = 0.7
-    beta = 0.3
+def feature_matching_module(pairs,DelP,Newcluster,alpha,beta):
+    #alpha = 0.5
+    #beta = 0.5
     appliance_pairs = OrderedDict()
     for i in range(len(pairs)):
       pos_cluster = sorted(Newcluster[pairs[i][0]])
@@ -122,7 +122,7 @@ def feature_matching_module(pairs,DelP,Newcluster):
              pair= (start_pos,neg_set[0])
              state_pairs.append(pair)
          elif len(neg_set)==0: # no negative edge found
-             print("No negative edge found for postive edge: {}".format(start_pos))
+             #print("No negative edge found for postive edge: {}".format(start_pos))
              continue
          else:
             #print ("implement it")
@@ -156,8 +156,10 @@ def feature_matching_module(pairs,DelP,Newcluster):
              Ststar = np.matmul(np.linalg.pinv(Lt[0:newlen,0:newlen]), ((-St[0].T) * Lt[0,0:newlen]).reshape(-1,1))
              result_vec = []
              for f in range(Smstar.shape[0]):
-                 temp=alpha * Smstar[f][0] + beta  * Ststar[f][0]
+                 #temp=alpha * Smstar[f][0] + beta  * Ststar[f][0]
+                 temp = np.nansum([alpha * Smstar[f][0] , beta  * Ststar[f][0] ])
                  result_vec.append(temp)
+             #print(i,j)
              best_pos = [a for a in range(len(result_vec)) if (result_vec[a] == min(result_vec))][0]
              pair = (start_pos,neg_set[best_pos])
              state_pairs.append(pair)
