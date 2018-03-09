@@ -205,3 +205,14 @@ def interpolate_values(A):
     A[np.isnan(A)] = np.interp(x, xp, fp)
     A = [round(i) for i in A]
     return A
+#%%
+def create_appliance_timeseries_signature(power_series,main_ind):
+    '''This converts ordinary number indexexed power series into time indexed power series'''
+    result = OrderedDict()
+    for i in range(len(power_series)):
+        temp = power_series[i]
+        temp.index = temp.timestamp
+        dummy = pd.Series(0,main_ind)
+        dummy[main_ind[temp.index.values]] = temp.power.values
+        result[i] = dummy
+    return(result)
