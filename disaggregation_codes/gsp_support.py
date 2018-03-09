@@ -216,3 +216,46 @@ def create_appliance_timeseries_signature(power_series,main_ind):
         dummy[main_ind[temp.index.values]] = temp.power.values
         result[i] = dummy
     return(result)
+#%%
+def map_appliance_names(train_dset,gsp_result):
+    '''This function gives mapping of appliance names in predicted data to original appliance names used in the home'''
+    appliances = train_dset.columns
+    appliances = appliances.difference(['use'])
+    if (len(appliances) > gsp_result.shape[1]):
+        raise ValueError("GSP has predicted less number of appliances than the actual number of appliances")
+    gt_dic = OrderedDict()
+    for app in appliances:
+        dic = {}
+        ds = train_dset[app]
+        ds =  ds[ds>10]
+        dic['mean'] = np.mean(ds)
+        dic['std'] = np.std(ds)
+        dic['appliance'] = app
+        gt_dic[app] = dic
+    #%
+    apps = gsp_result.columns
+    pred_dic = OrderedDict()
+    for app in apps:
+        dic = {}
+        ds = gsp_result[app]
+        ds =  ds[ds>10]
+        dic['mean'] = np.mean(ds)
+        dic['std'] = np.std(ds)
+        dic['appliance'] = app
+        pred_dic[app] = dic
+    #%
+    matches = []
+    for app in appliances:
+        gt_app_mean = gt_dic[app]['mean']       
+        means = [pred_dic[i]['mean'] for i in pred_dic.keys()]
+        means = [abs(j - gt_app_mean) for j in means]
+        #print(len(means))
+        matching_app_idx = np.argmin(means)
+        names = [pred_dic[i]['appliance'] for i in pred_dic.keys()]
+        gt_app,pred_app = app,names[matching_app_idx]
+        matches.append((gt_app,pred_app))
+        #print(app,pred_app)
+        mykeys = [i for i in pred_dic.keys()]
+        del pred_dic[mykeys[matching_app_idx]]
+    column_mapping = dict((i[1],i[0]) for i in matches)
+    return column_mapping
