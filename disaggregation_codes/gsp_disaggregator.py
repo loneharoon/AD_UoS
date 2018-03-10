@@ -17,96 +17,76 @@ sys.path.append('/Volumes/MacintoshHD2/Users/haroonr/Dropbox/UniOfStra/AD/disagg
 import accuracy_metrics_disagg as acmat
 import matplotlib.pyplot as plt
 import gsp_support as gsp
+import AD_support as ads
 from collections import OrderedDict
 from copy import deepcopy
 from collections import defaultdict
-#%%
-#import scipy.io
-#fpath = "/Volumes/MacintoshHD2/Users/haroonr/Documents/MATLAB/main.mat"
-#fl = scipy.io.loadmat(fpath)
-#data_file = fl['main'].flatten().tolist()  
-# READING REDD FILES
-#reddhome= "/Volumes/MacintoshHD2/Users/haroonr/Detailed_datasets/Redd_dataset/house3/"
-#main = pd.read_csv(reddhome+"main_meters.csv",index_col="Index")
-#main = main[0:90000]
-#main['aggregate'] = main.apply(sum,axis=1)
-#main['timestamp'] = pd.to_datetime(main.index).astype(np.int64) //10**9
-#iam = pd.read_csv(reddhome+"sub_meters.csv",index_col="Index")
-#keep = ['refrigerator','disposal','dishwaser','kitchen_outlets', 'kitchen_outlets.1','lighting','microwave']
-#iam_sub = iam[keep]
-#iam_sub['timestamp'] = pd.to_datetime(iam_sub.index).astype(np.int64) //10**9
+import standardize_column_names
 
 #%%
-#dir = "/Volumes/MacintoshHD2/Users/haroonr/Detailed_datasets/REFITT/CLEAN_REFIT_081116/"
-#home = "House1.csv"
-#df = pd.read_csv(dir+home,index_col="Time")
-#df.index = pd.to_datetime(df.index)
-#df_sub = df["2014-03-01":'2014-04-30'] # since before march their are calibration issues
-##%% Resampling data
-#print("*****RESAMPLING********")
-#df_samp = df_sub.resample('1T',label='right',closed='right').mean()
-#data_sampling_time = 1 #in minutes
-#data_sampling_type = "minutes" # or seconds
-#df_samp.drop('Issues',axis=1,inplace=True)
-#df_samp.rename(columns={'Aggregate':'use'},inplace=True) # renaming agg column
-#%% READING REFIT HOME 10 SELECTED
-readdir = "/Volumes/MacintoshHD2/Users/haroonr/Detailed_datasets/REFITT/REFIT_selected/"
-home = "gsp_refit_home10.csv"
-df = pd.read_csv(readdir+home,index_col="Time")
+dir = "/Volumes/MacintoshHD2/Users/haroonr/Detailed_datasets/REFITT/REFIT_selected/"
+home = "House20.csv"
+df = pd.read_csv(dir+home,index_col="Time")
 df.index = pd.to_datetime(df.index)
-main =  df['Aggregate'].values.tolist() # len= 426732
-main = main[0:5000] # 3 days data
+df_sub = deepcopy(df[:])
+#% Resampling data
+#TODO : TUNE ME
+resample = True
+data_sampling_time = 1 #in minutes
+data_sampling_type = "minutes" # or seconds
+if resample: 
+  df_samp = df_sub.resample('1T',label='right',closed='right').mean()
+  df_samp.drop('Issues',axis=1,inplace=True)
+  standardize_column_names.rename_appliances(home,df_samp) # this renames columns
+  #df_samp.rename(columns={'Aggregate':'use'},inplace=True) # renaming agg column
+  print("*****RESAMPling DONE********")
+  if home == "House16.csv":
+      df_samp = df_samp[df_samp.index!= '2014-03-08'] # after resamping this day gets created 
+else:
+  df_samp = deepcopy(df_sub)
+  df_samp.drop('Issues',axis=1,inplace=True)
+  standardize_column_names.rename_appliances(home,df_samp) # this renames columns  
 
-
+energy = df_samp.sum(axis=0)
+high_energy_apps = energy.nlargest(7).keys() # CONTROL : selects few appliances
+df_selected = df_samp[high_energy_apps]
+#%
+#TODO : TUNE ME
+denoised = False
+if denoised:
+    # chaning aggregate column
+    iams = high_energy_apps.difference(['use'])
+    df_selected['use'] = df_selected[iams].sum(axis=1)
+    print('**********DENOISED DATA*************8')
+train_dset,test_dset = ads.get_selected_home_data(home,df_selected)
+#%% READING REFIT HOME 10 SELECTED [used only during comparison for Matlab results]
+#readdir = "/Volumes/MacintoshHD2/Users/haroonr/Detailed_datasets/REFITT/REFIT_selected/"
+#home = "gsp_refit_home10.csv"
+#df = pd.read_csv(readdir+home,index_col="Time")
+#df.index = pd.to_datetime(df.index)
+#main =  df['Aggregate'].values.tolist() # len= 426732
+#main = main[0:15000] # 3 days data
 #%%
-#data_vec = df_samp['use'].values.tolist()
-#data_vec = data_file[19:10000]
-data_vec =  main
+main = train_dset['use'][:10000]
+main_val = main.values
+main_ind = main.index
+#%%
+data_vec =  main_val
 delta_p = [round(data_vec[i+1]-data_vec[i],2) for i in range(0,len(data_vec)-1)]
-#delta_p = [data_vec[i+1]-data_vec[i] for i in range(0,len(data_vec)-1)]
-
 sigma = 40;
 ri = 0.1;
-
 T_Positive = 40;
 T_Negative = -40;
 event =  [i for i in range(0, len(delta_p)) if (delta_p[i] > T_Positive or delta_p[i] < T_Negative) ]
-sigmas = [sigma,sigma/2,sigma/4,sigma/8,sigma/14,sigma/32,sigma/64]
-Finalcluster = []
-#%%
-for k in range(0,len(sigmas)):
-    clusters = []     
-    event = sorted(list(set(event)-set(clusters))) 
-    while len(event):
-        clus = gsp.gspclustering_event2(event,delta_p,sigmas[k]);
-        clusters.append(clus)
-        event = sorted(list(set(event)-set(clus)))
-        print(len(event))
-    if k == len(sigmas)-1:
-        # in the last iteration we don't need johntable
-        Finalcluster = Finalcluster + clusters 
-    else:
-        jt = gsp.johntable(clusters,Finalcluster,delta_p,ri)
-        Finalcluster = jt
-        events_updated = gsp.find_new_events(clusters,delta_p,ri)
-        events_updated = sorted(events_updated)
-        event = events_updated
-if len(event) > 0:
-  Finalcluster.append(event)
-#%% Code ClusterTable_3_H6.m
-
-
-
-#%% Here i count number of members of each cluster, their mean and standard deviation ans store such stats in Table_1. Next, I sort 'Finalcluster' according to cluster means in decreasing order. 
-#time = main['timestamp'].values.tolist()
-#time_main= iam_sub['timestamp'].values.tolist()
+Finalcluster = gsp.refined_clustering_block(event, delta_p, sigma, ri)
+#%% Here i count number of members of each cluster, their mean and standard deviation and store such stats in Table_1. Next, I sort 'Finalcluster' according to cluster means in decreasing order. 
 Table_1 =  np.zeros((len(Finalcluster),4))
 for i in range(len(Finalcluster)):
   Table_1[i,0] = len(Finalcluster[i])
   Table_1[i,1] = np.mean([delta_p[j] for j in Finalcluster[i]])
   Table_1[i,2] = np.std([delta_p[j] for j in Finalcluster[i]],ddof=1)
   Table_1[i,3] =  abs(Table_1[i,2]/ Table_1[i,1])
-#%%
+#% sorting module
 sort_means = np.argsort(Table_1[:,1]).tolist() # returns positions of sorted array
 sort_means.reverse() # gives decreasing order
 sorted_cluster =[]
@@ -120,11 +100,11 @@ DelP = [round(data_vec[i+1]-data_vec[i],2) for i in range(0,len(data_vec)-1)]
 Newcluster_1 = []
 Newtable = []
 for i in range(0,len(FinalTable)):
-  if (FinalTable[i][0]>=20):
+  if (FinalTable[i][0] >= 20):
     Newcluster_1.append(sorted_cluster[i])
     Newtable.append(FinalTable[i])
 Newcluster = Newcluster_1
-#%% merge cluster with less than 5 members to clusters with more than 5 members 
+#% merge cluster with less than 5 members to clusters with more than 5 members 
 for i in range(0,len(FinalTable)):
   if(FinalTable[i][0] < 20 ):
     for j in range(len(sorted_cluster[i])):
@@ -135,12 +115,12 @@ for i in range(0,len(FinalTable)):
       if sum(asv) == 1:
         johnIndex = count.index(max(count))
       elif DelP[sorted_cluster[i][j]] > 0:
-        print("case1",i,j)
+        #print("case1",i,j)
         tablemeans = [r[1] for r in Newtable]
         tempelem = [r for r in tablemeans if r < DelP[sorted_cluster[i][j]]][0]
         johnIndex = tablemeans.index(tempelem)
       else:
-        print("case else",i,j)
+        #print("case else",i,j)
         tablemeans = [r[1] for r in Newtable]
         tempelem = [r for r in tablemeans if r > DelP[sorted_cluster[i][j]]].pop()
         johnIndex = tablemeans.index(tempelem)
@@ -153,6 +133,18 @@ for i in range(len(Newcluster)):
   Table_2[i,2] = np.std([delta_p[j] for j in Newcluster[i]],ddof=1)
   Table_2[i,3] =  abs(Table_2[i,2]/ Table_2[i,1])
 Newtable = Table_2
+#%% Ideally, number of positive clusters should be equal to negative clusters. if one type is more than the other then we merge extra clusters until we get equal number of postive and negative clusters
+pos_clusters = neg_clusters = 0
+for i in range(Newtable.shape[0]):
+    if Newtable[i][1] > 0:
+        pos_clusters += 1
+    else:
+        neg_clusters += 1
+        
+    
+
+
+
 #%%
 # Use Newtable and Newclusters for pairing 
 # Newtable: contains mean and standard deviation of updated clusters
@@ -173,7 +165,7 @@ pairs_temp = deepcopy(pairs)
 dic_def = defaultdict(list)
 for value,key in pairs:
     dic_def[key].append(value)
-#%%
+#%
 updated_pairs= []
 for neg_edge in dic_def.keys():
     #neg_edge= 35
@@ -186,10 +178,17 @@ for neg_edge in dic_def.keys():
         good_pair = (pos_edges[0],neg_edge)
     updated_pairs.append(good_pair)
     
-#%% Now
-appliance_pairs = gsp.feature_matching_module(updated_pairs,DelP, Newcluster)
+#%
+alpha = 0.6
+beta = 0.4
+appliance_pairs = gsp.feature_matching_module(updated_pairs,DelP, Newcluster,alpha,beta)
+#%
 power_series = gsp.generate_appliance_powerseries(appliance_pairs,DelP)
-plt.plot(power_series[0].power)
+power_timeseries = gsp.create_appliance_timeseries_signature(power_series,main_ind)
+gsp_result = pd.concat(power_timeseries,axis=1)
+mapped_names = gsp.map_appliance_names(train_dset,gsp_result)
+gsp_result.rename(columns=mapped_names,inplace=True)
+gsp_result.plot(subplots=True)
 #%%
 fig,axes = plt.subplots(nrows=9,ncols=2,sharex=False,sharey=False,figsize=(12,15))
 app =0
@@ -198,8 +197,18 @@ for ax in range(len(power_series)//2):
     app+=1
     axes[ax,1].plot(power_series[app].timestamp,power_series[app].power)
     app+=1
-fig.savefig("gsp.png")
+#fig.savefig("gsp.png")
 #%% create mat files
+
+fig,axes = plt.subplots(nrows=9,ncols=2,sharex=False,sharey=False,figsize=(12,15))
+app =0
+for ax in range(len(power_timeseries)//2):
+    axes[ax,0].plot(power_timeseries[app])
+    app+=1
+    axes[ax,1].plot(power_timeseries[app])
+    app+=1
+
+#%%
 import scipy.io
 iam_sub.keys()
 spath = "/Volumes/MacintoshHD2/Users/haroonr/Documents/MATLAB/"

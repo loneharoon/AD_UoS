@@ -17,10 +17,8 @@ def gspclustering_event2(event,delta_p,sigma):
  # TODO: fix me
   winL = 1000
   Smstar = np.zeros((len(event),1))
-  #for k in range(0,len(event),winL):
   for k in range(0,int(np.floor(len(event)/winL))):
     r = []
-    #print('k val is = {}'.format(k))
     event_1 =  event[k*winL:((k+1)*winL)]
     # followed as such from the MATLAB code
     r.append(delta_p[event[0]])
@@ -32,8 +30,6 @@ def gspclustering_event2(event,delta_p,sigma):
     Am = np.zeros((templen,templen))
     for i in range(0,templen):
       for j in range(0,templen):
-         #print(i,j)
-         #print('\n')
          Am[i,j] = math.exp(-((r[i]-r[j])/sigma)**2);
          #Gaussian kernel weighting function
     Dm = np.zeros((templen,templen));
@@ -125,9 +121,6 @@ def feature_matching_module(pairs,DelP,Newcluster,alpha,beta):
              #print("No negative edge found for postive edge: {}".format(start_pos))
              continue
          else:
-            #print ("implement it")
-             #print (j)
-             # TODO : MAKE SURE IT IS DELP ONLY AND NOT ACTUAL CONSUMPTION
              phi_m = [DelP[h]+DelP[start_pos] for h in neg_set]
              phi_t = [(h-start_pos) for h in neg_set]
              newlen= len(neg_set)
@@ -227,7 +220,7 @@ def map_appliance_names(train_dset,gsp_result):
     for app in appliances:
         dic = {}
         ds = train_dset[app]
-        ds =  ds[ds>10]
+        ds =  ds[ds > 10]
         dic['mean'] = np.mean(ds)
         dic['std'] = np.std(ds)
         dic['appliance'] = app
@@ -238,7 +231,7 @@ def map_appliance_names(train_dset,gsp_result):
     for app in apps:
         dic = {}
         ds = gsp_result[app]
-        ds =  ds[ds>10]
+        ds =  ds[ds > 10]
         dic['mean'] = np.mean(ds)
         dic['std'] = np.std(ds)
         dic['appliance'] = app
@@ -259,3 +252,26 @@ def map_appliance_names(train_dset,gsp_result):
         del pred_dic[mykeys[matching_app_idx]]
     column_mapping = dict((i[1],i[0]) for i in matches)
     return column_mapping
+#%%
+def refined_clustering_block(event,delta_p,sigma,ri):
+    '''this section performs clustering as explained in Figure 1 (Flowchart) of the IEEE Acess paper'''
+    sigmas = [sigma,sigma/2,sigma/4,sigma/8,sigma/14,sigma/32,sigma/64]
+    Finalcluster = []
+    for k in range(0,len(sigmas)):
+        clusters = []     
+        event = sorted(list(set(event)-set(clusters))) 
+        while len(event):
+            clus =  gspclustering_event2(event,delta_p,sigmas[k]);
+            clusters.append(clus)
+            event = sorted(list(set(event)-set(clus)))
+        if k == len(sigmas)-1:
+            Finalcluster = Finalcluster + clusters 
+        else:
+            jt = johntable(clusters,Finalcluster,delta_p,ri)
+            Finalcluster = jt
+            events_updated = find_new_events(clusters,delta_p,ri)
+            events_updated = sorted(events_updated)
+            event = events_updated
+    if len(event) > 0:
+      Finalcluster.append(event)
+    return Finalcluster

@@ -8,7 +8,6 @@ It works in python 3 only
 
 import sys,pickle
 sys.path.append('/Volumes/MacintoshHD2/Users/haroonr/Dropbox/UniOfStra/AD/python_3_codes/')
-ε = 0.00021
 from copy import deepcopy
 import pandas as pd
 sys.path.append('/Volumes/MacintoshHD2/Users/haroonr/Dropbox/UniOfStra/AD/disaggregation_codes/')
@@ -20,7 +19,7 @@ import numpy as np
 
 dir = "/Volumes/MacintoshHD2/Users/haroonr/Detailed_datasets/REFITT/REFIT_selected/"
 
-home = "House10.csv"
+home = "House18.csv"
 df = pd.read_csv(dir+home,index_col="Time")
 df.index = pd.to_datetime(df.index)
 df_sub = deepcopy(df[:])
@@ -46,7 +45,7 @@ energy = df_samp.sum(axis=0)
 high_energy_apps = energy.nlargest(7).keys() # CONTROL : selects few appliances
 df_selected = df_samp[high_energy_apps]
 #TODO : TUNE ME
-denoised = False
+denoised = True
 if denoised:
     # chaning aggregate column
     iams = high_energy_apps.difference(['use'])
@@ -61,8 +60,7 @@ ids.remove('use')
 
 train_times = []
 max_states = 4 # makonin set 4
-precision = 1 # makonin set 10
-#TODO: FIX ME
+precision = 1 
 # this defines max aggregate power value as confirmed by Makonin
 max_obs = np.ceil(max(df_selected['use'].values)) + 1
 max_obs = float(max_obs)
@@ -79,13 +77,14 @@ print('Testing %s algorithm load disagg...' % algo_name)
 disagg_algo = getattr(__import__('algo_' + algo_name, fromlist=['disagg_algo']), 'disagg_algo')
 sshmms_result = mks.perform_testing(test_dset,sshmms,labels,disagg_algo,limit)
 sshmms_result['train_power'] = train_dset # required during anomaly detection logic
-#%%
+#%
 save_dir = "/Volumes/MacintoshHD2/Users/haroonr/Detailed_datasets/REFITT/Intermediary_results/"
 #TODO : TUNE ME
-filename = save_dir+"noisy/sshmms/selected/"+ home.split('.')[0]+'.pkl'
+filename = save_dir+"denoised/sshmms/selected/"+ home.split('.')[0]+'.pkl'
 handle = open(filename,'wb')
 #https://docs.python.org/2/library/pickle.html
 pickle.dump(sshmms_result,handle)
 handle.close()
+print('I am done')
 #%%
 
