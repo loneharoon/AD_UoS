@@ -67,7 +67,7 @@ train_dset,test_dset = ads.get_selected_home_data(home,df_selected)
 #main =  df['Aggregate'].values.tolist() # len= 426732
 #main = main[0:15000] # 3 days data
 #%%
-main = train_dset['use'][:10000]
+main = train_dset['use']
 main_val = main.values
 main_ind = main.index
 #%%
@@ -140,18 +140,126 @@ for i in range(Newtable.shape[0]):
         pos_clusters += 1
     else:
         neg_clusters += 1
+#%%
+Newcluster_cp = deepcopy(Newcluster)
+# merge until we get equal number of postive and negative clusters
+while pos_clusters != neg_clusters:
+    index_cluster = Newcluster_cp
+    power_cluster = []
+    for i in index_cluster:
+        list_member = []
+        for j in i:
+            list_member.append(delta_p[j])
+        power_cluster.append(list_member)
         
-    
+    clustermeans = [np.mean(i) for i in power_cluster]
+    postive_cluster_chunk= []
+    negative_cluster_chunk = []
+    postive_cluster_means= []
+    negative_cluster_means = []
+    pos_clusters = neg_clusters = 0
+    for j in range(len(clustermeans)):
+       if clustermeans[j] > 0:
+            pos_clusters += 1
+            postive_cluster_chunk.append(index_cluster[j])
+            postive_cluster_means.append(clustermeans[j])    
+       else:
+            neg_clusters += 1
+            negative_cluster_chunk.append(index_cluster[j])
+            negative_cluster_means.append(clustermeans[j])
+            
+    if pos_clusters > neg_clusters:
+         print ('call positive')
+         postive_cluster_chunk = find_closest_pair(postive_cluster_means, postive_cluster_chunk)
+    elif neg_clusters > pos_clusters:
+         print ('call negative')
+         negative_cluster_chunk = find_closest_pair(negative_cluster_means, negative_cluster_chunk)
+    else:
+        pass
+    Newcluster_cp = postive_cluster_chunk + negative_cluster_chunk        
+#%% Identify part of the newtable for merging
+cluster_means  =  Newtable[:,1].tolist()
+#cluster_means =  [20,30,40,-2,-4,-22,-85,-23]
+#pos_clusters = 3
+#neg_clusters = 5
+required_reduction = abs(pos_clusters - neg_clusters)
+if pos_clusters > neg_clusters:
+    # here we merge only postive clusters
+    start_cluster = 0
+    end_cluster = pos_clusters - 1
+    res = find_closest_pairs(start_cluster,end_cluster,cluster_means,required_reduction)
+elif pos_clusters < neg_clusters:
+     # here we merge only negative clusters
+    start_cluster = pos_clusters
+    end_cluster = len(cluster_means)-1
+    res = find_closest_pairs(start_cluster,end_cluster,cluster_means,required_reduction)
+else:
+    pass
+#%% 
+# convert Newcluster table to dictionary
+Newcluster_dict = {}
+for i in range(len(Newcluster)):
+    Newcluster_dict[i] =  Newcluster[i]
+#%%
+# merge clusters now
+Newcluster_2 = []
+for i in range(res.shape[0]):
+   Newcluster_2.append(Newcluster_dict[res.iloc[i].cluster_1] +  Newcluster_dict[res.iloc[i].cluster_2])
+   del Newcluster_dict[res.iloc[i].cluster_1]
+   del Newcluster_dict[res.iloc[i].cluster_2]
+for k,v in Newcluster_dict.items():
+    Newcluster_2.append(v)
+# Now  we have equal postive and negative clusters, we will now perform pairing
 
-
+#%%
+#cluster_means = Newtable[]    
+#cluster_means = [10,20,22,50,55,100] 
+def find_closest_pairs(start_cluster,end_cluster,cluster_means,required_reduction): 
+    distances = []   
+    for i in range(start_cluster, end_cluster):
+        for j in range((i+1),end_cluster+1):
+           print i,j
+           distance = abs(cluster_means[i] - cluster_means[j])  
+           distances.append((i,j,distance))
+    distances  = pd.DataFrame.from_records(distances)
+    distances.columns = ['cluster_1','cluster_2','difference']
+    distances.sort_values('difference',axis=0,inplace=True)
+    return distances.head(required_reduction)
+#%%
+def find_closest_pair(cluster_means,cluster_group): 
+    distances = []   
+    for i in range(len(cluster_means)-1):
+        for j in range((i+1),len(cluster_means)):
+           #print i,j
+           distance = abs(cluster_means[i] - cluster_means[j])  
+           distances.append((i,j,distance))
+    merge_pair = min(distances, key = lambda h:h[2])
+    # convert list to dict for simplicity
+    cluster_dict = {}
+    for i in range(len(cluster_group)): 
+        cluster_dict[i] =  cluster_group[i]
+    # merge cluster using above merge_pair and copy remaining as such
+    tempcluster = []
+    tempcluster.append(cluster_dict[merge_pair[0]] + cluster_dict[merge_pair[1]])
+    del cluster_dict[merge_pair[0]]
+    del cluster_dict[merge_pair[1]]
+    for k,v in cluster_dict.items():
+        tempcluster.append(v)
+    return tempcluster
 
 #%%
 # Use Newtable and Newclusters for pairing 
 # Newtable: contains mean and standard deviation of updated clusters
 # Newclusters: contains updated clusters after merge
-clus_means = [i[1] for i in Newtable]
+#clus_means = [i[1] for i in Newtable]
+#clus_means = [i[1] for i in Newtable]
+clus_means = []
+for i in Newcluster_cp:
+    list_member = []
+    for j in i:
+        list_member.append(delta_p[j])
+    clus_means.append(np.mean(list_member))    
 pairs = []
-
 # TODO: handle case for pending clusters which do not cluster  and sometimes more than one positive cluster might will pair with same neg. cluster
 for i in range(len(clus_means)):
   if clus_means[i] > 0: # postive edge
