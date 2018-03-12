@@ -17,8 +17,8 @@ from scipy.stats import norm
 import math
 #%%
 def gspclustering_event2(event,delta_p,sigma):
- # TODO: fix me
-  winL = 1000
+ 
+  winL = 1000 # this define  number of observations in a window, the algorthm works in a sliding window manner
   Smstar = np.zeros((len(event),1))
   for k in range(0,int(np.floor(len(event)/winL))):
     r = []
@@ -63,7 +63,7 @@ def gspclustering_event2(event,delta_p,sigma):
     Lm = Dm - Am;
     Smstar_temp = np.matmul(np.linalg.pinv(Lm[1:newlen,1:newlen]), ((-Sm[0].T) * Lm[0,1:newlen]).reshape(-1,1));
     Smstar[(int(np.floor(len(event)/winL))*winL):len(event)] = Smstar_temp
-  #TODO: Fix me
+  # 0.98 values has been obtained emparically
   cluster = [event[i] for i in range(len(Smstar)) if (Smstar[i] > 0.98)]
   return cluster
 #%%
@@ -207,6 +207,8 @@ def create_appliance_timeseries_signature(power_series,main_ind):
     result = OrderedDict()
     for i in range(len(power_series)):
         temp = power_series[i]
+        if len(temp) < 1: # corner case found
+            continue
         temp.index = temp.timestamp
         dummy = pd.Series(0,main_ind)
         dummy[main_ind[temp.index.values]] = temp.power.values
@@ -301,7 +303,7 @@ def find_closest_pair(cluster_means,cluster_group):
         tempcluster.append(v)
     return tempcluster
 #%%
-def pair_clusters_appliance_wise(Finalcluster, data_vec, delta_p):
+def pair_clusters_appliance_wise(Finalcluster, data_vec, delta_p, instancelimit):
         
     #% Here i count number of members of each cluster, their mean and standard deviation and store such stats in Table_1. Next, I sort 'Finalcluster' according to cluster means in decreasing order. 
     Table_1 =  np.zeros((len(Finalcluster),4))
@@ -324,15 +326,15 @@ def pair_clusters_appliance_wise(Finalcluster, data_vec, delta_p):
     DelP = [round(data_vec[i+1]-data_vec[i],2) for i in range(0,len(data_vec)-1)]
     Newcluster_1 = []
     Newtable = []
-    intancelimit = 20
+    #intancelimit = 20
     for i in range(0,len(FinalTable)):
-      if (FinalTable[i][0] >= intancelimit):
+      if (FinalTable[i][0] >= instancelimit):
         Newcluster_1.append(sorted_cluster[i])
         Newtable.append(FinalTable[i])
     Newcluster = Newcluster_1
     #% merge cluster with less than intancelimit members to clusters with more than 5 members 
     for i in range(0,len(FinalTable)):
-      if(FinalTable[i][0] < intancelimit ):
+      if(FinalTable[i][0] < instancelimit ):
         for j in range(len(sorted_cluster[i])):
           count =  []
           for k in range(len(Newcluster)):
