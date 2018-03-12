@@ -11,6 +11,9 @@ from __future__ import division
 import numpy as np
 import pandas as pd
 from collections import OrderedDict
+from copy import deepcopy
+from collections import defaultdict
+from scipy.stats import norm
 import math
 #%%
 def gspclustering_event2(event,delta_p,sigma):
@@ -297,6 +300,145 @@ def find_closest_pair(cluster_means,cluster_group):
     for k,v in cluster_dict.items():
         tempcluster.append(v)
     return tempcluster
+#%%
+def pair_clusters_appliance_wise(Finalcluster, data_vec, delta_p):
+        
+    #% Here i count number of members of each cluster, their mean and standard deviation and store such stats in Table_1. Next, I sort 'Finalcluster' according to cluster means in decreasing order. 
+    Table_1 =  np.zeros((len(Finalcluster),4))
+    for i in range(len(Finalcluster)):
+      Table_1[i,0] = len(Finalcluster[i])
+      Table_1[i,1] = np.mean([delta_p[j] for j in Finalcluster[i]])
+      Table_1[i,2] = np.std([delta_p[j] for j in Finalcluster[i]],ddof=1)
+      Table_1[i,3] =  abs(Table_1[i,2]/ Table_1[i,1])
+    #% sorting module
+    sort_means = np.argsort(Table_1[:,1]).tolist() # returns positions of sorted array
+    sort_means.reverse() # gives decreasing order
+    sorted_cluster =[]
+    FinalTable = []
+    for i in range(len(sort_means)):
+      sorted_cluster.append(Finalcluster[sort_means[i]])
+      FinalTable.append(Table_1[sort_means[i]].tolist())
+    #%
+    # Here I reduce number of clusters. I keep clusters with more than or equal 'instancelimit' members as such and in next cell I merge cluster with less than 5 members to clusters with more than 'instancelimit' members 
+    # DelP seems redundant but lets move on
+    DelP = [round(data_vec[i+1]-data_vec[i],2) for i in range(0,len(data_vec)-1)]
+    Newcluster_1 = []
+    Newtable = []
+    intancelimit = 20
+    for i in range(0,len(FinalTable)):
+      if (FinalTable[i][0] >= intancelimit):
+        Newcluster_1.append(sorted_cluster[i])
+        Newtable.append(FinalTable[i])
+    Newcluster = Newcluster_1
+    #% merge cluster with less than intancelimit members to clusters with more than 5 members 
+    for i in range(0,len(FinalTable)):
+      if(FinalTable[i][0] < intancelimit ):
+        for j in range(len(sorted_cluster[i])):
+          count =  []
+          for k in range(len(Newcluster)):
+            count.append(norm.pdf(DelP[sorted_cluster[i][j]],Newtable[k][1],Newtable[k][2]))
+          asv = [h == max(count) for h in count]
+          if sum(asv) == 1:
+            johnIndex = count.index(max(count))
+          elif DelP[sorted_cluster[i][j]] > 0:
+            #print("case1",i,j)
+            tablemeans = [r[1] for r in Newtable]
+            tempelem = [r for r in tablemeans if r < DelP[sorted_cluster[i][j]]][0]
+            johnIndex = tablemeans.index(tempelem)
+          else:
+            #print("case else",i,j)
+            tablemeans = [r[1] for r in Newtable]
+            tempelem = [r for r in tablemeans if r > DelP[sorted_cluster[i][j]]].pop()
+            johnIndex = tablemeans.index(tempelem)
+          Newcluster[johnIndex].append(sorted_cluster[i][j])
+    # updating table means in new table
+    Table_2 =  np.zeros((len(Newcluster),4))
+    for i in range(len(Newcluster)):
+      Table_2[i,0] = len(Newcluster[i])
+      Table_2[i,1] = np.mean([delta_p[j] for j in Newcluster[i]])
+      Table_2[i,2] = np.std([delta_p[j] for j in Newcluster[i]],ddof=1)
+      Table_2[i,3] =  abs(Table_2[i,2]/ Table_2[i,1])
+    Newtable = Table_2
+    #%
+    # Ideally, number of positive clusters should be equal to negative clusters. if one type is more than the other then we merge extra clusters until we get equal number of postive and negative clusters
+    pos_clusters = neg_clusters = 0
+    for i in range(Newtable.shape[0]):
+        if Newtable[i][1] > 0:
+            pos_clusters += 1
+        else:
+            neg_clusters += 1
+    Newcluster_cp = deepcopy(Newcluster)
+    # merge until we get equal number of postive and negative clusters
+    while pos_clusters != neg_clusters:
+        index_cluster = Newcluster_cp
+        power_cluster = []
+        for i in index_cluster:
+            list_member = []
+            for j in i:
+                list_member.append(delta_p[j])
+            power_cluster.append(list_member)
+            
+        clustermeans = [np.mean(i) for i in power_cluster]
+        postive_cluster_chunk= []
+        negative_cluster_chunk = []
+        postive_cluster_means= []
+        negative_cluster_means = []
+        pos_clusters = neg_clusters = 0
+        for j in range(len(clustermeans)):
+           if clustermeans[j] > 0:
+                pos_clusters += 1
+                postive_cluster_chunk.append(index_cluster[j])
+                postive_cluster_means.append(clustermeans[j])    
+           else:
+                neg_clusters += 1
+                negative_cluster_chunk.append(index_cluster[j])
+                negative_cluster_means.append(clustermeans[j])
+                
+        if pos_clusters > neg_clusters:
+             #print ('call positive')
+             postive_cluster_chunk = find_closest_pair(postive_cluster_means, postive_cluster_chunk)
+        elif neg_clusters > pos_clusters:
+             #print ('call negative')
+             negative_cluster_chunk = find_closest_pair(negative_cluster_means, negative_cluster_chunk)
+        else:
+            pass
+        Newcluster_cp = postive_cluster_chunk + negative_cluster_chunk        
+    
+    #%
+    # Use Newcluster_cp for pairing. Basically here we combine one postive cluster with one negative cluster, which corresponds to ON and OFF instances of the same appliance
+    clus_means = []
+    for i in Newcluster_cp:
+        list_member = []
+        for j in i:
+            list_member.append(delta_p[j])
+        clus_means.append(np.mean(list_member))    
+    pairs = []
+    for i in range(len(clus_means)):
+      if clus_means[i] > 0: # postive edge
+        neg_edges = [ (abs(clus_means[i] + clus_means[j]),j) for j in range(i+1,len(clus_means)) if clus_means[j] < 0] # find all neg edges and their location in tuple form
+        edge_mag = [j[0] for j in neg_edges] # 0 corresponds to list magnitude in the tuple
+        match_loc = neg_edges[edge_mag.index(min(edge_mag))][1]
+        pairs.append((i,match_loc))
+    #%
+    # while looking at pairs, we find that there are cases where more than one positive edge has piaired with more than one negative edge. To solve this issue, we fill process again this pairing process. step 1: save this in default dic by negative edge wise step 2: see with which positive edge matches the negative edge matches the most
+    #pairs_temp = deepcopy(pairs)
+    dic_def = defaultdict(list)
+    for value,key in pairs:
+        dic_def[key].append(value)
+    #%
+    updated_pairs= []
+    for neg_edge in dic_def.keys():
+        #neg_edge= 35
+        pos_edges = dic_def[neg_edge]
+        if len(pos_edges) >1:
+            candidates = [abs(clus_means[edge]+ clus_means[neg_edge]) for edge in pos_edges]
+            good_pos_edge =  [el_pos for el_pos in range(len(candidates)) if candidates[el_pos] == min(candidates)][0]
+            good_pair = (pos_edges[good_pos_edge],neg_edge)
+        else:
+            good_pair = (pos_edges[0],neg_edge)
+        updated_pairs.append(good_pair)
+    return Newcluster_cp,updated_pairs
+
 #%%
 # seems obselte one
 def find_closest_pairs(start_cluster,end_cluster,cluster_means,required_reduction): 
