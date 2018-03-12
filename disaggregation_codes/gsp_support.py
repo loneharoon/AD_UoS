@@ -275,3 +275,38 @@ def refined_clustering_block(event,delta_p,sigma,ri):
     if len(event) > 0:
       Finalcluster.append(event)
     return Finalcluster
+#%%
+def find_closest_pair(cluster_means,cluster_group): 
+    ''' this identifies closest clusters wrt to mean and then merges those clusters into one'''
+    distances = []   
+    for i in range(len(cluster_means)-1):
+        for j in range((i+1),len(cluster_means)):
+           #print i,j
+           distance = abs(cluster_means[i] - cluster_means[j])  
+           distances.append((i,j,distance))
+    merge_pair = min(distances, key = lambda h:h[2])
+    # convert list to dict for simplicity
+    cluster_dict = {}
+    for i in range(len(cluster_group)): 
+        cluster_dict[i] =  cluster_group[i]
+    # merge cluster using above merge_pair and copy remaining as such
+    tempcluster = []
+    tempcluster.append(cluster_dict[merge_pair[0]] + cluster_dict[merge_pair[1]])
+    del cluster_dict[merge_pair[0]]
+    del cluster_dict[merge_pair[1]]
+    for k,v in cluster_dict.items():
+        tempcluster.append(v)
+    return tempcluster
+#%%
+# seems obselte one
+def find_closest_pairs(start_cluster,end_cluster,cluster_means,required_reduction): 
+    distances = []   
+    for i in range(start_cluster, end_cluster):
+        for j in range((i+1),end_cluster+1):
+           print i,j
+           distance = abs(cluster_means[i] - cluster_means[j])  
+           distances.append((i,j,distance))
+    distances  = pd.DataFrame.from_records(distances)
+    distances.columns = ['cluster_1','cluster_2','difference']
+    distances.sort_values('difference',axis=0,inplace=True)
+    return distances.head(required_reduction)

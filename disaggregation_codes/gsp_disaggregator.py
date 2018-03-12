@@ -95,18 +95,19 @@ for i in range(len(sort_means)):
   sorted_cluster.append(Finalcluster[sort_means[i]])
   FinalTable.append(Table_1[sort_means[i]].tolist())
 #%% 
-# Here I reduce number of clusters. I keep clusters with more than or equal 5 members as such and in next cell I merge cluster with less than 5 members to clusters with more than 5 members 
+# Here I reduce number of clusters. I keep clusters with more than or equal 'instancelimit' members as such and in next cell I merge cluster with less than 5 members to clusters with more than 'instancelimit' members 
 DelP = [round(data_vec[i+1]-data_vec[i],2) for i in range(0,len(data_vec)-1)]
 Newcluster_1 = []
 Newtable = []
+intancelimit = 20
 for i in range(0,len(FinalTable)):
-  if (FinalTable[i][0] >= 20):
+  if (FinalTable[i][0] >= intancelimit):
     Newcluster_1.append(sorted_cluster[i])
     Newtable.append(FinalTable[i])
 Newcluster = Newcluster_1
-#% merge cluster with less than 5 members to clusters with more than 5 members 
+#% merge cluster with less than intancelimit members to clusters with more than 5 members 
 for i in range(0,len(FinalTable)):
-  if(FinalTable[i][0] < 20 ):
+  if(FinalTable[i][0] < intancelimit ):
     for j in range(len(sorted_cluster[i])):
       count =  []
       for k in range(len(Newcluster)):
@@ -140,7 +141,6 @@ for i in range(Newtable.shape[0]):
         pos_clusters += 1
     else:
         neg_clusters += 1
-#%%
 Newcluster_cp = deepcopy(Newcluster)
 # merge until we get equal number of postive and negative clusters
 while pos_clusters != neg_clusters:
@@ -170,89 +170,16 @@ while pos_clusters != neg_clusters:
             
     if pos_clusters > neg_clusters:
          print ('call positive')
-         postive_cluster_chunk = find_closest_pair(postive_cluster_means, postive_cluster_chunk)
+         postive_cluster_chunk = gsp.find_closest_pair(postive_cluster_means, postive_cluster_chunk)
     elif neg_clusters > pos_clusters:
          print ('call negative')
-         negative_cluster_chunk = find_closest_pair(negative_cluster_means, negative_cluster_chunk)
+         negative_cluster_chunk = gsp.find_closest_pair(negative_cluster_means, negative_cluster_chunk)
     else:
         pass
     Newcluster_cp = postive_cluster_chunk + negative_cluster_chunk        
-#%% Identify part of the newtable for merging
-cluster_means  =  Newtable[:,1].tolist()
-#cluster_means =  [20,30,40,-2,-4,-22,-85,-23]
-#pos_clusters = 3
-#neg_clusters = 5
-required_reduction = abs(pos_clusters - neg_clusters)
-if pos_clusters > neg_clusters:
-    # here we merge only postive clusters
-    start_cluster = 0
-    end_cluster = pos_clusters - 1
-    res = find_closest_pairs(start_cluster,end_cluster,cluster_means,required_reduction)
-elif pos_clusters < neg_clusters:
-     # here we merge only negative clusters
-    start_cluster = pos_clusters
-    end_cluster = len(cluster_means)-1
-    res = find_closest_pairs(start_cluster,end_cluster,cluster_means,required_reduction)
-else:
-    pass
-#%% 
-# convert Newcluster table to dictionary
-Newcluster_dict = {}
-for i in range(len(Newcluster)):
-    Newcluster_dict[i] =  Newcluster[i]
-#%%
-# merge clusters now
-Newcluster_2 = []
-for i in range(res.shape[0]):
-   Newcluster_2.append(Newcluster_dict[res.iloc[i].cluster_1] +  Newcluster_dict[res.iloc[i].cluster_2])
-   del Newcluster_dict[res.iloc[i].cluster_1]
-   del Newcluster_dict[res.iloc[i].cluster_2]
-for k,v in Newcluster_dict.items():
-    Newcluster_2.append(v)
-# Now  we have equal postive and negative clusters, we will now perform pairing
 
 #%%
-#cluster_means = Newtable[]    
-#cluster_means = [10,20,22,50,55,100] 
-def find_closest_pairs(start_cluster,end_cluster,cluster_means,required_reduction): 
-    distances = []   
-    for i in range(start_cluster, end_cluster):
-        for j in range((i+1),end_cluster+1):
-           print i,j
-           distance = abs(cluster_means[i] - cluster_means[j])  
-           distances.append((i,j,distance))
-    distances  = pd.DataFrame.from_records(distances)
-    distances.columns = ['cluster_1','cluster_2','difference']
-    distances.sort_values('difference',axis=0,inplace=True)
-    return distances.head(required_reduction)
-#%%
-def find_closest_pair(cluster_means,cluster_group): 
-    distances = []   
-    for i in range(len(cluster_means)-1):
-        for j in range((i+1),len(cluster_means)):
-           #print i,j
-           distance = abs(cluster_means[i] - cluster_means[j])  
-           distances.append((i,j,distance))
-    merge_pair = min(distances, key = lambda h:h[2])
-    # convert list to dict for simplicity
-    cluster_dict = {}
-    for i in range(len(cluster_group)): 
-        cluster_dict[i] =  cluster_group[i]
-    # merge cluster using above merge_pair and copy remaining as such
-    tempcluster = []
-    tempcluster.append(cluster_dict[merge_pair[0]] + cluster_dict[merge_pair[1]])
-    del cluster_dict[merge_pair[0]]
-    del cluster_dict[merge_pair[1]]
-    for k,v in cluster_dict.items():
-        tempcluster.append(v)
-    return tempcluster
-
-#%%
-# Use Newtable and Newclusters for pairing 
-# Newtable: contains mean and standard deviation of updated clusters
-# Newclusters: contains updated clusters after merge
-#clus_means = [i[1] for i in Newtable]
-#clus_means = [i[1] for i in Newtable]
+# Use Newcluster_cp for pairing. Basically here we combine one postive cluster with one negative cluster, which corresponds to ON and OFF instances of the same appliance
 clus_means = []
 for i in Newcluster_cp:
     list_member = []
@@ -260,7 +187,6 @@ for i in Newcluster_cp:
         list_member.append(delta_p[j])
     clus_means.append(np.mean(list_member))    
 pairs = []
-# TODO: handle case for pending clusters which do not cluster  and sometimes more than one positive cluster might will pair with same neg. cluster
 for i in range(len(clus_means)):
   if clus_means[i] > 0: # postive edge
     neg_edges = [ (abs(clus_means[i] + clus_means[j]),j) for j in range(i+1,len(clus_means)) if clus_means[j] < 0] # find all neg edges and their location in tuple form
@@ -285,11 +211,9 @@ for neg_edge in dic_def.keys():
     else:
         good_pair = (pos_edges[0],neg_edge)
     updated_pairs.append(good_pair)
-    
-#%
 alpha = 0.6
 beta = 0.4
-appliance_pairs = gsp.feature_matching_module(updated_pairs,DelP, Newcluster,alpha,beta)
+appliance_pairs = gsp.feature_matching_module(updated_pairs,DelP, Newcluster_cp,alpha,beta)
 #%
 power_series = gsp.generate_appliance_powerseries(appliance_pairs,DelP)
 power_timeseries = gsp.create_appliance_timeseries_signature(power_series,main_ind)
