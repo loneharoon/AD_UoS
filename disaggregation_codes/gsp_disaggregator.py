@@ -27,7 +27,7 @@ import standardize_column_names
 
 print("Run this code in python 2")
 dir = "/Volumes/MacintoshHD2/Users/haroonr/Detailed_datasets/REFITT/REFIT_selected/"
-home = "House18.csv"
+home = "House10.csv"
 df = pd.read_csv(dir+home,index_col="Time")
 df.index = pd.to_datetime(df.index)
 df_sub = deepcopy(df[:])
@@ -93,8 +93,10 @@ gsp_result.rename(columns = mapped_names, inplace = True)
 
 #%% run gsp monthly basis
 monthly_groups = test_dset.groupby(test_dset.index.month)
-monthly_gsp_res = OrderedDict()
-gt = OrderedDict()
+#monthly_gsp_res = OrderedDict()
+monthly_gsp_res = []
+gt = []
+#%%
 for k,v in monthly_groups:
     print('Month is {}'.format(k))
     dset = v
@@ -116,8 +118,9 @@ for k,v in monthly_groups:
     gsp_result = gsp_result.rename(columns = mapped_names, inplace = False)
     print ('Keep appliances present in training data only')
     apps = [v for k, v in mapped_names.items()]
-    monthly_gsp_res[k] =  gsp_result[apps] # drops remaining columns
-    gt[k] = dset
+    #monthly_gsp_res[k] =  gsp_result[apps] # drops remaining columns
+    monthly_gsp_res.append(gsp_result[apps])
+    gt.append(dset)
   #%% save results
 save_dir = "/Volumes/MacintoshHD2/Users/haroonr/Detailed_datasets/REFITT/Intermediary_results/"
 #TODO : TUNE ME
