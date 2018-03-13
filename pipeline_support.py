@@ -17,9 +17,10 @@ import matplotlib.pyplot as plt
 from copy import deepcopy
 
 #%%
-def compute_AD_and_disagg_status(logging_file, train_data,data_sampling_type,data_sampling_time, NoOfContexts,myapp,test_data,data_dic,disagg_approach,home,file_location,alpha,num_std):
-    resultfile = open(logging_file,'a')
-    resultfile.write('*********************NEW HOME*****************\n')    
+def compute_AD_and_disagg_status(logging_file,log_report, train_data,data_sampling_type,data_sampling_time, NoOfContexts,myapp,test_data,data_dic,disagg_approach,home,file_location,alpha,num_std):
+    if log_report:
+      resultfile = open(logging_file,'a')
+      resultfile.write('*********************NEW HOME*****************\n')    
     train_results = ads.AD_refit_training(train_data,data_sampling_type,data_sampling_time, NoOfContexts,myapp)
     test_results  = ads.AD_refit_testing(test_data,data_sampling_type,data_sampling_time, NoOfContexts,myapp)            
     #%
@@ -33,14 +34,21 @@ def compute_AD_and_disagg_status(logging_file, train_data,data_sampling_type,dat
     #%
     # Compute disaggregation accuracies
     norm_error = acmat.accuracy_metric_norm_error(data_dic)
-    #print(norm_error)
-    resultfile.write('Following two disaggagregation metrics of {} approach \n'.format(disagg_approach))
-    resultfile.write(str(norm_error))
-    resultfile.write('\n')
+    if log_report:
+      resultfile.write('Following two disaggagregation metrics of {} approach \n'.format(disagg_approach))
+      resultfile.write(str(norm_error))
+      resultfile.write('\n')
+    else:
+      print('ANE is:\n')
+      print(norm_error)
     confus_mat = acmat.call_confusion_metrics_on_disagg(data_dic['actual_power'],data_dic['decoded_power'],power_threshold=10)
     confus_mat = pd.DataFrame.from_dict(confus_mat)
-    resultfile.write(str(confus_mat))
-    resultfile.write('\n')
+    if log_report:
+      resultfile.write(str(confus_mat))
+      resultfile.write('\n')
+    else:
+      print('Confusion matrix accuracies are:\n')
+      print(confus_mat)
     #%
     # Compute anomaly detection accuracies
     #house_no = 1
@@ -54,9 +62,13 @@ def compute_AD_and_disagg_status(logging_file, train_data,data_sampling_type,dat
     #confusion_matrix(gt.day.values,ob.day.values)
     precision,recall, fscore = ads.compute_AD_confusion_metrics(gt,ob)
     #print(precision,recall, fscore)  
-    resultfile.write("Anomaly detection accuracies at; context {}, alpha {}, std {} on {} data \n".format(NoOfContexts,alpha,num_std,disagg_approach))
-    resultfile.write('Precision, reall and f_score are: {}, {}, {} \n'.format(precision,recall, fscore))
-    resultfile.close()
+    if log_report:
+      resultfile.write("Anomaly detection accuracies at; context {}, alpha {}, std {} on {} data \n".format(NoOfContexts,alpha,num_std,disagg_approach))
+      resultfile.write('Precision, reall and f_score are: {}, {}, {} \n'.format(precision,recall, fscore))
+      resultfile.close()
+    else:
+      print("Anomaly detection accuracies at; context {}, alpha {}, std {} on {} data \n".format(NoOfContexts,alpha,num_std,disagg_approach))
+      print('Precision, reall and f_score are: {}, {}, {} \n'.format(precision,recall, fscore))
     
     
 def compute_AD_status_only(logging_file,train_data,data_sampling_type,data_sampling_time, NoOfContexts,myapp,test_data,data_dic,disagg_approach,home,file_location,alpha,num_std,actual_signature):
