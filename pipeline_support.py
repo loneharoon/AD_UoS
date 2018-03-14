@@ -88,7 +88,7 @@ def compute_AD_status_only(logging_file,train_data,data_sampling_type,data_sampl
     house_no =  int(re.findall('\d+',home)[0])
     home = home.split('.')[0]+'.csv'
     appliance = scn.reverse_lookup(home,myapp) # find actual name of appliance in anomaly database
-    assert len(appliance)>1
+    assert len(appliance) > 1
     day_start = test_data.first_valid_index()
     day_end = test_data.last_valid_index()
     gt,ob = ads.tidy_gt_and_ob(house_no,appliance,day_start,day_end,result_sub)
@@ -104,3 +104,36 @@ def compute_AD_status_only(logging_file,train_data,data_sampling_type,data_sampl
     resultfile.write('Noise percentage in the disagg data was: {}\n'.format(noise_content))
     #%
     resultfile.close()
+#%%    
+def dump_AD_result(logging_file, train_data,data_sampling_type,data_sampling_time, NoOfContexts,myapp,test_data,data_dic,disagg_approach,home,file_location,alpha,num_std):
+    
+    train_results = ads.AD_refit_training(train_data,data_sampling_type,data_sampling_time, NoOfContexts,myapp)
+    test_results  = ads.AD_refit_testing(test_data,data_sampling_type,data_sampling_time, NoOfContexts,myapp)            
+    if myapp == 'ElectricHeater':
+        res_df = ads.anomaly_detection_algorithm_ElectricHeater(test_results,train_results,alpha,num_std)
+    else:
+        res_df = ads.anomaly_detection_algorithm(test_results,train_results,alpha,num_std)
+    #result_sub = res_df[res_df.status==1]
+    result_sub = res_df
+    
+    house_no =  int(re.findall('\d+',home)[0])
+    home = home.split('.')[0]+'.csv'
+    appliance = scn.reverse_lookup(home,myapp) # find actual name of appliance in anomaly database
+    assert len(appliance) > 1
+    day_start = test_data.first_valid_index()
+    day_end = test_data.last_valid_index()
+    gt,ob = ads.tidy_gt_and_ob(house_no,appliance,day_start,day_end,result_sub)
+    #confusion_matrix(gt.day.values,ob.day.values)
+    #precision,recall, fscore = ads.compute_AD_confusion_metrics(gt,ob)
+    result_dic ={}
+    result_dic['gt'] = gt
+    result_dic['ob'] = ob
+    savefile = "/Volumes/MacintoshHD2/Users/haroonr/Detailed_datasets/REFITT/Intermediary_results/AD_noisy/"
+    handle = open(savefile + disagg_approach + "/" +  home.split('.')[0]+'.pkl','wb')
+    pickle.dump(result_dic,handle)
+    handle.close()
+    
+    resultfile = open(logging_file,'a')
+    tp, fp, fn =  ads.compute_tp_fp_fn(gt,ob)
+    resultfile.write('\n{},{},{},{},{},{}'.format(home.split('.')[0], myapp, disagg_approach, tp, fp, fn))
+    resultfile.close()    
