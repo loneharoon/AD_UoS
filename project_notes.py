@@ -10,10 +10,9 @@ Created on Tue Jan 16 22:45:22 2018
 ..........................................................................
 ................................PROJECT RUNNING...........................
 ..........................................................................
-1. Run project_main.py first to get disaggregation results from different disagg techniques. This saves disagg results
-2. open pipeline_main.py. This calls disagg results first and then runs AD logic.
-
-
+1. Run project_main.py first to get disaggregation results from different disagg techniques. This saves disagg results as pickle files
+2. open pipeline_main.py. This calls disagg results first and then runs AD logic. Remember in this script you can run in between anomaly detection too as pickle files. Also, remember this script all pickle files except sshmss result because sshmss results werer obtained in python 3 and it seems that python3 and 2 have differenet pickle versions
+...................................................
 Following cases are present in REFIT data
 1. Na Values
 2. Days were data is already filled so only contionous high values [needs to be identifed in algorithm]
@@ -24,8 +23,11 @@ Failures/Insights:
 FHMM:
 1. Number of states for an appliance are detected via clustering. No manual need to specify. Same as done in toolkit
 
-CO:
+I found that GSP fails for denoised data. It often detects less number of appliances than actual number present. As a result it becomes difficult to compute accuracies.
     
+SSHMMS: It is the only algorithm which needs to run in python 3. Remaining run in python 2. 
+Sensitivity analysis:
+1. For anomaly detection algorithm, I do grid search in file 'grid_search_parameters.py'  
     
 '''
 '''
@@ -56,7 +58,7 @@ Issues: Day 3 March is removed since it contains anomaly
 
 5. Home 1
 training: month 12 of 2014
-testing: moths 1,2 and 3 of 2015
+testing: months 1,2 and 3 of 2015
 target_appliance:ElectricHeater
 Issues: NONE
     
