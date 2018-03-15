@@ -1,4 +1,4 @@
-
+# this script has only support functions. Required data is in results_data.R
 library(reshape2)
 library(ggplot2)
 
@@ -31,11 +31,12 @@ g
 ##################
 
 pd_cat = rbind(df_10_ane_noisy,df_20_ane_noisy,df_16_ane_noisy,df_18_ane_noisy,df_1_ane_noisy)
-keep <- c('Home','Appliance','CO','FHMM','LBM','SSHMMS','GSP')
+keep <- c('Home','Appliance','CO','FHMM','LBM','SSHMM','GSP')
 temp <- pd_cat[keep]
 df_melt=  reshape2::melt(temp,id.vars= c('Home','Appliance'))
 g <- ggplot(df_melt,aes(Appliance,value))+ facet_grid(Home~.,scales = 'free_y') + geom_bar(aes(fill=variable),position="dodge",stat="identity",width = 0.4 ) 
 g <- g +  labs(x = "Appliance #", y='ANE (Lower is better)', fill="Approach")  + scale_fill_brewer(palette="Set1")
 g <- g + theme(axis.text = element_text(color="Black",size = 7),legend.text = element_text(size = 7)) + scale_x_continuous(breaks=c(1:6))
 g
-ggsave("ane_combine_plot.pdf", width = 4, height = 6, units = "in")
+#ggsave("ane_combine_plot.pdf", width = 4, height = 6, units = "in")
+ggsave("obselete_plot.pdf", width = 4, height = 6, units = "in")
