@@ -15,9 +15,7 @@ sys.path.append('/Volumes/MacintoshHD2/Users/haroonr/Dropbox/UniOfStra/AD/disagg
 import standardize_column_names as scn
 import AD_support as ads
 import re
-import my_utilities as myutil
-from copy import deepcopy
-import accuracy_metrics_disagg as acmat
+import understand_tp_fp_fn_support as tp_fp_support
 import matplotlib.pyplot as plt
 #%%
 file_location = "/Volumes/MacintoshHD2/Users/haroonr/Detailed_datasets/REFITT/Intermediary_results/noisy/"
@@ -30,7 +28,7 @@ myapp = "Chest_Freezer"# home 10
 #myapp = "Fridge_Freezer"# home 18
 #myapp = "Freezer"# home 20
 
-technique = "fhmm"
+technique = "gsp"
 method = technique + "/selected/"
 #method="lbm/selected_results/"
 
@@ -67,19 +65,14 @@ precision,recall, fscore = ads.compute_AD_confusion_metrics(gt,ob)
 tp, fp, fn, tp_list, fp_list, fn_list = ads.show_tp_fp_fn_dates(gt,ob)
 #%%
 plt.ioff()
-for i in range(len(fp_list)): 
-    fpdate = str(fp_list[i])
-    df = pd.concat([actual_data[fpdate],test_data[fpdate]],axis = 1)
-    restype = 'fn'
-    df.columns = ['submetered',technique]
-    ax = df.plot(title = home.split('.')[0] + "-" + myapp + "-" + restype, figsize = (12,3))
-    fig = ax.get_figure()
-    savedir = "/Volumes/MacintoshHD2/Users/haroonr/Dropbox/UniOfStra/AD/intresting_plots/"
-    savedir = savedir + restype + "/"
-    fig.savefig(savedir + fpdate + ".pdf", bbox_inches='tight') 
+fp_list = fp_list
+restype = 'fp'
+tp_fp_support.plot_bind_save_pdf(actual_data, test_data, fp_list, technique, home, myapp, restype)
 #%%
-rootdir = "/Volumes/MacintoshHD2/Users/haroonr/Dropbox/UniOfStra/AD/intresting_plots/fp/"
-file_list = [rootdir + i for i in os.listdir(rootdir) if i.endswith(".pdf")]
-saveresult = "/Volumes/MacintoshHD2/Users/haroonr/Dropbox/UniOfStra/AD/intresting_plots/fp.pdf"
-myutil.create_pdf_from_pdf_list(file_list, saveresult)
-
+fp_list = fn_list
+restype = 'fn'
+tp_fp_support.plot_bind_save_pdf(actual_data, test_data, fp_list, technique, home, myapp, restype)
+#%%
+fp_list = tp_list
+restype = 'tp'
+tp_fp_support.plot_bind_save_pdf(actual_data, test_data, fp_list, technique, home, myapp, restype)
