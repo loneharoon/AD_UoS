@@ -48,6 +48,7 @@ def compute_AD_confusion_metrics(gt,ob):
     except :
         print ("Recall results in error\n")
     return precision,recall,fscore
+#%%
 def compute_tp_fp_fn(gt,ob):
     gt = gt[gt.Status=='S'] # only sure anomalies in ground truth
     print('\n Computing results w.r.t Sure anomalies only\n')
@@ -65,6 +66,32 @@ def compute_tp_fp_fn(gt,ob):
             fn = fn + 1 
     print('\n tp {}, fp {}, fn {}\n'.format(tp,fp,fn))
     return tp,fp,fn
+#%%
+def show_tp_fp_fn_dates(gt,ob):
+    '''This returns the list of all fp, tp, and fn dates'''
+    gt = gt[gt.Status=='S'] # only sure anomalies in ground truth
+    print('\n Computing results w.r.t Sure anomalies only\n')
+    gt_day = gt.day.values
+    ob_day = ob.day.values
+    tp = fp = fn = 0
+    tp_list = []
+    fp_list = []
+    fn_list = []
+    #precision = recall = fscore = np.nan
+    for i in ob_day:
+        if i in gt_day:
+            tp = tp + 1
+            tp_list.append(i)
+        else:
+            fp = fp + 1 
+            fp_list.append(i)
+    for j in gt_day:
+        if j not in ob_day:
+            fn = fn + 1 
+            fn_list.append(i)
+    print('\n tp {}, fp {}, fn {}\n'.format(tp,fp,fn))
+    return tp, fp, fn, tp_list, fp_list, fn_list
+
 #%%
 def read_REFIT_groundtruth():
   
