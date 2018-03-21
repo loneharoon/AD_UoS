@@ -20,15 +20,15 @@ import matplotlib.pyplot as plt
 #%%
 file_location = "/Volumes/MacintoshHD2/Users/haroonr/Detailed_datasets/REFITT/Intermediary_results/noisy/"
 #TODO: tune two of us
-home = "House10.pkl"
+home = "House1.pkl"
 home_no = home.split('.')[0]
-#myapp = "ElectricHeater"# home 1
-myapp = "Chest_Freezer"# home 10
+myapp = "ElectricHeater"# home 1
+#myapp = "Chest_Freezer"# home 10
 #myapp = "Fridge_Freezer_1"# home 16
 #myapp = "Fridge_Freezer"# home 18
 #myapp = "Freezer"# home 20
 
-technique = "gsp"
+technique = "sshmms"
 method = technique + "/selected/"
 #method="lbm/selected_results/"
 
@@ -38,19 +38,24 @@ data_dic = pickle.load(results)
 train_power =   data_dic['train_power']
 decoded_power = data_dic['decoded_power']
 actual_power  = data_dic['actual_power']
-#TODO : SETME
+
 train_data =  train_power[myapp]
 test_data =   decoded_power[myapp]
 actual_data = actual_power[myapp]
 #test_data =   decoded_power[myapp][:'2014-10-24'] # house10
 #%%
+#TODO : SETME
 contexts = 4
 data_sampling_time = 1 #in minutes
 data_sampling_type = "minutes" # or seconds
 alpha,num_std = 2, 2
 train_results = ads.AD_refit_training(train_data, data_sampling_type, data_sampling_time, contexts, myapp)
 test_results  = ads.AD_refit_testing(test_data, data_sampling_type, data_sampling_time, contexts, myapp)     
-res_df = ads.anomaly_detection_algorithm(test_results,train_results,alpha,num_std)
+if myapp == 'ElectricHeater':
+    res_df = ads.anomaly_detection_algorithm_ElectricHeater(test_results, train_results, alpha, num_std)
+else:
+    res_df = ads.anomaly_detection_algorithm(test_results, train_results, alpha, num_std)
+#result_sub = res_df[res_df.status==1]
 result_sub = res_df
 house_no =  int(re.findall('\d+',home)[0])
 home = home.split('.')[0]+'.csv'

@@ -72,9 +72,9 @@ with PdfPages(pdf_file_name) as pdfhandle:
         key = gp1[0] # date
         nilm = gp1[1]
          # https://stackoverflow.com/q/49006699/3317829
-        nilm['dummy_1'] =10 # dummy data to makes dfs of equal number of columns
-        nilm['dummy_2'] =10
-        nilm['dummy_3'] =10
+        nilm['dummy_1'] = 10 # dummy data to makes dfs of equal number of columns
+        nilm['dummy_2'] = 10
+        nilm['dummy_3'] = 10
         metered = gp2[1]
         fig, axes = plt.subplots(nrows=7,ncols=2,figsize=(12,6),sharex=True)       
         metered.plot(ax = axes[:,0],subplots=True,title=key)

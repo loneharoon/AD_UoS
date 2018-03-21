@@ -10,6 +10,8 @@ import os
 import my_utilities as myutil
 
 def plot_bind_save_pdf(actual_data, test_data, fp_list, technique, home, myapp, restype):
+    if len(fp_list) < 1:
+        return
     
     for i in range(len(fp_list)): 
         fpdate = str(fp_list[i])
@@ -20,7 +22,8 @@ def plot_bind_save_pdf(actual_data, test_data, fp_list, technique, home, myapp, 
         fig = ax.get_figure()
         savedir = "/Volumes/MacintoshHD2/Users/haroonr/Dropbox/UniOfStra/AD/intresting_plots/"
         savedir = savedir + restype + "/"
-        fig.savefig(savedir + fpdate + "-" + myapp + "-" + technique + ".pdf", bbox_inches='tight') 
+        fig.savefig(savedir + fpdate + "-" + myapp + "-" + technique + ".pdf", bbox_inches='tight')
+        fig.close()
     #% now combine pdfs
     #rootdir = "/Volumes/MacintoshHD2/Users/haroonr/Dropbox/UniOfStra/AD/intresting_plots/fp/"
     file_list = [savedir + i for i in os.listdir(savedir) if i.endswith(".pdf")]
