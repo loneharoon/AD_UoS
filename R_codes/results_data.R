@@ -117,55 +117,59 @@ setwd('/Volumes/MacintoshHD2/Users/haroonr/Dropbox/Writings/UoS/plots/')
  ######################
  ######################ANOMALY DETECTION RESULTS NOW###################
  
- Submetered <- c(1,1,1)
+
  CO <- c(0.54,1,0.70)
  FHMM <- c(0.55,0.82,0.66)
  LBM <- c(0,0,0)
  SSHMM <- c(0.54,1,0.7)
  GSP <- c(0.52,0.67,0.59)
+ Submetered <- c(1,1,1)
  # CO_denoisy <- c(0.54,1,0.7)
  # FHMM_denoisy<- c(0.52,0.39,0.45)
  # LBM_denoisy<- c(1,0.03,0.06)
  Metrics <- c('Precision','Recall','Fscore')
  Result_type <- rep('AD_Confusionmetrics',3)
  Home <- rep('10_Frzr',3)
- df_10_ad_confusionmat <- data.frame(Home,Result_type,Submetered,CO,FHMM,LBM,SSHMM,GSP,Metrics)
+ df_10_ad_confusionmat <- data.frame(Home,Result_type,CO,FHMM,LBM,SSHMM,GSP,Submetered,Metrics)
  
  
- Submetered <- c(1,0.6,0.75)
+ 
  CO <- c(0.11,1,0.2)
  FHMM <- c(0.09,0.7,0.16)
  LBM <- c(0.11,0.5,0.18)
  SSHMM <- c(0.11,1,0.2)
  GSP <- c(0.07,0.3,0.11)
+ Submetered <- c(1,0.6,0.75)
  #CO_denoisy<- c(0.11,1,0.2)
  #FHMM_denoisy<- c(0.1,0.3,0.15)
  #LBM_denoisy<- c(0.17,0.1,0.13)
  Metrics <- c('Precision','Recall','Fscore')
  Result_type <- rep('AD_Confusionmetrics',3)
  Home <- rep('20_Frezr',3)
- df_20_ad_confusionmat <- data.frame(Home,Result_type,Submetered,CO,FHMM,LBM,SSHMM,GSP,Metrics)
+ df_20_ad_confusionmat <- data.frame(Home,Result_type,CO,FHMM,LBM,SSHMM,GSP,Submetered,Metrics)
  
- Submetered <- c(0.95,0.91,0.93)
+ 
  CO <- c(0.25,1,0.4)
  FHMM <- c(0.25,1,0.4)
  LBM <- c(0.23,0.43,0.3)
  SSHMM <- c(0.25,1,0.4)
  GSP <- c(0.26,0.52,0.35)
+ Submetered <- c(0.95,0.91,0.93)
  #CO_denoisy<- c(0.25,1,0.4)
  #FHMM_denoisy<- c(0.33,0.83,0.47)
  #LBM_denoisy<- c(0.38,0.91,0.54)
  Metrics <- c('Precision','Recall','Fscore')
  Result_type <- rep('AD_Confusionmetrics',3)
  Home <- rep('16_Frezr',3)
- df_16_ad_confusionmat <- data.frame(Home,Result_type,Submetered,CO,FHMM,LBM,SSHMM,GSP,Metrics)
+ df_16_ad_confusionmat <- data.frame(Home,Result_type,CO,FHMM,LBM,SSHMM,GSP,Submetered,Metrics)
  
- Submetered <- c(1,0.67,0.8)
+ 
  CO <- c(0.03,1,0.06)
  FHMM <- c(0,0,0)
  LBM <- c(0.06,0.33,0.1)
  SSHMM <- c(0.03,1,0.06)
  GSP <- c(0.04,1,0.08)
+ Submetered <- c(1,0.67,0.8)
  
  #CO_denoisy<- c(0.03,1,0.06)
  #FHMM_denoisy<- c(0,0,0)
@@ -173,14 +177,15 @@ setwd('/Volumes/MacintoshHD2/Users/haroonr/Dropbox/Writings/UoS/plots/')
  Metrics <- c('Precision','Recall','Fscore')
  Result_type <- rep('AD_Confusionmetrics',3)
  Home <- rep('18_Frezr',3)
- df_18_ad_confusionmat <- data.frame(Home,Result_type,Submetered,CO,FHMM,LBM,SSHMM,GSP,Metrics)
+ df_18_ad_confusionmat <- data.frame(Home,Result_type,CO,FHMM,LBM,SSHMM,GSP,Submetered,Metrics)
  
- Submetered <- c(1,1,1)
+ 
  CO <- c(0.1,1,0.18)
  FHMM <- c(0.11,1,0.2)
  LBM <- c(0.08,1,0.15)
  SSHMM <- c(0.11,1,0.2)
  GSP <- c(0.14,1,0.25)
+ Submetered <- c(1,1,1)
  
  #CO_denoisy<- c(0.78,1,0.88)
  #FHMM_denoisy<- c(0.64,1,0.78)
@@ -188,17 +193,17 @@ setwd('/Volumes/MacintoshHD2/Users/haroonr/Dropbox/Writings/UoS/plots/')
  Metrics <- c('Precision','Recall','Fscore')
  Result_type <- rep('AD_Confusionmetrics',3)
  Home <- rep('1_ElecHt',3)
- df_1_ad_confusionmat <- data.frame(Home,Result_type,Submetered,CO,FHMM,LBM,SSHMM,GSP,Metrics)
+ df_1_ad_confusionmat <- data.frame(Home,Result_type,CO,FHMM,LBM,SSHMM,GSP,Submetered,Metrics)
  
  dff <- rbind(df_1_ad_confusionmat,df_10_ad_confusionmat,
               df_16_ad_confusionmat,df_18_ad_confusionmat,
               df_20_ad_confusionmat)
- keep <- c("Home", "Submetered","CO","FHMM","LBM","SSHMM","GSP","Metrics")
+ keep <- c("Home","CO","FHMM","LBM","SSHMM","GSP","Submetered","Metrics")
  df_temp <- dff[keep]
  df_melt=  reshape2::melt(df_temp,id.vars= c('Home','Metrics'))
- 
+ mybrewercolours <- c('#e41a1c','#377eb8','#4daf4a','#984ea3','#ff7f00','#a65628')
  h <- ggplot(df_melt,aes(variable,value)) + facet_grid(Home~Metrics) + geom_bar(aes(fill=variable),position="dodge",stat="identity",width = 0.4 )
- h <- h +  labs(x = "Approach ", y='Value (Higher is better)', fill="Approach")  + scale_fill_brewer(palette="Set1")
+ h <- h +  labs(x = "Approach ", y='Value (Higher is better)', fill="Approach")  + scale_fill_manual(values = mybrewercolours)
  h <- h + theme(axis.text.x = element_blank(),axis.text = element_text(color="Black",size = 7),legend.text = element_text(size = 7)) 
  h
  # ggsave("ad_results.pdf", width = 4, height = 5, units = "in")
