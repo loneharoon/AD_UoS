@@ -17,6 +17,8 @@ import standardize_column_names as scn
 from collections import OrderedDict,Counter
 from datetime import datetime,timedelta
 import re
+import os
+import my_utilities as myutil
 
 #%%
 def compute_AD_confusion_metrics(gt,ob):
@@ -50,7 +52,7 @@ def compute_AD_confusion_metrics(gt,ob):
     return precision,recall,fscore
 #%%
 def compute_tp_fp_fn(gt,ob):
-    gt = gt[gt.Status=='S'] # only sure anomalies in ground truth
+    gt = gt[gt.Status == 'S'] # only sure anomalies in ground truth
     print('\n Computing results w.r.t Sure anomalies only\n')
     gt_day = gt.day.values
     ob_day = ob.day.values
@@ -88,7 +90,7 @@ def show_tp_fp_fn_dates(gt,ob):
     for j in gt_day:
         if j not in ob_day:
             fn = fn + 1 
-            fn_list.append(i)
+            fn_list.append(j)
     print('\n tp {}, fp {}, fn {}\n'.format(tp,fp,fn))
     return tp, fp, fn, tp_list, fp_list, fn_list
 
@@ -353,13 +355,15 @@ def anomaly_detection_algorithm(test_stats,contexts_stats,alpha,num_std):
       context = res_df['context'][i]
       timestamp = res_df['timestamp'][i]
       if context == 'night_1_gp':
-        timestamp =  timestamp + timedelta(hours=3)
+        timestamp =  timestamp + timedelta(hours = 3)
       elif context == 'day_1_gp':
-        timestamp =  timestamp + timedelta(hours=9)
+        timestamp =  timestamp + timedelta(hours = 9)
       elif context == 'day_2_gp':
-        timestamp =  timestamp + timedelta(hours=15)
+        timestamp =  timestamp + timedelta(hours = 15)
       elif context == 'night_2_gp':
-        timestamp =  timestamp + timedelta(hours=21)
+        timestamp =  timestamp + timedelta(hours = 21)
+      else:
+          raise ValueError("Provide required context defintions in anomaly detection algorithm")
       updated_timestamp.append(timestamp)
   res_df['updated_timestamp'] =  updated_timestamp  
   return(res_df[res_df.status ==1]) # returns only anomaly packets
@@ -539,10 +543,10 @@ def  create_testing_stats_with_boxplot_ElectricHeater(testdata,k,sampling_type,s
   nan_obs = int(samp.isnull().sum())
   #rule: if more than 50% are nan then I drop that day from calculcations othewise I drop nan readings only
   if nan_obs:  
-    if nan_obs >= 0.50*samp.shape[0]:
+    if nan_obs >= 0.50 * samp.shape[0]:
       print("More than 50percent missing hence dropping context {}".format(k))
       return (False)
-    elif nan_obs < 0.50*samp.shape[0]:
+    elif nan_obs < 0.50 * samp.shape[0]:
       print("dropping  {} nan observations for total of {} in context {}".format(nan_obs, samp.shape[0], k))
       samp.dropna(inplace=True)
   samp.columns = ['power']
@@ -603,7 +607,7 @@ def  create_testing_stats_with_boxplot_ElectricHeater(testdata,k,sampling_type,s
 #  summ_dic['OFF_cycles'] = temp_dic[0]
   return (summ_dic)
 #%%
-def tidy_gt_and_ob(house_no,appliance,day_start,day_end,result_sub):
+def tidy_gt_and_ob(house_no, appliance, day_start, day_end, result_sub):
     '''In this I re_format gt and observed results for calculating end results '''
     gt = read_REFIT_groundtruth()
     select_house = gt.House_No==house_no
@@ -738,4 +742,26 @@ def find_my_anomalous_dates_from_gt(home):
     days_frame = anomalous_days_from_gt(house_no,appliance,start_date,end_date)
     anom_days = [x.strftime('%Y-%m-%d') for x in days_frame.values.tolist()]
     return anom_days
-  
+#%%
+def plot_bind_save_all_anomalies(actual_data, anom_list, home, myapp):
+    if len(anom_list) < 1:
+        return
+    
+    for i in range(len(anom_list)): 
+        fpdate = str(anom_list[i])
+        #df = pd.concat([actual_data[fpdate],test_data[fpdate]],axis = 1)
+        #restype = 'fp'
+        df = actual_data[fpdate] 
+        df.columns = ['submetered']
+        ax = df.plot(title = home.split('.')[0] + "-" + myapp + "-" + "true_anomaly", figsize = (12,3))
+        fig = ax.get_figure()
+        savedir = "/Volumes/MacintoshHD2/Users/haroonr/Detailed_datasets/REFITT/Intermediary_results/anomalies/"
+        savedir = savedir + home.split('.')[0] + "/"
+        fig.savefig(savedir + fpdate + "-" + myapp + ".pdf", bbox_inches = 'tight')
+        fig.close()
+    #% now combine pdfs
+    #rootdir = "/Volumes/MacintoshHD2/Users/haroonr/Dropbox/UniOfStra/AD/intresting_plots/fp/"
+    file_list = [savedir + i for i in os.listdir(savedir) if i.endswith(".pdf")]
+    saveresult = "/Volumes/MacintoshHD2/Users/haroonr/Dropbox/UniOfStra/AD/intresting_plots/"
+    saveresult = saveresult + "combine" + ".pdf"
+    myutil.create_pdf_from_pdf_list(file_list, saveresult)

@@ -28,10 +28,10 @@ df.index = pd.to_datetime(df.index)
 df_sub = df["2014-03":] # since before march their are calibration issues
 #%% Resampling data
 print("*****RESAMPLING********")
-df_samp = df_sub.resample('1T',label='right',closed='right').mean()
+df_samp = df_sub.resample('1T',label = 'right', closed ='right').mean()
 data_sampling_time = 1 #in minutes
 data_sampling_type = "minutes" # or seconds
-scn.rename_appliances(home,df_samp)
+scn.rename_appliances(home, df_samp)
 #%% select particular appliance for anomaly detection
 df_samp.columns
 myapp = "Chest_Freezer"
