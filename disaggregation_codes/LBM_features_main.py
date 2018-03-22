@@ -22,22 +22,21 @@ import standardize_column_names
 #%%#
 #dir = "/Volumes/MacintoshHD2/Users/haroonr/Detailed_datasets/REFITT/CLEAN_REFIT_081116/"
 direc = "/Volumes/MacintoshHD2/Users/haroonr/Detailed_datasets/REFITT/REFIT_selected/"
-home = "House1.csv"
-df = pd.read_csv(direc+home,index_col="Time")
+home = "House10.csv"
+df = pd.read_csv(direc+home, index_col = "Time")
 df.index = pd.to_datetime(df.index)
+#TODO : SELECT US
 #df_sub = df["2014-04-01":'2014-07-30']
-#df_sub = df['2014-04-01':'2014-04-30'] # home10
+df_sub = df['2014-04-01':'2014-04-30'] # home10
 #df_sub = df['2014-05-01':'2014-05-31'] # home20
 #df_sub = df['2014-07-01':'2014-07-31'] # home18
 #df_sub = df['2014-03-01':'2014-03-31'] # home16
-df_sub = df['2014-12'] # home1
-resample = 'True'
-data_sampling_time = 1 #in minutes
-data_sampling_type = "minutes" # or seconds
+#df_sub = df['2014-12'] # home1
+resample = False
 if resample: 
-  df_samp = df_sub.resample('1T',label='right',closed='right').mean()
-  df_samp.drop('Issues',axis=1,inplace=True)
-  standardize_column_names.rename_appliances(home,df_samp) # this renames columns
+  df_samp = df_sub.resample('1T',label = 'right', closed = 'right').mean()
+  df_samp.drop('Issues', axis = 1, inplace = True)
+  standardize_column_names.rename_appliances(home, df_samp) # this renames columns
   #df_samp.rename(columns={'Aggregate':'use'},inplace=True) # renaming agg column
   print("*****RESAMPling DONE********")
   if home == "House16.csv":
@@ -45,8 +44,8 @@ if resample:
 else:
   df_samp = deepcopy(df_sub)
   df_samp.drop('Issues',axis=1,inplace=True)
-  standardize_column_names.rename_appliances(home,df_samp) # this renames columns  
-df_samp.drop('use',axis=1,inplace=True) # dropping aggregate column
+  standardize_column_names.rename_appliances(home, df_samp) # this renames columns  
+df_samp.drop('use', axis = 1, inplace = True) # dropping aggregate column
 df_samp = df_samp.dropna(axis=0)
 #%%
 sampling_time =  1 # let's not care here. Set after some visual inference
@@ -71,14 +70,14 @@ for i in appliances:
   app_features['means'] = hmm_par.means_.tolist() 
   app_features['startprob'] = hmm_par.startprob_.reshape(-1,1).tolist()
   app_features['transprob'] = hmm_par.transmat_.tolist()
-  data_daywise =  pd.groupby(df_samp[i],by=df_samp[i].index.date)
-  lbm_cyclepar =  lbmsupport.find_cycle_parameters(data_daywise,sampling_time)
+  data_daywise =  pd.groupby(df_samp[i], by = df_samp[i].index.date)
+  lbm_cyclepar =  lbmsupport.find_cycle_parameters(data_daywise, sampling_time)
   app_features['numberOfCyclesStats'] = lbm_cyclepar
-  lbm_sacpar = lbmsupport.find_sac_parameters(data_daywise,sampling_time)
+  lbm_sacpar = lbmsupport.find_sac_parameters(data_daywise, sampling_time)
   app_features.update(lbm_sacpar) # merging dictionaries
   lbm_app_features[i] = app_features
 #%% save as pickle format
-save_dir = "/Volumes/MacintoshHD2/Users/haroonr/Detailed_datasets/REFITT/Intermediary_results/lbm/population_models/selected/"
+save_dir = "/Volumes/MacintoshHD2/Users/haroonr/Detailed_datasets/REFITT/Intermediary_results/denoised/lbm/population_models/selected_8sec/"
 savename = save_dir +  home.split('.')[0] + '.pkl'
 lbmsupport.save_obj(lbm_app_features, savename)
    

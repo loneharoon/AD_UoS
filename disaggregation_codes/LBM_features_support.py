@@ -18,7 +18,7 @@ def find_hmm_parameters(seq,n_components):
   model.fit(seq)
   return(model)
   
-def find_cycle_parameters(app_daywise,sampling_time):
+def find_cycle_parameters(app_daywise, sampling_time):
   #sampling_time = 2*60 # 2 minutes
   cycle_stat = {}
   cycles = [] # no  of cycles

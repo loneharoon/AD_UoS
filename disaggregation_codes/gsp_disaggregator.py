@@ -28,16 +28,14 @@ import standardize_column_names
 print("Run this code in python 2")
 dir = "/Volumes/MacintoshHD2/Users/haroonr/Detailed_datasets/REFITT/REFIT_selected/"
 home = "House10.csv"
-df = pd.read_csv(dir+home,index_col="Time")
+df = pd.read_csv(dir+home, index_col = "Time")
 df.index = pd.to_datetime(df.index)
 df_sub = deepcopy(df[:])
 #% Resampling data
-#TODO : TUNE ME
+#TODO : Toggle switch and set sampling rate correctly
 resample = True
-data_sampling_time = 1 #in minutes
-data_sampling_type = "minutes" # or seconds
 if resample: 
-  df_samp = df_sub.resample('1T',label='right',closed='right').mean()
+  df_samp = df_sub.resample('10T',label='right',closed='right').mean()
   df_samp.drop('Issues',axis=1,inplace=True)
   standardize_column_names.rename_appliances(home,df_samp) # this renames columns
   #df_samp.rename(columns={'Aggregate':'use'},inplace=True) # renaming agg column
@@ -67,13 +65,13 @@ sigma = 40;
 ri = 0.1 # obained empirically
 # good thresholds are as
 # home10: 40 watts,
-T_Positive = 40;
-T_Negative = -40;
+T_Positive = 30;
+T_Negative = -30;
 # alpha define weight given to magnitude and beta define weight given to time
-alpha = 0.6
-beta = 0.4
+alpha = 0.5
+beta = 0.5
 # this defines the number of times an appliance is set ON in one month
-instancelimit = 25 # for home 18, I set it to  15 (otherwise it predicts less no. of appliances), for remaining home it was set 25
+instancelimit = 25 # [normal value 25 for one month] for home 18, I set it to  15 (otherwise it predicts less no. of appliances), for remaining home it was set 25. and for home 10 (at 10 minutes sampling I set it to 20)
 #%% if you want to run in monthly wise, then run next cell and skip this one
 main = train_dset['use']
 main_val = main.values
@@ -96,7 +94,6 @@ monthly_groups = test_dset.groupby(test_dset.index.month)
 #monthly_gsp_res = OrderedDict()
 monthly_gsp_res = []
 gt = []
-#%%
 for k,v in monthly_groups:
     print('Month is {}'.format(k))
     dset = v
@@ -124,13 +121,12 @@ for k,v in monthly_groups:
   #%% save results
 save_dir = "/Volumes/MacintoshHD2/Users/haroonr/Detailed_datasets/REFITT/Intermediary_results/"
 #TODO : TUNE ME
-filename = save_dir + "noisy/gsp/selected/" + home.split('.')[0]+'.pkl'
+filename = save_dir + "noisy/gsp/selected_10min/" + home.split('.')[0]+'.pkl'
 gsp_result = {}
 gsp_result['decoded_power'] = pd.concat(monthly_gsp_res,axis=0)
 gsp_result['actual_power'] = pd.concat(gt,axis=0)
 gsp_result['train_power'] = train_dset
 handle = open(filename,'wb')
-#https://docs.python.org/2/library/pickle.html
 pickle.dump(gsp_result,handle)
 handle.close()      
     
