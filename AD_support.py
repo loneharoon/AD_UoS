@@ -19,6 +19,7 @@ from datetime import datetime,timedelta
 import re
 import os
 import my_utilities as myutil
+import  matplotlib.pyplot  as plt
 
 #%%
 def compute_AD_confusion_metrics(gt,ob):
@@ -744,24 +745,20 @@ def find_my_anomalous_dates_from_gt(home):
     return anom_days
 #%%
 def plot_bind_save_all_anomalies(actual_data, anom_list, home, myapp):
+    ''' this creates one pdf per day and then combines all pdfs into one pdf '''
     if len(anom_list) < 1:
         return
-    
     for i in range(len(anom_list)): 
         fpdate = str(anom_list[i])
-        #df = pd.concat([actual_data[fpdate],test_data[fpdate]],axis = 1)
-        #restype = 'fp'
         df = actual_data[fpdate] 
         df.columns = ['submetered']
         ax = df.plot(title = home.split('.')[0] + "-" + myapp + "-" + "true_anomaly", figsize = (12,3))
         fig = ax.get_figure()
         savedir = "/Volumes/MacintoshHD2/Users/haroonr/Detailed_datasets/REFITT/Intermediary_results/anomalies/"
         savedir = savedir + home.split('.')[0] + "/"
-        fig.savefig(savedir + fpdate + "-" + myapp + ".pdf", bbox_inches = 'tight')
-        fig.close()
+        fig.savefig(savedir + myapp + "-" + fpdate + ".pdf", bbox_inches = 'tight')
+        plt.close()
     #% now combine pdfs
-    #rootdir = "/Volumes/MacintoshHD2/Users/haroonr/Dropbox/UniOfStra/AD/intresting_plots/fp/"
     file_list = [savedir + i for i in os.listdir(savedir) if i.endswith(".pdf")]
-    saveresult = "/Volumes/MacintoshHD2/Users/haroonr/Dropbox/UniOfStra/AD/intresting_plots/"
-    saveresult = saveresult + "combine" + ".pdf"
+    saveresult = savedir + "combine" + ".pdf"
     myutil.create_pdf_from_pdf_list(file_list, saveresult)
