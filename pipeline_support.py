@@ -13,8 +13,7 @@ import standardize_column_names as scn
 import AD_support as ads
 import re
 import accuracy_metrics_disagg as acmat
-import matplotlib.pyplot as plt
-from copy import deepcopy
+
 
 #%%
 def compute_AD_and_disagg_status(logging_file,log_report, train_data,data_sampling_type,data_sampling_time, NoOfContexts,myapp,test_data,data_dic,disagg_approach,home,file_location,alpha,num_std):
@@ -31,31 +30,45 @@ def compute_AD_and_disagg_status(logging_file,log_report, train_data,data_sampli
     #result_sub = res_df[res_df.status==1]
     result_sub = res_df
     
-    #%
     # Compute disaggregation accuracies
     norm_error = acmat.accuracy_metric_norm_error(data_dic)
-    if log_report:
-      resultfile.write('Following two disaggagregation metrics of {} approach \n'.format(disagg_approach))
-      resultfile.write(str(norm_error))
-      resultfile.write('\n')
-    else:
-      print('ANE is:\n')
-      print(norm_error)
+    order = format_results_in_appliance_order(home)
+    norm_error = norm_error.reindex(order)
+    # compute rmse too
+    rmse = acmat.compute_rmse_ver_dict(data_dic)
+    rmse = rmse.reindex(order)
+    cor_coeff = acmat.compute_correlation_ver_dict(data_dic)
+    cor_coeff = cor_coeff.reindex(order)
     confus_mat = acmat.call_confusion_metrics_on_disagg(data_dic['actual_power'],data_dic['decoded_power'],power_threshold=10)
     confus_mat = pd.DataFrame.from_dict(confus_mat)
+    confus_mat = confus_mat.reindex(order, axis = 1)
+    
     if log_report:
+      resultfile.write('Following four disaggagregation metrics of {} approach \n'.format(disagg_approach))
+      resultfile.write(str(norm_error))
+      resultfile.write('\n')
+      resultfile.write(str(rmse))
+      resultfile.write('\n')
+      resultfile.write(str(cor_coeff))
+      resultfile.write('\n')
       resultfile.write(str(confus_mat))
       resultfile.write('\n')
     else:
+      print('Appliance normalization error are \n')
+      print(norm_error)
+      print('RMSE is:\n')
+      print(rmse)
+      print('correlation values are:\n')
+      print(cor_coeff) 
       print('Confusion matrix accuracies are:\n')
       print(confus_mat)
-    #%
+    #%%
     # Compute anomaly detection accuracies
     #house_no = 1
     house_no =  int(re.findall('\d+',home)[0])
     home = home.split('.')[0]+'.csv'
     appliance = scn.reverse_lookup(home,myapp) # find actual name of appliance in anomaly database
-    assert len(appliance)>1
+    assert len(appliance) > 1
     day_start = test_data.first_valid_index()
     day_end = test_data.last_valid_index()
     gt,ob = ads.tidy_gt_and_ob(house_no,appliance,day_start,day_end,result_sub)
@@ -122,7 +135,7 @@ def dump_AD_result(logging_file, train_data,data_sampling_type,data_sampling_tim
     assert len(appliance) > 1
     day_start = test_data.first_valid_index()
     day_end = test_data.last_valid_index()
-    gt,ob = ads.tidy_gt_and_ob(house_no,appliance,day_start,day_end,result_sub)
+    gt,ob = ads.tidy_gt_and_ob(house_no, appliance, day_start ,day_end, result_sub)
     #confusion_matrix(gt.day.values,ob.day.values)
     #precision,recall, fscore = ads.compute_AD_confusion_metrics(gt,ob)
     result_dic ={}
@@ -137,3 +150,20 @@ def dump_AD_result(logging_file, train_data,data_sampling_type,data_sampling_tim
     tp, fp, fn =  ads.compute_tp_fp_fn(gt,ob)
     resultfile.write('\n{},{},{},{},{},{}'.format(home.split('.')[0], myapp, disagg_approach, tp, fp, fn))
     resultfile.close()    
+#%%
+    
+def format_results_in_appliance_order(home):
+     ''' this function returns applainces in intended order'''
+     if home  == "House20.pkl":
+         order = ['Dishwasher', 'TV', 'Kettle', 'Fridge', 'Freezer', 'TumbleDryer']
+     elif home == "House10.pkl": 
+         order = ['Dishwasher', 'TV', 'toaster', 'WashingMachine', 'Chest_Freezer', 'blender'] 
+     elif home == "House18.pkl":
+         order = ['Dishwasher', 'TV', 'Freezer_garage', 'Computer', 'Fridge_Freezer', 'Fridge_garage']
+     elif home == "House16.pkl":    
+         order = ['Dishwasher', 'Computer', 'TV', 'Fridge_Freezer_2', 'Fridge_Freezer_1', 'Dehumidifier ']
+     elif home == "House1.pkl":    
+         order = ['Dishwasher', 'WashingMachine', 'Fridge', 'Freezer_1', 'ElectricHeater', 'Freezer_2']
+     else :
+         raise ValueError ("Supply correct home details")
+     return order

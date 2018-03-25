@@ -25,6 +25,30 @@ def compute_correlation(gt, pred):
         corr_coeff[app] =  ( pd.concat([gt[app], pred[app]], axis = 1).corr()).iloc[0][1]      
     return pd.Series(corr_coeff)
 
+def compute_rmse_ver_dict(dis_result):
+    from sklearn.metrics import mean_squared_error
+    pred = dis_result['decoded_power']
+    gt = deepcopy(dis_result['actual_power'])
+    try:
+        gt = gt.drop(['use'], axis = 1)
+    except:
+        print("GT does not contain use column\n")
+    rms_error = {}
+    for app in gt.columns:
+        rms_error[app] =  np.sqrt(mean_squared_error(gt[app],pred[app]))
+    return pd.Series(rms_error)
+
+def compute_correlation_ver_dict(dis_result):
+    pred = dis_result['decoded_power']
+    gt = deepcopy(dis_result['actual_power'])
+    try:
+        gt = gt.drop(['use'], axis = 1)
+    except:
+        print("GT does not contain use column\n")
+    corr_coeff = {}
+    for app in pred.columns:
+        corr_coeff[app] =  ( pd.concat([gt[app], pred[app]], axis = 1).corr()).iloc[0][1]      
+    return pd.Series(corr_coeff)
 def accuracy_metric_norm_error(dis_result):
     '''Metric taken from Nipuns NILMTK paper:Normalised error in assigned power'''
     pred = dis_result['decoded_power']
