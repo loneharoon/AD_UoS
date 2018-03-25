@@ -12,12 +12,18 @@ import pandas as pd
 from copy import deepcopy
 from collections import OrderedDict
 #%%
-def compute_rmse(gt,pred):
+def compute_rmse(gt, pred):
     from sklearn.metrics import mean_squared_error
     rms_error = {}
     for app in gt.columns:
         rms_error[app] =  np.sqrt(mean_squared_error(gt[app],pred[app]))
     return pd.Series(rms_error)
+
+def compute_correlation(gt, pred):
+    corr_coeff = {}
+    for app in pred.columns:
+        corr_coeff[app] =  ( pd.concat([gt[app], pred[app]], axis = 1).corr()).iloc[0][1]      
+    return pd.Series(corr_coeff)
 
 def accuracy_metric_norm_error(dis_result):
     '''Metric taken from Nipuns NILMTK paper:Normalised error in assigned power'''
