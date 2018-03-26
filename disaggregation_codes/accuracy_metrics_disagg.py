@@ -64,6 +64,7 @@ def compute_correlation_ver_dict(dis_result):
         corr_coeff[app] =  ( pd.concat([gt_app, pred_app], axis = 1).corr()).iloc[0,1]      
     
     return pd.Series(corr_coeff)
+
 def accuracy_metric_norm_error(dis_result):
     '''Metric taken from Nipuns NILMTK paper:Normalised error in assigned power'''
     pred = dis_result['decoded_power']
@@ -84,6 +85,7 @@ def accuracy_metric_norm_error(dis_result):
         denominator = np.nansum(gt_app) * 1.0
         error[app] = np.divide(numerator,denominator)
     result = pd.DataFrame.from_dict(error, orient='index')
+    
     return result
 
 #%%
