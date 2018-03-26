@@ -28,8 +28,7 @@ def compute_AD_and_disagg_status(logging_file,log_report, train_data,data_sampli
     else:
         res_df = ads.anomaly_detection_algorithm(test_results,train_results,alpha,num_std)
     #result_sub = res_df[res_df.status==1]
-    result_sub = res_df
-    
+    #result_sub = res_df
     # Compute disaggregation accuracies
     norm_error = acmat.accuracy_metric_norm_error(data_dic)
     order = format_results_in_appliance_order(home)
@@ -45,14 +44,16 @@ def compute_AD_and_disagg_status(logging_file,log_report, train_data,data_sampli
     
     if log_report:
       resultfile.write('Following four disaggagregation metrics of {} approach \n'.format(disagg_approach))
+      resultfile.write("\n ANE is:\n")
       resultfile.write(str(norm_error))
-      resultfile.write('\n')
+      resultfile.write("\n RMSE is:\n")
       resultfile.write(str(rmse))
-      resultfile.write('\n')
+      resultfile.write("\n CORRELATION COEFFICIENT is:\n")
       resultfile.write(str(cor_coeff))
-      resultfile.write('\n')
+      resultfile.write("\n CONFUSION MAT is:\n")
       resultfile.write(str(confus_mat))
       resultfile.write('\n')
+      resultfile.close()
     else:
       print('Appliance normalization error are \n')
       print(norm_error)
@@ -64,18 +65,23 @@ def compute_AD_and_disagg_status(logging_file,log_report, train_data,data_sampli
       print(confus_mat)
     #%%
     # Compute anomaly detection accuracies
-    #house_no = 1
+    try:     
+        result_sub = res_df[res_df.anomtype == "long"]
+        print ("KEEPING LONG ANOMALIES, DROPPING FREQUENT ONES")
+    except:
+        print("No long anomaly found in this case\n")
     house_no =  int(re.findall('\d+',home)[0])
     home = home.split('.')[0]+'.csv'
     appliance = scn.reverse_lookup(home,myapp) # find actual name of appliance in anomaly database
     assert len(appliance) > 1
     day_start = test_data.first_valid_index()
     day_end = test_data.last_valid_index()
-    gt,ob = ads.tidy_gt_and_ob(house_no,appliance,day_start,day_end,result_sub)
+    gt, ob = ads.tidy_gt_and_ob(house_no, appliance, day_start, day_end, result_sub)
     #confusion_matrix(gt.day.values,ob.day.values)
-    precision,recall, fscore = ads.compute_AD_confusion_metrics(gt,ob)
+    precision,recall, fscore = ads.compute_AD_confusion_metrics(gt, ob)
     #print(precision,recall, fscore)  
     if log_report:
+      resultfile = open(logging_file,'a')
       resultfile.write("Anomaly detection accuracies at; context {}, alpha {}, std {} on {} data \n".format(NoOfContexts,alpha,num_std,disagg_approach))
       resultfile.write('Precision, reall and f_score are: {}, {}, {} \n'.format(precision,recall, fscore))
       resultfile.close()

@@ -35,19 +35,34 @@ def compute_rmse_ver_dict(dis_result):
         print("GT does not contain use column\n")
     rms_error = {}
     for app in gt.columns:
-        rms_error[app] =  np.sqrt(mean_squared_error(gt[app],pred[app]))
+        gt_app = gt[app]
+        ob_app = pred[app]
+        if abs(len(ob_app) - len(gt_app)) == 1:
+            #sometimes downsampling  results in extra reading, so remove that entry to make both gt and ob readings equal
+            gt_app =  gt_app[:-1]
+        rms_error[app] =  np.sqrt(mean_squared_error(gt_app.values, ob_app.values))
     return pd.Series(rms_error)
 
 def compute_correlation_ver_dict(dis_result):
     pred = dis_result['decoded_power']
     gt = deepcopy(dis_result['actual_power'])
+    
     try:
         gt = gt.drop(['use'], axis = 1)
+        pred = pred.drop(['use'], axis = 1) # in case of LBM results required
     except:
         print("GT does not contain use column\n")
+   
     corr_coeff = {}
     for app in pred.columns:
-        corr_coeff[app] =  ( pd.concat([gt[app], pred[app]], axis = 1).corr()).iloc[0][1]      
+        #print(app)
+        gt_app = gt[app]
+        pred_app = pred[app]
+        if abs(len(pred_app) - len(gt_app)) == 1:
+            #sometimes downsampling  results in extra reading, so remove that entry to make both gt and ob readings equal
+            gt_app =  gt_app[:-1]
+        corr_coeff[app] =  ( pd.concat([gt_app, pred_app], axis = 1).corr()).iloc[0,1]      
+    
     return pd.Series(corr_coeff)
 def accuracy_metric_norm_error(dis_result):
     '''Metric taken from Nipuns NILMTK paper:Normalised error in assigned power'''
