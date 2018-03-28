@@ -196,7 +196,12 @@ def smoothen_NILM_output(data_series, threshold_minutes, std, num_std):
   status = [0 if i < 10 else 1 for i in temp.values]
   temp['status'] = status
   temp_groups = temp.groupby('status')
-  tgt_gp = temp_groups.get_group(1)
+  try:   
+    tgt_gp = temp_groups.get_group(1)
+  except: # when all entries with status 0
+    temp_dup = deepcopy(temp)
+    temp_dup.columns = ['power','status']
+    return temp_dup['power']
   temp_dup = deepcopy(temp)
   temp_dup.columns = ['power','status']
   #temp_dup['power'].plot()
@@ -297,9 +302,9 @@ def compute_AD_and_disagg_status_on_NILM_smoothened_data(logging_file,log_report
       print('Precision, reall and f_score are: {}, {}, {} \n'.format(precision,recall, fscore))
 #%%
 
-def divide_smoothen_combine(data, NoOfContexts, train_results, num_std):
+def divide_smoothen_combine(data_series, NoOfContexts, train_results, num_std):
   ''' this function takes NILM data as input and then smoothens that data. Note down smoothening is done context wise so context specific thresholds are used''' 
-  contexts = ads.create_contexts(data, NoOfContexts)      
+  contexts = ads.create_contexts(data_series, NoOfContexts)      
   contexts_daywise = OrderedDict()
   for k, v in contexts.items():
     gp = v.groupby(v.index.date) 
@@ -310,7 +315,7 @@ def divide_smoothen_combine(data, NoOfContexts, train_results, num_std):
     std = off_std_duration 
     smoothened_daywise = OrderedDict()
     for day_k, day_v in gp:
-      print(day_k)
+      #print(day_k)
       smoothened_daywise[day_k] = smoothen_NILM_output(day_v, threshold_minutes, std, num_std)
    # Now merge all daywise results
     contexts_daywise[k] = pd.concat([v for k,v in smoothened_daywise.items()], axis = 0) 
