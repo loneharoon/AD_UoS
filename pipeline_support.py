@@ -15,7 +15,7 @@ import AD_support as ads
 import re
 import accuracy_metrics_disagg as acmat
 from copy import deepcopy
-
+from collections import OrderedDict
 
 #%%
 def compute_AD_and_disagg_status(logging_file,log_report, train_data,data_sampling_type,data_sampling_time, NoOfContexts,myapp,test_data,data_dic,disagg_approach,home,file_location,alpha,num_std):
@@ -295,7 +295,28 @@ def compute_AD_and_disagg_status_on_NILM_smoothened_data(logging_file,log_report
     else:
       print("Anomaly detection accuracies at; context {}, alpha {}, std {} on {} data \n".format(NoOfContexts,alpha,num_std,disagg_approach))
       print('Precision, reall and f_score are: {}, {}, {} \n'.format(precision,recall, fscore))
-  
+#%%
+
+def divide_smoothen_combine(data, NoOfContexts, train_results, num_std):
+  ''' this function takes NILM data as input and then smoothens that data. Note down smoothening is done context wise so context specific thresholds are used''' 
+  contexts = ads.create_contexts(data, NoOfContexts)      
+  contexts_daywise = OrderedDict()
+  for k, v in contexts.items():
+    gp = v.groupby(v.index.date) 
+    # get context specific stats
+    off_mean_duration = train_results[k]['OFF_duration']['mean']
+    off_std_duration = train_results[k]['OFF_duration']['std']
+    threshold_minutes = off_mean_duration
+    std = off_std_duration 
+    smoothened_daywise = OrderedDict()
+    for day_k, day_v in gp:
+      print(day_k)
+      smoothened_daywise[day_k] = smoothen_NILM_output(day_v, threshold_minutes, std, num_std)
+   # Now merge all daywise results
+    contexts_daywise[k] = pd.concat([v for k,v in smoothened_daywise.items()], axis = 0) 
+  smoothened_series = pd.concat([v for k,v in contexts_daywise.items()], axis = 0)  
+  sorted_series =  smoothened_series.sort_index()
+  return sorted_series
     
     
     
