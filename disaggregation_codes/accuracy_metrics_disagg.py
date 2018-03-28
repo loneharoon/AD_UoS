@@ -34,6 +34,11 @@ def compute_rmse_ver_dict(dis_result):
     except:
         print("GT does not contain use column\n")
     rms_error = {}
+    if isinstance(pred, pd.Series): # if input is series
+      pred = pred.to_frame()
+      gt = gt.to_frame()
+      pred.columns = ["power"]
+      gt.columns = ["power"]
     for app in gt.columns:
         gt_app = gt[app]
         ob_app = pred[app]
@@ -54,6 +59,11 @@ def compute_correlation_ver_dict(dis_result):
         print("GT does not contain use column\n")
    
     corr_coeff = {}
+    if isinstance(pred, pd.Series): # if input is series
+      pred = pred.to_frame()
+      gt = gt.to_frame()
+      pred.columns = ["power"]
+      gt.columns = ["power"]
     for app in pred.columns:
         #print(app)
         gt_app = gt[app]
@@ -70,11 +80,16 @@ def accuracy_metric_norm_error(dis_result):
     pred = dis_result['decoded_power']
     gt = deepcopy(dis_result['actual_power'])
     try:
-        gt = gt.drop(['use'],axis=1)
+        gt = gt.drop(['use'], axis = 1)
     except:
         print("GT does not contain use column\n")
-    
     error = {}
+    if isinstance(pred, pd.Series):
+      # if input is series
+      pred = pred.to_frame()
+      gt = gt.to_frame()
+      pred.columns = ["power"]
+      gt.columns = ["power"]
     for app in gt.columns:
         gt_app = gt[app]
         ob_app = pred[app]
@@ -89,7 +104,7 @@ def accuracy_metric_norm_error(dis_result):
     return result
 
 #%%
-def compute_mae(gt,pred):
+def compute_mae(gt, pred):
     ''' compute mean absolute error'''
     from sklearn.metrics import mean_absolute_error
     mae_error = {}
@@ -158,9 +173,15 @@ def accuracy_metric_gemello(dis_result):
 
 #%%%% CONFUSION METRICS
 #%%
-def call_confusion_metrics_on_disagg(test_dset,predict_df,power_threshold):
+def call_confusion_metrics_on_disagg(test_dset, predict_df, power_threshold):
     #predict_df = predict_df.drop(['use'],axis=1)
     on_power_threshold = power_threshold
+    if isinstance(predict_df, pd.Series):
+      # if input is series
+      predict_df = predict_df.to_frame()
+      test_dset = test_dset.to_frame()
+      predict_df.columns = ["power"]
+      test_dset.columns = ["power"]
     appliances  = predict_df.columns
     results =  OrderedDict()
     for app in appliances:
