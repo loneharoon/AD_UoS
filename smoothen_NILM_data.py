@@ -17,27 +17,22 @@ from copy import deepcopy
 
 #%% 
 file_location = "/Volumes/MacintoshHD2/Users/haroonr/Detailed_datasets/REFITT/Intermediary_results/"
-#TODO : TUNE ME
 log_report = False # this logs final reports, log only if you are sure of algorithm
 ad_logging = False # this logs intermediary AD results 
 if log_report:
-    #TODO : TUNE ME
   logging_file = file_location +"xxxx.csv" # denoisy_resultfile.csv
   resultfile = open(logging_file,'a')
 else:
   logging_file = " "
-
-#TODO : TUNE  US [we are 5]
-home = "House10.pkl" # options are: 10, 20, 18, 16, 1
+#TODO : TUNE ME % path for reading pickle files
+home = "House20.pkl" # options are: 10, 20, 18, 16, 1
 disagg_approach = "co" # options are co,fhmm, lbm,sshmms,gsp
+
 
 NoOfContexts = 4
 alpha = 2
 num_std = 2
 myapp = ads.get_selected_home_appliance(home)
-
-
-#TODO : TUNE ME % path for reading pickle files
 method = "noisy/" + disagg_approach + "/selected/" # noisy or denoised
 #method="lbm/selected_results/"
 if log_report:
@@ -61,7 +56,7 @@ if disagg_approach == "lbm":
 train_data =  train_power[myapp]
 test_data =   decoded_power[myapp]
 actual_data = actual_power[myapp]
-#%% play with training data
+#%play with training data
 data_sampling_time = 1 #in minutes
 data_sampling_type = "minutes" # or s
 if home =="House1.pkl":
@@ -69,28 +64,27 @@ if home =="House1.pkl":
 else:
   appliance = "Freezer"
 NoOfContexts = 4 
-train_results = ads.AD_refit_training(train_data,data_sampling_type,data_sampling_time,NoOfContexts,appliance)
-#%%
-#TODO : TUNE ME
-num_std = 1 # 0, 1, 1.5, 2, .....
+train_results = ads.AD_refit_training(train_data, data_sampling_type, data_sampling_time, NoOfContexts, appliance)
+#%
+#TODO: TUNE ME
+num_std = 0 # 0, 1, 1.5, 2, .....
 #data_series = test_data[:'2014-04-04']
 #data_series = test_data['2014-06-1 04:00:00':'2014-06-1 05:00:00']
 #nilm_smoothened = ps.smoothen_NILM_output(data_series, threshold_minutes, std, num_std)
 data_series = test_data
 nilm_smoothened = ps.divide_smoothen_combine(data_series, NoOfContexts, train_results, num_std)
-
+#%
 data_dic2 = {}
 data_dic2['train_power'] = train_data
 data_dic2['decoded_power'] = nilm_smoothened
 data_dic2['actual_power'] = actual_data
 
 save_dir = "/Volumes/MacintoshHD2/Users/haroonr/Detailed_datasets/REFITT/Intermediary_results/"
-#TODO : TUNE ME
-filename = save_dir + "nilm_smoothened/co/"+'std'+ str(num_std)+"/" + home.split('.')[0] + '.pkl'
+filename = save_dir + 'nilm_smoothened/'+ disagg_approach +'/'+'std'+ str(num_std)+"/" + home.split('.')[0] + '.pkl'
 handle = open(filename,'wb')
 pickle.dump(data_dic2, handle)
 handle.close()
-#%% read samee pickle data
+#%% read same pickle data
 
 results = open(filename, 'rb')
 if sys.version_info > (3, 0):
