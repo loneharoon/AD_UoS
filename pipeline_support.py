@@ -5,6 +5,7 @@ Created on Thu Feb 22 13:49:08 2018
 
 @author: haroonr
 """
+from __future__ import division
 import pickle
 import pandas as pd
 import sys
@@ -13,6 +14,7 @@ import standardize_column_names as scn
 import AD_support as ads
 import re
 import accuracy_metrics_disagg as acmat
+from copy import deepcopy
 
 
 #%%
@@ -69,6 +71,7 @@ def compute_AD_and_disagg_status(logging_file,log_report, train_data,data_sampli
         result_sub = res_df[res_df.anomtype == "long"]
         print ("KEEPING LONG ANOMALIES, DROPPING FREQUENT ONES")
     except:
+        result_sub = pd.DataFrame()
         print("No long anomaly found in this case\n")
     house_no =  int(re.findall('\d+',home)[0])
     home = home.split('.')[0]+'.csv'
@@ -167,9 +170,56 @@ def format_results_in_appliance_order(home):
      elif home == "House18.pkl":
          order = ['Dishwasher', 'TV', 'Freezer_garage', 'Computer', 'Fridge_Freezer', 'Fridge_garage']
      elif home == "House16.pkl":    
-         order = ['Dishwasher', 'Computer', 'TV', 'Fridge_Freezer_2', 'Fridge_Freezer_1', 'Dehumidifier ']
+         order = ['Dishwasher', 'Computer', 'TV', 'Fridge_Freezer_2', 'Fridge_Freezer_1', 'Dehumidifier']
      elif home == "House1.pkl":    
          order = ['Dishwasher', 'WashingMachine', 'Fridge', 'Freezer_1', 'ElectricHeater', 'Freezer_2']
      else :
          raise ValueError ("Supply correct home details")
      return order
+#%%
+def  interpolate_dataframe(start_ob, end_ob, temp_dup):
+   ''' This function creates a new dataframe from temp_dup by using only two observation from it sepecified by parameters start_ob and end_ob. Remaining in between observations are filled by interpolation '''
+   ind = pd.date_range(start = start_ob, end = end_ob, freq = 'T')
+   temp_df =  pd.DataFrame(index = ind)
+   k = pd.concat([temp_dup.loc[str(start_ob)], temp_dup.loc[str(end_ob)]],axis = 1).T
+   k = k.combine_first(temp_df)
+   k['power'].interpolate(method = 'linear',inplace = True)
+   temp_dup.loc[k.index.intersection(temp_dup.index)] = k
+   return temp_dup
+#%%
+def smoothen_NILM_output(data_series, threshold_minutes, std, num_std):    
+  '''this function taken NILM output and removes small OFF durations by using threshold_minutes''' 
+  #temp = test_data['2014-05-1'].to_frame()
+  #temp = test_data['2014-05-1'].to_frame()
+  threshold_minutes = threshold_minutes - std * num_std
+  temp = data_series.to_frame()
+  # less than 5, I consider as OFF, this can be done with clustering too
+  status = [0 if i < 5 else 1 for i in temp.values]
+  temp['status'] = status
+  temp_groups = temp.groupby('status')
+  tgt_gp = temp_groups.get_group(1)
+  temp_dup = deepcopy(temp)
+  temp_dup.columns = ['power','status']
+  temp_dup['power'].plot()
+  #%
+  for i in range(tgt_gp.shape[0]):
+    j = i + 1
+    if j >= tgt_gp.shape[0]:
+      #print ('Loop limit reached\n')
+      break
+    start_ind = tgt_gp.index[i]
+    next_ind = tgt_gp.index[j]
+    delta = next_ind - start_ind
+    delta_minutes = (delta.seconds / 60)
+    if delta_minutes <= 1:
+      pass
+    elif delta_minutes < threshold_minutes:
+      # interpolate me at minutes rate
+      temp_dup = interpolate_dataframe(start_ind, next_ind, temp_dup)
+    else:
+      pass
+  #temp_dup['power'].plot() 
+  return temp_dup['power']
+    
+    
+    
