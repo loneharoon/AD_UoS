@@ -23,17 +23,19 @@ import pipeline_support as ps
 file_location = "/Volumes/MacintoshHD2/Users/haroonr/Detailed_datasets/REFITT/Intermediary_results/"
 #TODO : TUNE ME
 log_report = False # this logs final reports, log only if you are sure of algorithm
-ad_logging = True # this logs intemediary ad results 
+ad_logging = False # this logs intermediary AD results 
 if log_report:
     #TODO : TUNE ME
-  logging_file = file_location+"noisy_resultfile.csv" # denoisy_resultfile.csv
+  logging_file = file_location + "noisy_resultfile_onlyenergy_AD_rule.csv" # denoisy_resultfile.csv
   resultfile = open(logging_file,'a')
 else:
-  logging_file = ""
+  logging_file = " "
 
 #TODO : TUNE  US [we are 5]
-home = "House10.pkl" # options are: 10,20,18,16,1
-disagg_approach = "sshmms" # options are co,fhmm, lbm,sshmms,gsp
+NILM_smooth_version = True # if you want to read NILM smoothened dataset
+home = "House16.pkl" # options are: 10, 20, 18, 16, 1
+disagg_approach = "gsp" # options are co,fhmm, lbm,sshmms,gsp
+num_std_smooth = 0
 
 NoOfContexts = 4
 alpha = 2
@@ -42,26 +44,39 @@ myapp = ads.get_selected_home_appliance(home)
 
 
 #TODO : TUNE ME % path for reading pickle files
-method = "noisy/"+ disagg_approach+ "/selected/" # noisy or denoised
+#method = "noisy/" + disagg_approach + "/selected/" # noisy or denoised
+method = 'nilm_smoothened/'+ disagg_approach + '/' + 'std' + str(num_std_smooth) + "/"
 #method="lbm/selected_results/"
 if log_report:
   resultfile.write('*********************NEW HOME*****************\n')
   resultfile.write("\n Home is {} and appliance is {}\n ".format(home,myapp))
 filename= file_location + method + home
 results = open(filename, 'rb')
-data_dic = pickle.load(results)
+if sys.version_info > (3, 0):
+  data_dic = pickle.load(results, encoding = 'latin1')
+else:
+  data_dic = pickle.load(results)
 results.close()
+#
 if log_report:
   resultfile.close()
+  
+if NILM_smooth_version:
+  train_data  =  data_dic['train_power']
+  test_data   =  data_dic['decoded_power']
+  actual_data =  data_dic['actual_power']
+else: 
+  train_power =   data_dic['train_power']
+  decoded_power = data_dic['decoded_power']
+  actual_power  = data_dic['actual_power']
+  if disagg_approach == "lbm":
+      data_dic['decoded_power'] = data_dic['decoded_power'].drop(['inferred mains'],axis=1)
+  train_data =  train_power[myapp]
+  test_data =   decoded_power[myapp]
 
-train_power =   data_dic['train_power']
-decoded_power = data_dic['decoded_power']
-actual_power  = data_dic['actual_power']
-if disagg_approach == "lbm":
-    data_dic['decoded_power'] = data_dic['decoded_power'].drop(['inferred mains'],axis=1)
-train_data =  train_power[myapp]
-test_data =   decoded_power[myapp]
+
 #%% RUN THIS CELL ONLY WHEN DUMPING SUMBETERED RESULTS
+  #TODO: check me
 test_data =  actual_power[myapp]
 disagg_approach = "submetered" # options are co,fhmm, lbm,sshmms,gsp
 
@@ -70,12 +85,13 @@ disagg_approach = "submetered" # options are co,fhmm, lbm,sshmms,gsp
 data_sampling_time = 1 #in minutes
 data_sampling_type = "minutes" # or seconds
 
-#ps.compute_AD_and_disagg_status(logging_file,log_report,train_data,data_sampling_type,data_sampling_time, NoOfContexts,myapp,test_data,data_dic,disagg_approach,home,file_location,alpha,num_std)
+ps.compute_AD_and_disagg_status(NILM_smooth_version, logging_file,log_report,train_data,data_sampling_type,data_sampling_time, NoOfContexts,myapp,test_data,data_dic,disagg_approach,home,file_location,alpha,num_std)
 # if we want to log intermediary anomaly detection results.
+
 if ad_logging:
     #TODO: check me
     ad_logging_file = "/Volumes/MacintoshHD2/Users/haroonr/Detailed_datasets/REFITT/Intermediary_results/AD_noisy/ad_confusion_metrics.csv"
-ps.dump_AD_result(ad_logging_file, train_data,data_sampling_type,data_sampling_time, NoOfContexts,myapp,test_data,data_dic,disagg_approach,home,file_location,alpha,num_std)
+    ps.dump_AD_result(ad_logging_file, train_data,data_sampling_type,data_sampling_time, NoOfContexts,myapp,test_data,data_dic,disagg_approach,home,file_location,alpha,num_std)
 
 #%% for SUBMETERED DATA CASE 
 #actual_signature =   actual_power[myapp]

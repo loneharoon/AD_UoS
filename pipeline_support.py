@@ -18,7 +18,7 @@ from copy import deepcopy
 from collections import OrderedDict
 
 #%%
-def compute_AD_and_disagg_status(logging_file,log_report, train_data,data_sampling_type,data_sampling_time, NoOfContexts,myapp,test_data,data_dic,disagg_approach,home,file_location,alpha,num_std):
+def compute_AD_and_disagg_status(NILM_smooth_version, logging_file, log_report, train_data, data_sampling_type, data_sampling_time, NoOfContexts, myapp, test_data, data_dic, disagg_approach, home, file_location, alpha, num_std):
     if log_report:
       resultfile = open(logging_file,'a')
       resultfile.write('*********************NEW HOME*****************\n')    
@@ -32,17 +32,25 @@ def compute_AD_and_disagg_status(logging_file,log_report, train_data,data_sampli
     #result_sub = res_df[res_df.status==1]
     #result_sub = res_df
     # Compute disaggregation accuracies
-    norm_error = acmat.accuracy_metric_norm_error(data_dic)
-    order = format_results_in_appliance_order(home)
-    norm_error = norm_error.reindex(order)
-    # compute rmse too
-    rmse = acmat.compute_rmse_ver_dict(data_dic)
-    rmse = rmse.reindex(order)
-    cor_coeff = acmat.compute_correlation_ver_dict(data_dic)
-    cor_coeff = cor_coeff.reindex(order)
-    confus_mat = acmat.call_confusion_metrics_on_disagg(data_dic['actual_power'],data_dic['decoded_power'],power_threshold=10)
-    confus_mat = pd.DataFrame.from_dict(confus_mat)
-    confus_mat = confus_mat.reindex(order, axis = 1)
+    
+    if NILM_smooth_version:
+      norm_error = acmat.accuracy_metric_norm_error(data_dic)
+      rmse = acmat.compute_rmse_ver_dict(data_dic)
+      cor_coeff = acmat.compute_correlation_ver_dict(data_dic)
+      confus_mat = acmat.call_confusion_metrics_on_disagg(data_dic['actual_power'],data_dic['decoded_power'],power_threshold=10)
+      confus_mat = pd.DataFrame.from_dict(confus_mat)
+    else: 
+      norm_error = acmat.accuracy_metric_norm_error(data_dic)
+      order = format_results_in_appliance_order(home)
+      norm_error = norm_error.reindex(order)
+      #compute rmse too
+      rmse = acmat.compute_rmse_ver_dict(data_dic)
+      rmse = rmse.reindex(order)
+      cor_coeff = acmat.compute_correlation_ver_dict(data_dic)
+      cor_coeff = cor_coeff.reindex(order)
+      confus_mat = acmat.call_confusion_metrics_on_disagg(data_dic['actual_power'],data_dic['decoded_power'],power_threshold=10)
+      confus_mat = pd.DataFrame.from_dict(confus_mat)
+      confus_mat = confus_mat.reindex(order, axis = 1)
     
     if log_report:
       resultfile.write('Following four disaggagregation metrics of {} approach \n'.format(disagg_approach))
@@ -59,12 +67,16 @@ def compute_AD_and_disagg_status(logging_file,log_report, train_data,data_sampli
     else:
       print('Appliance normalization error are \n')
       print(norm_error)
+      print('\n')
       print('RMSE is:\n')
       print(rmse)
+      print('\n')
       print('correlation values are:\n')
       print(cor_coeff) 
+      print('\n')
       print('Confusion matrix accuracies are:\n')
       print(confus_mat)
+      print('\n')
     #%%
     # Compute anomaly detection accuracies
     try:     
@@ -75,7 +87,7 @@ def compute_AD_and_disagg_status(logging_file,log_report, train_data,data_sampli
         print("No long anomaly found in this case\n")
     house_no =  int(re.findall('\d+',home)[0])
     home = home.split('.')[0]+'.csv'
-    appliance = scn.reverse_lookup(home,myapp) # find actual name of appliance in anomaly database
+    appliance = scn.reverse_lookup(home, myapp) # find actual name of appliance in anomaly database
     assert len(appliance) > 1
     day_start = test_data.first_valid_index()
     day_end = test_data.last_valid_index()
