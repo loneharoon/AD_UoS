@@ -27,8 +27,8 @@ else:
   logging_file = " "
 
 #TODO : TUNE  US [we are 5]
-home = "House16.pkl" # options are: 10, 20, 18, 16, 1
-disagg_approach = "sshmms" # options are co,fhmm, lbm,sshmms,gsp
+home = "House10.pkl" # options are: 10, 20, 18, 16, 1
+disagg_approach = "gsp" # options are co,fhmm, lbm,sshmms,gsp
 
 NoOfContexts = 4
 alpha = 2
@@ -44,7 +44,10 @@ if log_report:
   resultfile.write("\n Home is {} and appliance is {}\n ".format(home,myapp))
 filename= file_location + method + home
 results = open(filename, 'rb')
-data_dic = pickle.load(results)
+if sys.version_info > (3, 0):
+  data_dic = pickle.load(results, encoding = 'latin1')
+else:
+  data_dic = pickle.load(results)
 results.close()
 if log_report:
   resultfile.close()
@@ -61,21 +64,22 @@ actual_data = actual_power[myapp]
 data_sampling_time = 1 #in minutes
 data_sampling_type = "minutes" # or s
 NoOfContexts, appliance = 4 ,'Freezer'
-train_results = ads.AD_refit_training(train_data,data_sampling_type,data_sampling_time,NoOfContexts,appliance)
+train_results = ads.AD_refit_training(train_data, data_sampling_type, data_sampling_time, NoOfContexts, appliance)
 #%%
-threshold_minutes = train_results['day_1_gp']['OFF_duration']['mean']
-std = train_results['day_1_gp']['OFF_duration']['std']
-# number of standard deviations
-#%%
-threshold_minutes = 10
-num_std = 0 # 0, 1, 1.5, 2, .....
-#data_series = test_data['2014-06-1']
-data_series = test_data['2014-06-1 04:00:00':'2014-06-1 05:00:00']
+#num_std = 2 # 0, 1, 1.5, 2, .....
+data_series = test_data['2014-05-01']
+data_actual = actual_data['2014-05-01']
+print_stats = False
+#data_series = test_data['2014-06-1 04:00:00':'2014-06-1 05:00:00']
 #data_series = test_data
-nilm_smoothened = ps.smoothen_NILM_output(data_series, threshold_minutes, std, num_std)
-data_series.plot()
-nilm_smoothened.plot()
+#nilm_smoothened = ps.smoothen_NILM_output(data_series, threshold_minutes, std, num_std)
+
+num_stds = [0,1,2,3,4,5]
+for num_std in num_stds:
+  nilm_smoothened = ps.divide_smoothen_combine(data_series, NoOfContexts, train_results, num_std, print_stats)
+#data_series.plot()
+#nilm_smoothened.plot()
+  ps.compute_accuracy_metrics_on_NILM_smoothend_ver(data_actual, nilm_smoothened)
 #%%
 ps.compute_AD_and_disagg_status_on_NILM_smoothened_data(logging_file,log_report,train_results, data_sampling_type,data_sampling_time, NoOfContexts,myapp, nilm_smoothened, data_dic, disagg_approach, home, file_location, alpha, num_std)
-      
       
