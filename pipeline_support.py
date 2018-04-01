@@ -313,7 +313,6 @@ def compute_AD_and_disagg_status_on_NILM_smoothened_data(logging_file,log_report
       print("Anomaly detection accuracies at; context {}, alpha {}, std {} on {} data \n".format(NoOfContexts,alpha,num_std,disagg_approach))
       print('Precision, reall and f_score are: {}, {}, {} \n'.format(precision,recall, fscore))
 #%%
-
 def divide_smoothen_combine(data_series, NoOfContexts, train_results, num_std, print_stats):
   ''' this function takes NILM data as input and then smoothens that data. Note down smoothening is done context wise so context specific thresholds are used''' 
   contexts = ads.create_contexts(data_series, NoOfContexts)      
@@ -337,6 +336,7 @@ def divide_smoothen_combine(data_series, NoOfContexts, train_results, num_std, p
   smoothened_series = pd.concat([v for k,v in contexts_daywise.items()], axis = 0)  
   sorted_series =  smoothened_series.sort_index()
   return sorted_series
+
 #%%
 def compute_accuracy_metrics_on_NILM_smoothend_ver(data_series, nilm_smoothened):
     data_dic = {}
