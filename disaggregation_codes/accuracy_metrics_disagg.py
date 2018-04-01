@@ -32,7 +32,8 @@ def compute_rmse_ver_dict(dis_result):
     try:
         gt = gt.drop(['use'], axis = 1)
     except:
-        print("GT does not contain use column\n")
+        pass
+        #print("GT does not contain use column\n")
     rms_error = {}
     if isinstance(pred, pd.Series): # if input is series
       pred = pred.to_frame()
@@ -56,7 +57,8 @@ def compute_correlation_ver_dict(dis_result):
         gt = gt.drop(['use'], axis = 1)
         pred = pred.drop(['use'], axis = 1) # in case of LBM results required
     except:
-        print("GT does not contain use column\n")
+        pass
+        #print("GT does not contain use column\n")
    
     corr_coeff = {}
     if isinstance(pred, pd.Series): # if input is series
@@ -82,7 +84,8 @@ def accuracy_metric_norm_error(dis_result):
     try:
         gt = gt.drop(['use'], axis = 1)
     except:
-        print("GT does not contain use column\n")
+        pass
+        #print("GT does not contain use column\n")
     error = {}
     if isinstance(pred, pd.Series):
       # if input is series

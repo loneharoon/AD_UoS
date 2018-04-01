@@ -314,7 +314,7 @@ def compute_AD_and_disagg_status_on_NILM_smoothened_data(logging_file,log_report
       print('Precision, reall and f_score are: {}, {}, {} \n'.format(precision,recall, fscore))
 #%%
 
-def divide_smoothen_combine(data_series, NoOfContexts, train_results, num_std):
+def divide_smoothen_combine(data_series, NoOfContexts, train_results, num_std, print_stats):
   ''' this function takes NILM data as input and then smoothens that data. Note down smoothening is done context wise so context specific thresholds are used''' 
   contexts = ads.create_contexts(data_series, NoOfContexts)      
   contexts_daywise = OrderedDict()
@@ -323,6 +323,9 @@ def divide_smoothen_combine(data_series, NoOfContexts, train_results, num_std):
     # get context specific stats
     off_mean_duration = train_results[k]['OFF_duration']['mean']
     off_std_duration = train_results[k]['OFF_duration']['std']
+    if print_stats:
+      print('context is {}\n'.format(k))
+      print('Mean and std are {}, {}\n'.format(off_mean_duration,  off_std_duration))
     threshold_minutes = off_mean_duration
     std = off_std_duration 
     smoothened_daywise = OrderedDict()
@@ -334,6 +337,13 @@ def divide_smoothen_combine(data_series, NoOfContexts, train_results, num_std):
   smoothened_series = pd.concat([v for k,v in contexts_daywise.items()], axis = 0)  
   sorted_series =  smoothened_series.sort_index()
   return sorted_series
-    
-    
-    
+#%%
+def compute_accuracy_metrics_on_NILM_smoothend_ver(data_series, nilm_smoothened):
+    data_dic = {}
+    data_dic['decoded_power'] = data_series
+    data_dic['actual_power'] = nilm_smoothened
+    norm_error = acmat.accuracy_metric_norm_error(data_dic)
+    rmse = acmat.compute_rmse_ver_dict(data_dic)
+    cor_coeff = acmat.compute_correlation_ver_dict(data_dic)
+    #confus_mat = acmat.call_confusion_metrics_on_disagg(data_dic['actual_power'],data_dic['decoded_power'],power_threshold = 10)
+    print('ANE :{}, RMSE :{}, COR :{}'.format(norm_error.values, rmse.values, cor_coeff.values))
