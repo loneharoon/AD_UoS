@@ -8,7 +8,8 @@ Created on Tue Mar 20 13:28:25 2018
 import pandas as pd
 import os
 import my_utilities as myutil
-
+import matplotlib.pyplot as plt
+#%%
 def plot_bind_save_pdf(actual_data, test_data, fp_list, technique, home, myapp, restype):
     if len(fp_list) < 1:
         return
@@ -23,10 +24,12 @@ def plot_bind_save_pdf(actual_data, test_data, fp_list, technique, home, myapp, 
         savedir = "/Volumes/MacintoshHD2/Users/haroonr/Dropbox/UniOfStra/AD/intresting_plots/"
         savedir = savedir + restype + "/"
         fig.savefig(savedir + fpdate + "-" + myapp + "-" + technique + ".pdf", bbox_inches='tight')
-        fig.close()
+        plt.close()
     #% now combine pdfs
     #rootdir = "/Volumes/MacintoshHD2/Users/haroonr/Dropbox/UniOfStra/AD/intresting_plots/fp/"
     file_list = [savedir + i for i in os.listdir(savedir) if i.endswith(".pdf")]
     saveresult = "/Volumes/MacintoshHD2/Users/haroonr/Dropbox/UniOfStra/AD/intresting_plots/"
     saveresult = saveresult + restype + ".pdf"
     myutil.create_pdf_from_pdf_list(file_list, saveresult)
+    for i in file_list: # delete individual files
+      os.remove(i)
