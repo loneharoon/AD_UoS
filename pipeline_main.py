@@ -32,24 +32,28 @@ else:
   logging_file = " "
 
 #TODO : TUNE  US [we are 5]
-NILM_smooth_version = True # if you want to read NILM smoothened dataset
-home = "House16.pkl" # options are: 10, 20, 18, 16, 1
-disagg_approach = "gsp" # options are co,fhmm, lbm,sshmms,gsp
-num_std_smooth = 0
+NILM_smooth_version = False# if you want to read NILM smoothened dataset
+home = "House10.pkl" # options are: 10, 20, 18, 16, 1
+disagg_approach = "sshmms" # options are co,fhmm, lbm,sshmms,gsp
 
 NoOfContexts = 4
 alpha = 2
 num_std = 2
 myapp = ads.get_selected_home_appliance(home)
 
-
 #TODO : TUNE ME % path for reading pickle files
-#method = "noisy/" + disagg_approach + "/selected/" # noisy or denoised
-method = 'nilm_smoothened/'+ disagg_approach + '/' + 'std' + str(num_std_smooth) + "/"
-#method="lbm/selected_results/"
+if NILM_smooth_version :
+  num_std_smooth = 5
+  method = 'nilm_smoothened/'+ disagg_approach + '/' + 'std' + str(num_std_smooth) + "/"
+else :  
+  method = "noisy/" + disagg_approach + "/selected/" # noisy or denoised
+  #method="lbm/selected_results/"
+
+
 if log_report:
   resultfile.write('*********************NEW HOME*****************\n')
   resultfile.write("\n Home is {} and appliance is {}\n ".format(home,myapp))
+  
 filename= file_location + method + home
 results = open(filename, 'rb')
 if sys.version_info > (3, 0):
