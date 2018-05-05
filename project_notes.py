@@ -10,7 +10,7 @@ Created on Tue Jan 16 22:45:22 2018
 ..........................................................................
 ................................PROJECT RUNNING...........................
 ..........................................................................
-1. Run project_main.py first to get disaggregation results from different disagg techniques. This saves disagg results as pickle files
+1. Run project_main.py first to get disaggregation results from different disagg techniques. This saves disagg results as pickle files. Makonin's SSHMM runs in python 3 only so run makonin_main.py placed in python_3_codes to get disagg results
 2. open pipeline_main.py. This calls disagg results first and then runs AD logic. Remember in this script you can run in between anomaly detection too as pickle files. Also, remember this script all pickle files except sshmss result because sshmss results werer obtained in python 3 and it seems that python3 and 2 have differenet pickle versions
 ...................................................
 Following cases are present in REFIT data
@@ -51,7 +51,7 @@ target_appliance:frige freezer
 Issues: NONE
 
 4. Home 16
-training: month 2
+training: month 3
 testing: moths 4, 5,6
 target_appliance: Frige_Freezer_1
 Issues: Day 3 March is removed since it contains anomaly
