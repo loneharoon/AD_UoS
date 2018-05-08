@@ -19,41 +19,37 @@ import numpy as np
 
 dir = "/Volumes/MacintoshHD2/Users/haroonr/Detailed_datasets/REFITT/REFIT_selected/"
 
-home = "House18.csv"
-df = pd.read_csv(dir+home,index_col="Time")
+home = "House10.csv"
+df = pd.read_csv(dir + home, index_col = "Time")
 df.index = pd.to_datetime(df.index)
 df_sub = deepcopy(df[:])
-#TODO : TUNE ME
+#TODO : Toggle switch and set sampling rate correctly
 resample = True
-data_sampling_time = 1 #in minutes
-data_sampling_type = "minutes" # or seconds
 if resample: 
-  df_samp = df_sub.resample('1T',label='right',closed='right').mean()
-  df_samp.drop('Issues',axis=1,inplace=True)
+  df_samp = df_sub.resample('10T', label = 'right', closed='right').mean()
+  df_samp.drop('Issues', axis = 1, inplace = True)
   scn.rename_appliances(home,df_samp) # this renames columns
-  df_samp.rename(columns={'Aggregate':'use'},inplace=True) # renaming agg column
+  df_samp.rename(columns={'Aggregate':'use'}, inplace = True) # renaming agg column
   print("*****RESAMPling DONE********")
   if home == "House16.csv":
-      df_samp = df_samp[df_samp.index!= '2014-03-08'] # after resamping this day gets created 
+      df_samp = df_samp[df_samp.index != '2014-03-08'] # after resamping this day gets created 
 else:
   df_samp = deepcopy(df_sub)
-  df_samp.drop('Issues',axis=1,inplace=True)
-  scn.rename_appliances(home,df_samp) # this renames columns  
+  df_samp.drop('Issues', axis = 1,inplace = True)
+  scn.rename_appliances(home, df_samp) # this renames columns  
   df_samp.rename(columns={'Aggregate':'use'},inplace=True)
 
-energy = df_samp.sum(axis=0)
+energy = df_samp.sum(axis = 0)
 high_energy_apps = energy.nlargest(7).keys() # CONTROL : selects few appliances
 df_selected = df_samp[high_energy_apps]
-#TODO : TUNE ME
-denoised = True
+#TODO : Toggle me if required
+denoised = False
 if denoised:
     # chaning aggregate column
     iams = high_energy_apps.difference(['use'])
     df_selected['use'] = df_selected[iams].sum(axis=1)
     print('**********DENOISED DATA*************8')
-train_dset,test_dset = ads.get_selected_home_data(home,df_selected)
-#train_dset = train_dset[:86400]
-#test_dset = test_dset[:86400]
+train_dset,test_dset = ads.get_selected_home_data(home, df_selected)
 #%%
 ids = train_dset.columns.values.tolist()
 ids.remove('use')
@@ -66,7 +62,7 @@ max_obs = np.ceil(max(df_selected['use'].values)) + 1
 max_obs = float(max_obs)
 max_states = int(max_states)
 #%
-sshmms = mks.create_train_model(train_dset,ids,max_states,max_obs,precision)
+sshmms = mks.create_train_model(train_dset, ids, max_states, max_obs, precision)
 
 #%%
 labels = sshmms[0].labels
@@ -75,15 +71,14 @@ algo_name = 'SparseViterbi'
 limit ="all"
 print('Testing %s algorithm load disagg...' % algo_name)
 disagg_algo = getattr(__import__('algo_' + algo_name, fromlist=['disagg_algo']), 'disagg_algo')
-sshmms_result = mks.perform_testing(test_dset,sshmms,labels,disagg_algo,limit)
+sshmms_result = mks.perform_testing(test_dset, sshmms, labels, disagg_algo, limit)
 sshmms_result['train_power'] = train_dset # required during anomaly detection logic
 #%
 save_dir = "/Volumes/MacintoshHD2/Users/haroonr/Detailed_datasets/REFITT/Intermediary_results/"
-#TODO : TUNE ME
-filename = save_dir+"denoised/sshmms/selected/"+ home.split('.')[0]+'.pkl'
+#TODO : set me to correct directory
+filename = save_dir + "noisy/sshmms/selected_10min/" + home.split('.')[0] + '.pkl'
 handle = open(filename,'wb')
-#https://docs.python.org/2/library/pickle.html
-pickle.dump(sshmms_result,handle)
+pickle.dump(sshmms_result, handle)
 handle.close()
 print('I am done')
 #%%

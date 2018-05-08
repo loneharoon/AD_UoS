@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
+In this I plot submetered, NILM and NILM smoothened version day wise for each NILM techn separ. It shows how smoothening effects NILM version
 Created on Thu Mar 29 09:13:38 2018
 
 @author: haroonr
@@ -10,6 +11,7 @@ import pickle
 import sys
 sys.path.append('/Volumes/MacintoshHD2/Users/haroonr/Dropbox/UniOfStra/AD/disaggregation_codes/')
 import AD_support as ads
+import pandas as pd
 import pipeline_support as ps
 import matplotlib.pyplot as plt
 #%% 
@@ -27,7 +29,7 @@ else:
 #TODO : TUNE  US [we are 5]
 NILM_smooth_version = True # if you want to read NILM smoothened dataset
 home = "House10.pkl" # options are: 10, 20, 18, 16, 1
-disagg_approach = "lbm" # options are co,fhmm, lbm,sshmms,gsp
+disagg_approach = "sshmms" # options are co,fhmm, lbm,sshmms,gsp
 num_std_smooth = 0
 
 NoOfContexts = 4
@@ -68,7 +70,7 @@ if disagg_approach == "lbm":
     data_dic_nilm['decoded_power'] = data_dic_nilm['decoded_power'].drop(['inferred mains'],axis=1)
 train_data_n =  train_power[myapp]
 test_data_n =   decoded_power[myapp]
-#%%
+#%% This cell is used to save a range of plots
 days = np.unique(test_data_n.index.date)
 days = [str(i) for i in days]
 for i in days:
@@ -83,3 +85,18 @@ for i in days:
   savedir = savedir + home.split('.')[0] + "/" + disagg_approach + "/"
   fig.savefig(savedir + i + ".png", bbox_inches='tight')
   plt.close()  
+#%% This cell saves only one plot at a time
+#i = '2014-05-21 : 2014-05-21 05:59:59'
+gt = actual_data_ns['2014-05-21' : '2014-05-21 05:59:59']
+nilm = test_data_n['2014-05-21' : '2014-05-21 05:59:59']
+nilm_smooth =  test_data_ns['2014-05-21' : '2014-05-21 05:59:59']
+cat = pd.concat([gt, nilm, nilm_smooth],axis = 1)
+cat.columns = ['Submetered', 'NILM', 'NILM_Processed']
+ax = cat.plot(subplots = True, figsize = (8,4))
+fig = ax[0].get_figure()
+plt.xlabel('Timestamp')
+plt.ylabel('Power (W)')
+savedir = "/Volumes/MacintoshHD2/Users/haroonr/Detailed_datasets/REFITT/Intermediary_results/paper_plots/"
+
+fig.savefig(savedir + home.split('.')[0] + disagg_approach + ".pdf", bbox_inches='tight')
+plt.close()  
