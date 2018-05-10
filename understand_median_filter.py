@@ -88,5 +88,5 @@ co_result = co.co_decoding(train_dset, test_dset)
 co_result['actual_power']['use'] = test_dset['use'] # appending aggregate column for later use
 co_result['train_power'] = train_dset
 handle = open(filename, 'wb')
-pickle.dump(co_result, handle)
+pickle.dump(co_result, handle, protocol = 2)
 handle.close()

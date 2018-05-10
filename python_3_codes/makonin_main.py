@@ -15,6 +15,8 @@ import AD_support as ads
 import makonin_support as mks
 import standardize_column_names as scn
 import numpy as np
+import scipy as sp
+from scipy import signal  # it is necessary
 #%%
 
 dir = "/Volumes/MacintoshHD2/Users/haroonr/Detailed_datasets/REFITT/REFIT_selected/"
@@ -26,7 +28,7 @@ df_sub = deepcopy(df[:])
 #TODO : Toggle switch and set sampling rate correctly
 resample = True
 if resample: 
-  df_samp = df_sub.resample('10T', label = 'right', closed='right').mean()
+  df_samp = df_sub.resample('1T', label = 'right', closed='right').mean()
   df_samp.drop('Issues', axis = 1, inplace = True)
   scn.rename_appliances(home,df_samp) # this renames columns
   df_samp.rename(columns={'Aggregate':'use'}, inplace = True) # renaming agg column
@@ -48,7 +50,15 @@ if denoised:
     # chaning aggregate column
     iams = high_energy_apps.difference(['use'])
     df_selected['use'] = df_selected[iams].sum(axis=1)
-    print('**********DENOISED DATA*************8')
+    print('**********DENOISED DATA*************')
+#TODO : Toggle me if required
+median_filtering = True
+if median_filtering:
+    filtered = deepcopy(df_selected)
+    filtered_agg = sp.signal.medfilt(filtered['use'], kernel_size = 5)
+    filtered['use'] = filtered_agg
+    df_selected =  filtered
+    print("Applied median filter")
 train_dset,test_dset = ads.get_selected_home_data(home, df_selected)
 #%%
 ids = train_dset.columns.values.tolist()

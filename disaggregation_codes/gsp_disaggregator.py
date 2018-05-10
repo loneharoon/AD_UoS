@@ -22,12 +22,14 @@ import AD_support as ads
 from collections import OrderedDict
 from copy import deepcopy
 import standardize_column_names
+import scipy as sp
+from scipy import signal  # it is necessary
 
 #%%
 
 print("Run this code in python 2")
 dir = "/Volumes/MacintoshHD2/Users/haroonr/Detailed_datasets/REFITT/REFIT_selected/"
-home = "House10.csv"
+home = "House16.csv"
 df = pd.read_csv(dir+home, index_col = "Time")
 df.index = pd.to_datetime(df.index)
 df_sub = deepcopy(df[:])
@@ -35,8 +37,8 @@ df_sub = deepcopy(df[:])
 #TODO : Toggle switch and set sampling rate correctly
 resample = True
 if resample: 
-  df_samp = df_sub.resample('10T',label='right',closed='right').mean()
-  df_samp.drop('Issues',axis=1,inplace=True)
+  df_samp = df_sub.resample('1T',label='right',closed='right').mean()
+  df_samp.drop('Issues',axis = 1,inplace=True)
   standardize_column_names.rename_appliances(home,df_samp) # this renames columns
   #df_samp.rename(columns={'Aggregate':'use'},inplace=True) # renaming agg column
   print("*****RESAMPling DONE********")
@@ -44,10 +46,10 @@ if resample:
       df_samp = df_samp[df_samp.index!= '2014-03-08'] # after resamping this day gets created 
 else:
   df_samp = deepcopy(df_sub)
-  df_samp.drop('Issues',axis=1,inplace=True)
+  df_samp.drop('Issues',axis = 1,inplace = True)
   standardize_column_names.rename_appliances(home,df_samp) # this renames columns  
 
-energy = df_samp.sum(axis=0)
+energy = df_samp.sum(axis = 0)
 high_energy_apps = energy.nlargest(7).keys() # CONTROL : selects few appliances
 df_selected = df_samp[high_energy_apps]
 #%
@@ -58,6 +60,13 @@ if denoised:
     iams = high_energy_apps.difference(['use'])
     df_selected['use'] = df_selected[iams].sum(axis=1)
     print('**********DENOISED DATA*************8')
+median_filtering = True
+if median_filtering:
+    filtered = deepcopy(df_selected)
+    filtered_agg = sp.signal.medfilt(filtered['use'], kernel_size = 5)
+    filtered['use'] = filtered_agg
+    df_selected =  filtered
+    print ("Applied median filter")
 train_dset,test_dset = ads.get_selected_home_data(home,df_selected)
 #%%
 #TODO : tune us
@@ -71,7 +80,7 @@ T_Negative = -30;
 alpha = 0.5
 beta = 0.5
 # this defines the number of times an appliance is set ON in one month
-instancelimit = 25 # [normal value 25 for one month] for home 18, I set it to  15 (otherwise it predicts less no. of appliances), for remaining home it was set 25. and for home 10 (at 10 minutes sampling I set it to 20)
+instancelimit = 20 # [normal value 25 for one month] for home 18, I set it to  15 (otherwise it predicts less no. of appliances), for remaining home it was set 25. and for home 10 (at 10 minutes sampling I set it to 20)
 #%% if you want to run in monthly wise, then run next cell and skip this one
 main = train_dset['use']
 main_val = main.values
@@ -121,13 +130,14 @@ for k,v in monthly_groups:
   #%% save results
 save_dir = "/Volumes/MacintoshHD2/Users/haroonr/Detailed_datasets/REFITT/Intermediary_results/"
 #TODO : TUNE ME
-filename = save_dir + "noisy/gsp/selected_10min/" + home.split('.')[0]+'.pkl'
+#filename = save_dir + "noisy/gsp/selected_10min/" + home.split('.')[0]+'.pkl'
+filename = save_dir + "noisy_median_filtered/gsp/windowsize5/" + home.split('.')[0]+'.pkl'
 gsp_result = {}
 gsp_result['decoded_power'] = pd.concat(monthly_gsp_res,axis=0)
 gsp_result['actual_power'] = pd.concat(gt,axis=0)
 gsp_result['train_power'] = train_dset
 handle = open(filename,'wb')
-pickle.dump(gsp_result,handle)
+pickle.dump(gsp_result,handle,protocol = 2)
 handle.close()      
     
 
