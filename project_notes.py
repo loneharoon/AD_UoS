@@ -26,6 +26,8 @@ FHMM:
 I found that GSP fails for denoised data. It often detects less number of appliances than actual number present. As a result it becomes difficult to compute accuracies.
     
 SSHMMS: It is the only algorithm which needs to run in python 3. Remaining run in python 2. 
+The code is present in python_3_codes folder. Run makonin_main.py first
+
 Sensitivity analysis:
 1. For anomaly detection algorithm, I do grid search in file 'grid_search_parameters.py'  
     
@@ -61,6 +63,9 @@ training: month 12 of 2014
 testing: months 1,2 and 3 of 2015
 target_appliance:ElectricHeater
 Issues: NONE
-    
+# NOTES AFTER COMING TO IIITD
+1. Plot showing the effect of smoothing on NILM data is plotted using plot_NILM_NILM_smooth.py
+
+
 
 '''
