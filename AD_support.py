@@ -363,11 +363,51 @@ def anomaly_detection_algorithm(test_stats,contexts_stats,alpha,num_std):
         timestamp =  timestamp + timedelta(hours = 15)
       elif context == 'night_2_gp':
         timestamp =  timestamp + timedelta(hours = 21)
+      elif context == 'all24_gp':
+        timestamp =  timestamp + timedelta(hours = 12)
+      elif context == 'first12_gp':
+        timestamp =  timestamp + timedelta(hours = 6)
+      elif context == 'last12_gp':
+        timestamp =  timestamp + timedelta(hours = 18)
+      elif context == 'first8_gp':
+        timestamp =  timestamp + timedelta(hours = 4)
+      elif context == 'next8_gp':
+        timestamp =  timestamp + timedelta(hours = 12)
+      elif context == 'last8_gp':
+        timestamp =  timestamp + timedelta(hours = 19)
+      elif context == 'gp_0_4':
+        timestamp =  timestamp + timedelta(hours = 3)
+      elif context == 'gp_4_8':
+        timestamp =  timestamp + timedelta(hours = 6)
+      elif context == 'gp_8_12':
+        timestamp =  timestamp + timedelta(hours = 10)
+      elif context == 'gp_12_16':
+        timestamp =  timestamp + timedelta(hours = 14)
+      elif context == 'gp_16_20':
+        timestamp =  timestamp + timedelta(hours = 18)
+      elif context == 'gp_20_24':
+        timestamp =  timestamp + timedelta(hours = 12)
+      elif context == 'gp_0_3':
+        timestamp =  timestamp + timedelta(hours = 2)
+      elif context == 'gp_3_6':
+        timestamp =  timestamp + timedelta(hours = 5)
+      elif context == 'gp_6_9':
+        timestamp =  timestamp + timedelta(hours = 8)
+      elif context == 'gp_9_12':
+        timestamp =  timestamp + timedelta(hours = 11)
+      elif context == 'gp_12_15':
+        timestamp =  timestamp + timedelta(hours = 14)
+      elif context == 'gp_15_18':
+        timestamp =  timestamp + timedelta(hours = 17)
+      elif context == 'gp_18_21':
+        timestamp =  timestamp + timedelta(hours = 20)
+      elif context == 'gp_21_24':
+        timestamp =  timestamp + timedelta(hours = 23)
       else:
           raise ValueError("Provide required context defintions in anomaly detection algorithm")
       updated_timestamp.append(timestamp)
   res_df['updated_timestamp'] =  updated_timestamp  
-  return(res_df[res_df.status ==1]) # returns only anomaly packets
+  return(res_df[res_df.status ==1]) # returns only anomaly packets 
 #%%
 def anomaly_detection_algorithm_ElectricHeater(test_stats,contexts_stats,alpha,num_std):
   ''' this function defines the anomaly detection logic '''
@@ -396,13 +436,55 @@ def anomaly_detection_algorithm_ElectricHeater(test_stats,contexts_stats,alpha,n
       context = res_df['context'][i]
       timestamp = res_df['timestamp'][i]
       if context == 'night_1_gp':
-        timestamp =  timestamp + timedelta(hours=3)
+        timestamp =  timestamp + timedelta(hours = 3)
       elif context == 'day_1_gp':
-        timestamp =  timestamp + timedelta(hours=9)
+        timestamp =  timestamp + timedelta(hours = 9)
       elif context == 'day_2_gp':
-        timestamp =  timestamp + timedelta(hours=15)
+        timestamp =  timestamp + timedelta(hours = 15)
       elif context == 'night_2_gp':
-        timestamp =  timestamp + timedelta(hours=21)
+        timestamp =  timestamp + timedelta(hours = 21)
+      elif context == 'all24_gp':
+        timestamp =  timestamp + timedelta(hours = 12)
+      elif context == 'first12_gp':
+        timestamp =  timestamp + timedelta(hours = 6)
+      elif context == 'last12_gp':
+        timestamp =  timestamp + timedelta(hours = 18)
+      elif context == 'first8_gp':
+        timestamp =  timestamp + timedelta(hours = 4)
+      elif context == 'next8_gp':
+        timestamp =  timestamp + timedelta(hours = 12)
+      elif context == 'last8_gp':
+        timestamp =  timestamp + timedelta(hours = 19)
+      elif context == 'gp_0_4':
+        timestamp =  timestamp + timedelta(hours = 3)
+      elif context == 'gp_4_8':
+        timestamp =  timestamp + timedelta(hours = 6)
+      elif context == 'gp_8_12':
+        timestamp =  timestamp + timedelta(hours = 10)
+      elif context == 'gp_12_16':
+        timestamp =  timestamp + timedelta(hours = 14)
+      elif context == 'gp_16_20':
+        timestamp =  timestamp + timedelta(hours = 18)
+      elif context == 'gp_20_24':
+        timestamp =  timestamp + timedelta(hours = 12)
+      elif context == 'gp_0_3':
+        timestamp =  timestamp + timedelta(hours = 2)
+      elif context == 'gp_3_6':
+        timestamp =  timestamp + timedelta(hours = 5)
+      elif context == 'gp_6_9':
+        timestamp =  timestamp + timedelta(hours = 8)
+      elif context == 'gp_9_12':
+        timestamp =  timestamp + timedelta(hours = 11)
+      elif context == 'gp_12_15':
+        timestamp =  timestamp + timedelta(hours = 14)
+      elif context == 'gp_15_18':
+        timestamp =  timestamp + timedelta(hours = 17)
+      elif context == 'gp_18_21':
+        timestamp =  timestamp + timedelta(hours = 20)
+      elif context == 'gp_21_24':
+        timestamp =  timestamp + timedelta(hours = 23)
+      else:
+          raise ValueError("Provide required context defintions in anomaly detection algorithm")
       updated_timestamp.append(timestamp)
   res_df['updated_timestamp'] =  updated_timestamp  
   return(res_df[res_df.status ==1]) # returns only anomaly packets
@@ -443,13 +525,13 @@ def create_training_stats_ElectricHeater(traindata,sampling_type,sampling_rate):
     return (summ_dic)  
 
 #%%
-def AD_refit_training(train_data,data_sampling_type,data_sampling_time,NoOfContexts,appliance):
+def AD_refit_training(train_data, data_sampling_type, data_sampling_time, NoOfContexts, appliance):
     #%create training stats
     """" 1. get data
-         2. divide it into 4 contexts 
+         2. divide it into different contexts/sets 
          3. divide each into day wise
          4. calculate above stats """
-    contexts = create_contexts(train_data,NoOfContexts)      
+    contexts = create_contexts(train_data, NoOfContexts)      
     
     # create groups within contexts day wise, this will allow us to catch stats at day level otherwise preserving boundaries between different days might become difficult
     contexts_daywise = OrderedDict()
@@ -470,7 +552,7 @@ def AD_refit_training(train_data,data_sampling_type,data_sampling_time,NoOfConte
             contexts_stats[k] = create_training_stats(v,sampling_type=data_sampling_type,sampling_rate=data_sampling_time) 
     return contexts_stats
 #%%
-def create_contexts(data,NoOfContexts):
+def create_contexts(data, NoOfContexts):
     
     if NoOfContexts == 1:
         contexts = OrderedDict()
