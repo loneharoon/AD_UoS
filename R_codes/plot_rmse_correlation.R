@@ -1,4 +1,4 @@
-# use this script to plot rmse and corelation for UK work
+# use this script to plot rmse and corelation for UK work. The first part of the scripts plots results obtained on 1 minute resolution and the last two plots show results obtained on default 8 seconds resolution.
 library(ggplot2)
 library(xts)
 library(fasttime)
@@ -52,3 +52,57 @@ h <- h + theme(panel.grid.major = element_blank(), panel.grid.minor = element_bl
 h <- h + theme(legend.position = 'top', legend.text = element_text(color="Black",size = 9)) 
 h
 ggsave("correlation_plot.pdf", width = 6, height = 3,units = "in") 
+###%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+###
+setwd('/Volumes/MacintoshHD2/Users/haroonr/Detailed_datasets/REFITT/Intermediary_results/paper_plots/')
+# RMSE
+columnhead <- c('Home1', 'Home10', 'Home16', 'Home18', 'Home20')
+CO <- c(446,55,	64,	109,	122)
+FHMM <- c(462,51,	69,	84,	83)
+LBM <- c(475,	46,	56,78	,72	)
+SSHMM <- c(150,	53,	67,	73,	59)
+#GSP <- c(,	56,	,	 , )
+
+resdata = as.data.frame(rbind(CO,FHMM, LBM, SSHMM))
+colnames(resdata) <-  columnhead
+resdata['Approach'] <- rownames(resdata)
+
+df_melt=  reshape2::melt(resdata,id.vars= c('Approach'))
+mybrewercolours <- c('#e41a1c','#377eb8','#4daf4a','#984ea3','#ff7f00','#a65628')
+h <- ggplot(df_melt,aes(variable,value))  + geom_bar(aes(fill= Approach),position="dodge",stat="identity",width = 0.4 )
+h <- h +  labs(x = "", y='RMSE (Lower is better)', fill="Approach")  + scale_fill_manual(values = mybrewercolours)
+h <- h + theme(axis.text = element_text(color="Black",size = 9),legend.text = element_text(size = 7)) 
+h <- h + theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
+               panel.background = element_blank(), axis.line = element_line(colour = "grey"))
+h <- h + theme(legend.position = c(0.8,0.7), legend.text = element_text(color="Black",size = 9)) 
+h
+figpath <- '/Volumes/MacintoshHD2/Users/haroonr/Detailed_datasets/REFITT/Intermediary_results/paper_plots/'
+
+ggsave(paste0(figpath,"rmse_8sec.pdf"), width = 6, height = 3,units = "in") 
+
+
+# CORRELATION 
+columnhead <- c('Home1', 'Home10', 'Home16', 'Home18', 'Home20')
+CO <-    c(0.50,	  0.04, 0.03,	0.22,	0.21)
+FHMM <-  c(0.48,	  0.08,	0.01,	0.22,	0.21)
+LBM <-   c(0.21,	  0.17,	0.12,	0.07,	0.22)
+SSHMM <- c(0.88,  	0.08,	0.05,	0.30,	0.49)
+#GSP <- c(0.22,	0.17,	0.01,	0.02,	0.32)
+
+resdata = as.data.frame(rbind(CO,FHMM, LBM, SSHMM))
+colnames(resdata) <-  columnhead
+resdata['Approach'] <- rownames(resdata)
+df_melt=  reshape2::melt(resdata,id.vars= c('Approach'))
+mybrewercolours <- c('#e41a1c','#377eb8','#4daf4a','#984ea3','#ff7f00','#a65628')
+h <- ggplot(df_melt,aes(variable,value))  + geom_bar(aes(fill= Approach),position="dodge",stat="identity",width = 0.4 )  
+#+ guides(col = guide_legend(nrow = 2, byrow= TRUE)) 
+h <- h +  labs(x = "", y='Correlation  Coefficient', fill="Approach")  + scale_fill_manual(values = mybrewercolours)
+h <- h + theme(axis.text = element_text(color="Black",size = 9))  
+theme(legend.)
+h <- h + theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
+               panel.background = element_blank(), axis.line = element_line(colour = "grey")) 
+h <- h + theme(legend.position = 'top', legend.text = element_text(color="Black",size = 9)) 
+h
+figpath <- '/Volumes/MacintoshHD2/Users/haroonr/Detailed_datasets/REFITT/Intermediary_results/paper_plots/'
+
+ggsave(paste0(figpath,"correlation_plot_8sec.pdf"), width = 6, height = 3,units = "in") 
