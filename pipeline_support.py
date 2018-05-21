@@ -329,7 +329,7 @@ def divide_smoothen_combine(data_series, NoOfContexts, train_results, num_std, p
   ''' this function takes NILM data as input and then smoothens that data. Note down smoothening is done context wise so context specific thresholds are used''' 
   contexts = ads.create_contexts(data_series, NoOfContexts)      
   contexts_daywise = OrderedDict()
-  for k, v in contexts.items():
+  for k, v in contexts.items(): # get contexts data
     gp = v.groupby(v.index.date) 
     # get context specific stats
     off_mean_duration = train_results[k]['OFF_duration']['mean']
@@ -339,13 +339,16 @@ def divide_smoothen_combine(data_series, NoOfContexts, train_results, num_std, p
       print('Mean and std are {}, {}\n'.format(off_mean_duration,  off_std_duration))
     threshold_minutes = off_mean_duration
     std = off_std_duration 
+    #print('context is {}'.format(k))
     smoothened_daywise = OrderedDict()
-    for day_k, day_v in gp:
+    for day_k, day_v in gp: # get day data
       #print(day_k)
       smoothened_daywise[day_k] = smoothen_NILM_output(day_v, threshold_minutes, std, num_std,data_sampling_type)
    # Now merge all daywise results
-    contexts_daywise[k] = pd.concat([v for k,v in smoothened_daywise.items()], axis = 0) 
-  smoothened_series = pd.concat([v for k,v in contexts_daywise.items()], axis = 0)  
+    #print(k)
+    contexts_daywise[k] = pd.concat([val for key,val in smoothened_daywise.items()], axis = 0) 
+  smoothened_series = pd.concat([val2 for key2,val2 in contexts_daywise.items()], axis = 0)  
+  #print(smoothened_series)
   sorted_series =  smoothened_series.sort_index()
   return sorted_series
 
