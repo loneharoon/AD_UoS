@@ -406,7 +406,7 @@ def anomaly_detection_algorithm(test_stats,contexts_stats,alpha,num_std):
       else:
           raise ValueError("Provide required context defintions in anomaly detection algorithm")
       updated_timestamp.append(timestamp)
-  res_df['updated_timestamp'] =  updated_timestamp  
+  res_df['updated_timestamp'] =  updated_timestamp
   return(res_df[res_df.status ==1]) # returns only anomaly packets 
 #%%
 def anomaly_detection_algorithm_ElectricHeater(test_stats,contexts_stats,alpha,num_std):
@@ -556,40 +556,40 @@ def create_contexts(data, NoOfContexts):
     
     if NoOfContexts == 1:
         contexts = OrderedDict()
-        contexts['all24_gp'] = data.between_time("00:00","23:59")
+        contexts['all24_gp'] = data.between_time("00:00","23:59:59")
     elif NoOfContexts == 2:
         contexts = OrderedDict()
-        contexts['first12_gp'] = data.between_time("00:00","11:59")
-        contexts['last12_gp'] = data.between_time("12:00","23:59")
+        contexts['first12_gp'] = data.between_time("00:00","11:59:59")
+        contexts['last12_gp'] = data.between_time("12:00","23:59:59")
     elif  NoOfContexts == 3:
         contexts = OrderedDict()
-        contexts['first8_gp'] = data.between_time("00:00","07:59")
-        contexts['next8_gp'] = data.between_time("08:00","15:59")
-        contexts['last8_gp'] = data.between_time("16:00","23:59")
+        contexts['first8_gp'] = data.between_time("00:00","07:59:59")
+        contexts['next8_gp'] = data.between_time("08:00","15:59:59")
+        contexts['last8_gp'] = data.between_time("16:00","23:59:59")
     elif NoOfContexts == 4:
         contexts = OrderedDict()
-        contexts['night_1_gp'] = data.between_time("00:00","05:59")
-        contexts['day_1_gp'] =  data.between_time("06:00","11:59")
-        contexts['day_2_gp'] = data.between_time("12:00","17:59")
-        contexts['night_2_gp'] = data.between_time("18:00","23:59")
+        contexts['night_1_gp'] = data.between_time("00:00:00","05:59:59")
+        contexts['day_1_gp'] =  data.between_time("06:00:00","11:59:59")
+        contexts['day_2_gp'] = data.between_time("12:00:00","17:59:59")
+        contexts['night_2_gp'] = data.between_time("18:00:00","23:59:59")
     elif NoOfContexts == 6:
         contexts = OrderedDict()
-        contexts['gp_0_4'] =   data.between_time("00:00","03:59")
-        contexts['gp_4_8'] =   data.between_time("04:00","07:59")
-        contexts['gp_8_12'] =  data.between_time("08:00","11:59")
-        contexts['gp_12_16'] = data.between_time("12:00","15:59")
-        contexts['gp_16_20'] = data.between_time("16:00","19:59")
-        contexts['gp_20_24'] = data.between_time("20:00","23:59")
+        contexts['gp_0_4'] =   data.between_time("00:00","03:59:59")
+        contexts['gp_4_8'] =   data.between_time("04:00","07:59:59")
+        contexts['gp_8_12'] =  data.between_time("08:00","11:59:59")
+        contexts['gp_12_16'] = data.between_time("12:00","15:59:59")
+        contexts['gp_16_20'] = data.between_time("16:00","19:59:59")
+        contexts['gp_20_24'] = data.between_time("20:00","23:59:59")
     elif NoOfContexts == 8:
         contexts = OrderedDict()
-        contexts['gp_0_3'] =    data.between_time("00:00","02:59")
-        contexts['gp_3_6'] =    data.between_time("03:00","05:59")
-        contexts['gp_6_9'] =    data.between_time("06:00","08:59")
-        contexts['gp_9_12'] =   data.between_time("09:00","11:59")
-        contexts['gp_12_15'] =  data.between_time("12:00","14:59")
-        contexts['gp_15_18'] =  data.between_time("15:00","17:59")
-        contexts['gp_18_21'] =  data.between_time("18:00","20:59")
-        contexts['gp_21_24'] =  data.between_time("21:00","23:59")
+        contexts['gp_0_3'] =    data.between_time("00:00","02:59:59")
+        contexts['gp_3_6'] =    data.between_time("03:00","05:59:59")
+        contexts['gp_6_9'] =    data.between_time("06:00","08:59:59")
+        contexts['gp_9_12'] =   data.between_time("09:00","11:59:59")
+        contexts['gp_12_15'] =  data.between_time("12:00","14:59:59")
+        contexts['gp_15_18'] =  data.between_time("15:00","17:59:59")
+        contexts['gp_18_21'] =  data.between_time("18:00","20:59:59")
+        contexts['gp_21_24'] =  data.between_time("21:00","23:59:59")
     
     else:
         raise ValueError("Please provide contexts which make sense\n")
