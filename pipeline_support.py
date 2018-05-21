@@ -34,7 +34,7 @@ def compute_AD_and_disagg_status(NILM_smooth_version, logging_file, log_report, 
     # Compute disaggregation accuracies
     
     if NILM_smooth_version:
-      norm_error = acmat.accuracy_metric_norm_error(data_dic)
+      #norm_error = acmat.accuracy_metric_norm_error(data_dic)
       rmse = acmat.compute_rmse_ver_dict(data_dic)
       cor_coeff = acmat.compute_correlation_ver_dict(data_dic)
       confus_mat = acmat.call_confusion_metrics_on_disagg(data_dic['actual_power'],data_dic['decoded_power'],power_threshold=10)
@@ -189,17 +189,29 @@ def format_results_in_appliance_order(home):
          raise ValueError ("Supply correct home details")
      return order
 #%%
-def  interpolate_dataframe(start_ob, end_ob, temp_dup):
+def  interpolate_dataframe(start_ob, end_ob, temp_dup,data_sampling_type):
    ''' This function creates a new dataframe from temp_dup by using only two observation from it sepecified by parameters start_ob and end_ob. Remaining in between observations are filled by interpolation '''
-   ind = pd.date_range(start = start_ob, end = end_ob, freq = 'T')
-   temp_df =  pd.DataFrame(index = ind)
-   k = pd.concat([temp_dup.loc[str(start_ob)], temp_dup.loc[str(end_ob)]],axis = 1).T
-   k = k.combine_first(temp_df)
-   k['power'].interpolate(method = 'linear',inplace = True)
-   temp_dup.loc[k.index.intersection(temp_dup.index)] = k
+   if data_sampling_type == "minutes":
+       print ("Mintues case executed for interpolation")
+       ind = pd.date_range(start = start_ob, end = end_ob, freq = 'T')
+       temp_df =  pd.DataFrame(index = ind)
+       k = pd.concat([temp_dup.loc[str(start_ob)], temp_dup.loc[str(end_ob)]],axis = 1).T
+       k = k.combine_first(temp_df)
+       k['power'].interpolate(method = 'linear',inplace = True)
+       temp_dup.loc[k.index.intersection(temp_dup.index)] = k
+   elif data_sampling_type == "seconds":
+       print ("Seconds case executed for interpolation")
+       temp_sub = temp_dup[start_ob : end_ob]
+       temp_df2 =  pd.DataFrame(index = temp_sub.index )
+       y = pd.concat([temp_dup.loc[str(start_ob)], temp_dup.loc[str(end_ob)]],axis = 1).T
+       y = y.combine_first(temp_df2)
+       y['power'].interpolate(method = 'linear',inplace = True)
+       temp_dup.loc[y.index.intersection(temp_dup.index)] = y
+   else :
+      raise ValueError(' please input correct data sampling rate for interpolation')
    return temp_dup
 #%%
-def smoothen_NILM_output(data_series, threshold_minutes, std, num_std):    
+def smoothen_NILM_output(data_series, threshold_minutes, std, num_std,data_sampling_type):    
   '''this function taken NILM output and removes small OFF durations by using threshold_minutes''' 
 
   threshold_minutes = threshold_minutes - num_std * std
@@ -232,7 +244,7 @@ def smoothen_NILM_output(data_series, threshold_minutes, std, num_std):
       pass
     elif delta_minutes < threshold_minutes:
       # interpolate me at minutes rate
-      temp_dup = interpolate_dataframe(start_ind, next_ind, temp_dup)
+      temp_dup = interpolate_dataframe(start_ind, next_ind, temp_dup,data_sampling_type)
     else:
       pass
   # temp_dup['power'].plot() 
@@ -313,7 +325,7 @@ def compute_AD_and_disagg_status_on_NILM_smoothened_data(logging_file,log_report
       print("Anomaly detection accuracies at; context {}, alpha {}, std {} on {} data \n".format(NoOfContexts,alpha,num_std,disagg_approach))
       print('Precision, reall and f_score are: {}, {}, {} \n'.format(precision,recall, fscore))
 #%%
-def divide_smoothen_combine(data_series, NoOfContexts, train_results, num_std, print_stats):
+def divide_smoothen_combine(data_series, NoOfContexts, train_results, num_std, print_stats,data_sampling_type):
   ''' this function takes NILM data as input and then smoothens that data. Note down smoothening is done context wise so context specific thresholds are used''' 
   contexts = ads.create_contexts(data_series, NoOfContexts)      
   contexts_daywise = OrderedDict()
@@ -330,7 +342,7 @@ def divide_smoothen_combine(data_series, NoOfContexts, train_results, num_std, p
     smoothened_daywise = OrderedDict()
     for day_k, day_v in gp:
       #print(day_k)
-      smoothened_daywise[day_k] = smoothen_NILM_output(day_v, threshold_minutes, std, num_std)
+      smoothened_daywise[day_k] = smoothen_NILM_output(day_v, threshold_minutes, std, num_std,data_sampling_type)
    # Now merge all daywise results
     contexts_daywise[k] = pd.concat([v for k,v in smoothened_daywise.items()], axis = 0) 
   smoothened_series = pd.concat([v for k,v in contexts_daywise.items()], axis = 0)  
