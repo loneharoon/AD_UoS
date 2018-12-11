@@ -12,13 +12,13 @@ sys.path.append('/Volumes/MacintoshHD2/Users/haroonr/Dropbox/UniOfStra/AD/disagg
 import standardize_column_names as scn
 import AD_support as ads
 import re
-import understand_tp_fp_fn_support as tp_fp_support
 import matplotlib.pyplot as plt
+import accuracy_metrics_disagg as acmat
 #%%
 file_location = "/Volumes/MacintoshHD2/Users/haroonr/Detailed_datasets/REFITT/Intermediary_results/noisy/"
 #TODO: tune two of us
 home = "House10.pkl"
-home_no = home.split('.')[0]
+#home_no = home.split('.')[0]
 #myapp = "ElectricHeater"# home 1
 myapp = "Chest_Freezer"# home 10
 #myapp = "Fridge_Freezer_1"# home 16
@@ -39,34 +39,39 @@ actual_power  = data_dic['actual_power']
 train_data  =  train_power[myapp]
 test_data   =  decoded_power[myapp]
 actual_data = actual_power[myapp]
-#%%
-contexts = 4
-data_sampling_time = 1 #in minutes
-data_sampling_type = "minutes" # or seconds
-alpha,num_std = 2, 2
-train_results = ads.AD_refit_training(train_data, data_sampling_type, data_sampling_time, contexts, myapp)
-test_results  = ads.AD_refit_testing(test_data, data_sampling_type, data_sampling_time, contexts, myapp)     
-if myapp == 'ElectricHeater':
-    res_df = ads.anomaly_detection_algorithm_ElectricHeater(test_results, train_results, alpha, num_std)
-else:
-    res_df = ads.anomaly_detection_algorithm(test_results, train_results, alpha, num_std)
-#result_sub = res_df[res_df.status==1]
-result_sub = res_df
-#%%
+
+#%
 house_no =  int(re.findall('\d+',home)[0])
 home = home.split('.')[0] + '.csv'
 appliance = scn.reverse_lookup(home, myapp) # find actual name of appliance in anomaly database
 assert len(appliance) > 1
 day_start = actual_data.first_valid_index()
 day_end = actual_data.last_valid_index()
-#print('both S and NS anomalies selected')
-#%%
-gt_days = ads.anomalous_days_from_gt(house_no, appliance, day_start, day_end)
-ads.plot_bind_save_all_anomalies(actual_data, gt_days.values, home, myapp)
-#precision,recall, fscore = ads.compute_AD_confusion_metrics(gt,ob)
-#tp, fp, fn, tp_list, fp_list, fn_list = ads.show_tp_fp_fn_dates(gt,ob)
 #%%
 plt.ioff()
-fp_list = fp_list
-restype = 'fp'
-tp_fp_support.plot_bind_save_pdf(actual_data, test_data, fp_list, technique, home, myapp, restype)
+gt_days = ads.anomalous_days_from_gt(house_no, appliance, day_start, day_end)
+ads.plot_bind_save_all_anomalies(actual_data, gt_days.values, home, myapp)
+
+#%%
+
+#rmse_score = compute_rmse(actual_power, decoded_power)
+#(pd_cat.corr().predicted[0],2)
+daterange = "2014-06-01" + ":" +"2014-06-05"
+gt = actual_power["2014-06-01" : "2014-06-05"]
+pred = decoded_power["2014-06-01" : "2014-06-05"]
+#compute_rmse(gt, pred)
+compute_correlation(gt, pred)
+#%%
+###
+def compute_rmse(gt, pred):
+    from sklearn.metrics import mean_squared_error
+    rms_error = {}
+    for app in pred.columns:
+        rms_error[app] =  np.sqrt(mean_squared_error(gt[app],pred[app]))
+    return pd.Series(rms_error)
+#%%
+def compute_correlation(gt, pred):
+    corr_coeff = {}
+    for app in pred.columns:
+        corr_coeff[app] =  ( pd.concat([gt[app], pred[app]], axis = 1).corr()).iloc[0][1]      
+    return pd.Series(corr_coeff)
