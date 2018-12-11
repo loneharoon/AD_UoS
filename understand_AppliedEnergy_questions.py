@@ -14,7 +14,8 @@ Created on Tue Dec 11 16:41:37 2018
 @author: haroonr
 """
 import standardize_column_names as scn
-import AD_support as ads
+#import AD_support as ads
+import AD_AppliedEnergy_support as support
 import re
 import numpy as np
 import pandas as pd
@@ -30,19 +31,19 @@ df = pd.read_csv(dir+home,index_col="localminute")
 df.index = pd.to_datetime(df.index)
 #df_sub = df["2014-03":] # since before march their are calibration issues
 #%% Resampling data
-train_dset = df_new.truncate(before="2014-06-01", after="2014-06-30 23:59:59")
-test_dset = df_new.truncate(before="2014-07-01", after="2014-08-30 23:59:59")
-
-print("*****RESAMPLING********")
-df_samp = df_sub.resample('1T',label = 'right', closed ='right').mean()
+train_dset = df.truncate(before="2014-06-01", after="2014-06-30 23:59:59")
+#test_dset = df.truncate(before="2014-07-01", after="2014-08-30 23:59:59")
 data_sampling_time = 1 #in minutes
 data_sampling_type = "minutes" # or seconds
-scn.rename_appliances(home, df_samp)
+#scn.rename_appliances(home, df_samp)
 #%% select particular appliance for anomaly detection
-df_samp.columns
-myapp = "Chest_Freezer"
-train_data =  df_samp[myapp]['2014-04-01' : '2014-04-30'] # home 3 freezer
+#df_samp.columns
+myapp = "refrigerator1"
+myapp = "air1"
+train_data =  train_dset[myapp]['2014-06-01'] # home 3 freezer
 #test_data =  df_samp[myapp]['2014-05-01':'2014-05-03'] # home 3
-test_data =  df_samp[myapp]['2014-05-01':'2014-05-31'] # home 3
-train_results = ads.AD_refit_training(train_data,data_sampling_type,data_sampling_time)
-test_results  = ads.AD_refit_testing(test_data,data_sampling_type,data_sampling_time)
+#%%
+ res = support.AppliedEnergy_training(train_data,data_sampling_type,data_sampling_time,1,'refrigerator1')
+total_energy_ON = np.sum(res['all24_gp']['ON_energy'])
+mean_energy_ON = np.mean(res['all24_gp']['ON_energy'])
+std_dev_energy_ON = np.std(res['all24_gp']['ON_energy'])
